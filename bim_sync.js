@@ -21,7 +21,7 @@
 
 // ─── KONFIGURATION ────────────────────────────────────────────────────
 const BIM_SUPABASE_URL = 'https://frohpggmwdxbnpigyodx.supabase.co_URL';      // z.B. https://xxxx.supabase.co
-const BIM_SUPABASE_KEY = 'DEIN_SUPABASE_ANON_KEY';  // eyJh...
+const BIM_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyb2hwZ2dtd2R4Ym5waWd5b2R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2MjY0NzYsImV4cCI6MjA5MTIwMjQ3Nn0.OSJ6FyohNNnuuCpTB1SfC1Y-TaV4wH81a4gXRT8oMOo';  // eyJh...
 
 // ─── SYNC-SCHLÜSSEL ──────────────────────────────────────────────────
 // Nur Keys mit diesem Prefix werden synchronisiert

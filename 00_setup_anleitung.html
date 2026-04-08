@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>BIM Manager – Setup Guide</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f3f8;color:#1a2540;font-size:14px;line-height:1.65;padding:40px 20px}
+.wrap{max-width:760px;margin:0 auto}
+.header{background:#0f1623;border-radius:12px;padding:28px 32px;margin-bottom:28px;display:flex;align-items:center;gap:16px}
+.logo{width:44px;height:44px;background:#00c9a7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#0f1623;font-family:monospace;flex-shrink:0}
+.header-text h1{font-size:20px;font-weight:700;color:#e2e8f0;letter-spacing:-0.02em}
+.header-text p{font-size:12px;color:#8899b0;margin-top:3px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.card-header{padding:12px 20px;background:#f5f7fa;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px}
+.step-num{width:26px;height:26px;border-radius:50%;background:#00c9a7;color:#0f1623;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:monospace}
+.card-header-title{font-size:14px;font-weight:600;color:#1a2540}
+.card-body{padding:18px 20px}
+code{background:#f5f7fa;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px;font-family:monospace;font-size:12px;color:#3b82f6}
+pre{background:#0f1623;color:#e2e8f0;border-radius:8px;padding:16px;font-family:monospace;font-size:12px;line-height:1.7;overflow-x:auto;margin:10px 0}
+pre .k{color:#00c9a7}pre .s{color:#f59e0b}pre .c{color:#4a5876}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#00c9a7;color:#0f1623;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:background 0.15s;margin-top:10px}
+.btn:hover{background:#00b396}
+.btn-sec{background:#f5f7fa;color:#4a5876;border:1px solid #e2e8f0}.btn-sec:hover{background:#e2e8f0}
+.info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;font-size:12px;color:#1d4ed8;margin:10px 0;line-height:1.6}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:12px;color:#92400e;margin:10px 0}
+.check{color:#10b981;margin-right:4px}
+.modules-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.mod-item{background:#f5f7fa;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:8px}
+.mod-icon{font-size:14px}
+ul li{margin-bottom:6px}
+ol{padding-left:20px}ol li{margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <div class="logo">BIM</div>
+  <div class="header-text">
+    <h1>BIM Manager – Einrichtungsanleitung</h1>
+    <p>Kollaborativer Betrieb mit Supabase · Geschätzte Einrichtungszeit: 10 Minuten</p>
+  </div>
+</div>
+
+<div class="info">
+  <strong>Wie funktioniert die Synchronisierung?</strong><br>
+  Alle Daten werden weiterhin lokal im Browser gespeichert (offline-fähig). Im Hintergrund synchronisiert <code>bim_sync.js</code> alle Änderungen automatisch in eure gemeinsame Supabase-Datenbank. Ein kleines Ampel-Icon in der Topbar jedes Moduls zeigt den Sync-Status.
+</div>
+
+<!-- STEP 1 -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num">1</div>
+    <div class="card-header-title">Supabase-Konto anlegen</div>
+  </div>
+  <div class="card-body">
+    <p>Geht auf <strong>supabase.com</strong> und erstellt ein kostenloses Konto. Der Free-Tier umfasst 500 MB Speicher und 2 GB Datentransfer pro Monat – mehr als ausreichend für dieses Tool.</p>
+    <a href="https://supabase.com" target="_blank" class="btn">→ supabase.com öffnen</a>
+    <div class="info" style="margin-top:12px">Nur <strong>eine Person</strong> muss das Konto anlegen und die Zugangsdaten teilen. Kein weiterer Account nötig für den Kollegen.</div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num">2</div>
+    <div class="card-header-title">Neues Projekt erstellen</div>
+  </div>
+  <div class="card-body">
+    <ol>
+      <li>Nach dem Login auf <strong>„New project"</strong> klicken</li>
+      <li>Projektname: z. B. <code>bim-manager</code></li>
+      <li>Datenbank-Passwort: sicheres Passwort notieren (wird später nicht mehr angezeigt)</li>
+      <li>Region: <strong>Frankfurt (eu-central-1)</strong> wählen</li>
+      <li>Plan: <strong>Free</strong> belassen → <strong>„Create new project"</strong></li>
+    </ol>
+    <div class="warn">Das Projekt-Setup dauert ca. 1–2 Minuten. Seite nicht schließen.</div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num">3</div>
+    <div class="card-header-title">Datenbanktabelle anlegen</div>
+  </div>
+  <div class="card-body">
+    <p>Im Supabase-Dashboard links auf <strong>„SQL Editor"</strong> klicken, dann diesen Code einfügen und ausführen:</p>
+<pre><span class="k">CREATE TABLE</span> bim_data (
+  key       TEXT <span class="k">PRIMARY KEY</span>,
+  value     TEXT,
+  updated_at TIMESTAMPTZ <span class="k">DEFAULT</span> NOW()
+);
+
+<span class="c">-- Zugriff für alle erlauben (Tool ohne Login)</span>
+<span class="k">ALTER TABLE</span> bim_data <span class="k">ENABLE ROW LEVEL SECURITY</span>;
+<span class="k">CREATE POLICY</span> <span class="s">"allow_all"</span> <span class="k">ON</span> bim_data
+  <span class="k">FOR ALL USING</span> (true) <span class="k">WITH CHECK</span> (true);</pre>
+    <p>Auf <strong>„Run"</strong> (▶) klicken. Ergebnis: <code>Success. No rows returned</code></p>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num">4</div>
+    <div class="card-header-title">API-Zugangsdaten ermitteln</div>
+  </div>
+  <div class="card-body">
+    <p>Links im Menü auf <strong>Settings → API</strong> klicken. Ihr benötigt:</p>
+    <ul style="margin:10px 0 0 16px">
+      <li><strong>Project URL</strong> – sieht aus wie: <code>https://abcdefgh.supabase.co</code></li>
+      <li><strong>anon public</strong> Key – langer String beginnend mit <code>eyJh...</code></li>
+    </ul>
+    <div class="info" style="margin-top:10px">Der <code>anon</code>-Key ist für den öffentlichen Zugriff gedacht und kann im Source-Code stehen. Kein Problem für dieses interne Tool.</div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num">5</div>
+    <div class="card-header-title">bim_sync.js konfigurieren</div>
+  </div>
+  <div class="card-body">
+    <p>Öffnet die Datei <code>bim_sync.js</code> in einem Texteditor und ersetzt die zwei Zeilen oben:</p>
+<pre><span class="c">// Vorher:</span>
+<span class="k">const</span> BIM_SUPABASE_URL = <span class="s">'DEINE_SUPABASE_URL'</span>;
+<span class="k">const</span> BIM_SUPABASE_KEY = <span class="s">'DEIN_SUPABASE_ANON_KEY'</span>;
+
+<span class="c">// Nachher (eure echten Werte):</span>
+<span class="k">const</span> BIM_SUPABASE_URL = <span class="s">'https://abcdefgh.supabase.co'</span>;
+<span class="k">const</span> BIM_SUPABASE_KEY = <span class="s">'eyJhbGciOiJIUzI1NiIs...'</span>;</pre>
+    <div class="warn"><strong>Wichtig:</strong> Speichert die Datei nach der Änderung. Dieselbe <code>bim_sync.js</code> teilt ihr dann mit eurem Kollegen – er muss sie nicht ändern.</div>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num">6</div>
+    <div class="card-header-title">Dateien teilen und öffnen</div>
+  </div>
+  <div class="card-body">
+    <p>Schickt eurem Kollegen den <strong>kompletten Ordner</strong> (alle 8 Dateien). Die Struktur muss so aussehen:</p>
+<pre>📁 bim-manager/
+  ├── bim_sync.js                   ← Sync-Adapter (mit euren Keys)
+  ├── 01_projektverwaltung.html     ← Einstiegspunkt
+  ├── 02_meilensteinplanung.html
+  ├── 03_merkmalserver_v2.html
+  ├── 04_anwendungsfaelle.html
+  ├── 05_modellpruefung.html
+  ├── 06_modellpruefung_regeln.html
+  └── 07_berichtsgenerator.html</pre>
+    <p>Beide öffnen <code>01_projektverwaltung.html</code> im Browser. Beim ersten Start werden die Testdaten geladen und sofort in Supabase synchronisiert.</p>
+    <div class="info">
+      <strong>Sync-Status:</strong> In der Topbar jedes Moduls erscheint ein kleines Ampel-Icon:<br>
+      <span style="color:#10b981">●</span> Grün = synchronisiert &nbsp;
+      <span style="color:#f59e0b">●</span> Gelb = lädt &nbsp;
+      <span style="color:#ef4444">●</span> Rot = Fehler &nbsp;
+      <span style="color:#8899b0">●</span> Grau = lokaler Modus (kein Supabase)
+    </div>
+  </div>
+</div>
+
+<!-- STEP 7: Hosting -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num">7</div>
+    <div class="card-header-title">Optional: Im Browser hosten (kein lokales Speichern nötig)</div>
+  </div>
+  <div class="card-body">
+    <p>Falls ihr die Dateien nicht lokal speichern möchtet, könnt ihr das Tool kostenlos auf <strong>GitHub Pages</strong> hosten:</p>
+    <ol>
+      <li>GitHub-Konto erstellen (falls noch nicht vorhanden)</li>
+      <li>Neues Repository anlegen: <code>bim-manager</code></li>
+      <li>Alle 8 Dateien hochladen</li>
+      <li>Repository → Settings → Pages → Branch: <code>main</code> → Save</li>
+      <li>URL: <code>https://euer-name.github.io/bim-manager/01_projektverwaltung.html</code></li>
+    </ol>
+    <div class="info">Der Kollege muss dann nichts herunterladen – einfach den Link öffnen. Daten bleiben in Supabase synchronisiert.</div>
+  </div>
+</div>
+
+<!-- Weiterentwicklung -->
+<div class="card">
+  <div class="card-header">
+    <div class="step-num" style="background:var(--global,#8b5cf6);color:#fff">✦</div>
+    <div class="card-header-title">Weiterentwicklung mit Claude</div>
+  </div>
+  <div class="card-body">
+    <p style="margin-bottom:12px">Für die laufende Entwicklung empfehle ich diesen Workflow:</p>
+    <div class="modules-grid">
+      <div class="mod-item"><div class="mod-icon">💬</div><div><strong>Anforderungen beschreiben</strong><br><span style="color:#8899b0;font-size:11px">Direkt in Claude, wie bisher</span></div></div>
+      <div class="mod-item"><div class="mod-icon">📥</div><div><strong>Geänderte Datei herunterladen</strong><br><span style="color:#8899b0;font-size:11px">Claude liefert neue HTML-Version</span></div></div>
+      <div class="mod-item"><div class="mod-icon">🔄</div><div><strong>Datei im Ordner ersetzen</strong><br><span style="color:#8899b0;font-size:11px">bim_sync.js bleibt unverändert</span></div></div>
+      <div class="mod-item"><div class="mod-icon">🚀</div><div><strong>Sofort für beide verfügbar</strong><br><span style="color:#8899b0;font-size:11px">Auf GitHub pushen oder Datei teilen</span></div></div>
+    </div>
+    <div class="info" style="margin-top:12px">
+      <strong>Tipp für Claude-Sessions:</strong> Wenn ihr Feedback aus dem Test habt, beschreibt die Anforderungen gesammelt – z. B. „Nach dem Test fehlen uns noch: 1. … 2. … 3. …" – dann können Änderungen in einer Session gebündelt umgesetzt werden. Der Kontext dieser Entwicklungssession ist in einem Transcript gespeichert und Claude kann bei weiteren Gesprächen darauf zugreifen.
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:20px 0;color:#8899b0;font-size:12px">
+  BIM Manager · Prototyp V0.1 · Entwickelt mit Claude
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM Manager Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --nav-bg: #0f1623;
+    --nav-border: #1e2d45;
+    --nav-text: #8899b0;
+    --nav-hover: #1a2744;
+    --nav-active: #152238;
+    --accent: #00c9a7;
+    --accent-dim: rgba(0,201,167,0.12);
+    --accent-dim2: rgba(0,201,167,0.08);
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface2: #f0f3f8;
+    --border: #e2e8f0;
+    --text: #1a2540;
+    --text2: #4a5876;
+    --text3: #8899b0;
+    --ok: #10b981;
+    --ok-bg: #ecfdf5;
+    --warn: #f59e0b;
+    --warn-bg: #fffbeb;
+    --err: #ef4444;
+    --err-bg: #fef2f2;
+    --info: #3b82f6;
+    --info-bg: #eff6ff;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: var(--nav-bg);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    border-right: 1px solid var(--nav-border);
+    z-index: 100;
+  }
+
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--nav-border);
+  }
+
+  .logo-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; color: #0f1623;
+    font-family: var(--mono);
+    flex-shrink: 0;
+  }
+
+  .logo-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e2e8f0;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--nav-text);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-left: 42px;
+    font-family: var(--mono);
+  }
+
+  .nav {
+    padding: 12px 0;
+    flex: 1;
+  }
+
+  .nav-section {
+    padding: 16px 20px 6px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #3d5473;
+    font-family: var(--mono);
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--nav-text);
+    font-size: 13.5px;
+    font-weight: 400;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    margin: 1px 0;
+    user-select: none;
+  }
+
+  .nav-item:hover {
+    background: var(--nav-hover);
+    color: #c8d8e8;
+  }
+
+  .nav-item.active {
+    background: var(--nav-active);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .nav-icon {
+    width: 18px; height: 18px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: #1e2d45;
+    color: var(--nav-text);
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .nav-item.active .nav-badge {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--nav-border);
+  }
+
+  .user-card {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a2f50, #2a4f80);
+    border: 1px solid #2a4070;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    color: #90b8e0;
+    flex-shrink: 0;
+  }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; color: #c8d8e8; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 11px; color: var(--nav-text); }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-breadcrumb {
+    font-size: 13px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar-breadcrumb span { color: var(--text); font-weight: 500; }
+
+  .topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0f1623;
+  }
+
+  .btn-primary:hover { background: #00b396; }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  .btn-secondary:hover { background: var(--surface2); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    padding: 7px 10px;
+  }
+
+  .btn-ghost:hover { background: var(--surface2); }
+
+  .content {
+    padding: 32px;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+    color: var(--text3);
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--mono);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .stat-accent { color: var(--accent) !important; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .card-body { padding: 20px; }
+
+  /* ── PROJECT CARDS ── */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .project-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .project-card-top {
+    height: 6px;
+    background: var(--accent);
+  }
+
+  .project-card-top.phase-1 { background: #3b82f6; }
+  .project-card-top.phase-2 { background: var(--accent); }
+  .project-card-top.phase-3 { background: #f59e0b; }
+  .project-card-top.phase-4 { background: #8b5cf6; }
+
+  .project-card-body { padding: 18px; }
+
+  .project-number {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+
+  .project-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .project-client {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .tag {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+  }
+
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+  .tag-green { background: #d1fae5; color: #065f46; }
+  .tag-amber { background: #fef3c7; color: #92400e; }
+  .tag-purple { background: #ede9fe; color: #5b21b6; }
+  .tag-gray { background: var(--surface2); color: var(--text2); }
+
+  .project-progress {
+    margin-bottom: 14px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 6px;
+    font-family: var(--mono);
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  .progress-fill.blue { background: #3b82f6; }
+  .progress-fill.amber { background: #f59e0b; }
+  .progress-fill.purple { background: #8b5cf6; }
+
+  .project-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-family: var(--mono);
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbfd; }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+  }
+
+  .status-ok { background: var(--ok-bg); color: #047857; }
+  .status-warn { background: var(--warn-bg); color: #b45309; }
+  .status-err { background: var(--err-bg); color: #dc2626; }
+  .status-info { background: var(--info-bg); color: #1d4ed8; }
+  .status-pending { background: var(--surface2); color: var(--text3); }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-ok { background: var(--ok); }
+  .dot-warn { background: var(--warn); }
+  .dot-err { background: var(--err); }
+  .dot-info { background: var(--info); }
+
+  /* ── TIMELINE ── */
+  .timeline-grid {
+    display: grid;
+    gap: 0;
+  }
+
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 160px 24px 1fr;
+    gap: 0 16px;
+    align-items: start;
+    padding: 0 0 28px;
+    position: relative;
+  }
+
+  .timeline-date {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+    text-align: right;
+    padding-top: 3px;
+  }
+
+  .timeline-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .timeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 2px var(--accent);
+    margin-top: 3px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .timeline-dot.future { background: var(--surface2); box-shadow: 0 0 0 2px var(--border); }
+  .timeline-dot.critical { background: var(--err); box-shadow: 0 0 0 2px var(--err); }
+  .timeline-dot.milestone { background: #8b5cf6; box-shadow: 0 0 0 2px #8b5cf6; }
+
+  .timeline-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    margin: 4px 0;
+    min-height: 40px;
+  }
+
+  .timeline-item:last-child .timeline-line { display: none; }
+
+  .timeline-content { padding-top: 0; }
+
+  .timeline-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .timeline-desc {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .timeline-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ── PARAMETER TABLE ── */
+  .param-category {
+    padding: 8px 16px;
+    background: var(--surface2);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--mono);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .use-case-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin: 2px;
+    font-family: var(--mono);
+  }
+
+  /* ── REPORT TEMPLATES ── */
+  .report-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .report-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+  }
+
+  .report-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .report-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim2);
+  }
+
+  .report-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius);
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+    font-size: 20px;
+  }
+
+  .report-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .report-desc {
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+
+  /* ── TRANSCRIPT ── */
+  .transcript-item {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .transcript-item:last-child { border-bottom: none; }
+
+  .transcript-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    padding-top: 2px;
+  }
+
+  .transcript-speaker {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 3px;
+  }
+
+  .transcript-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px;
+    text-align: center;
+    transition: all 0.2s;
+    cursor: pointer;
+    background: var(--surface);
+    margin-bottom: 24px;
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: var(--accent-dim2);
+  }
+
+  .upload-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .upload-sub { font-size: 13px; color: var(--text3); }
+
+  /* ── PAGES (hidden/shown) ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── TWO-COL LAYOUT ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── INFO PANEL ── */
+  .info-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--text3); }
+  .info-value { color: var(--text); font-weight: 500; }
+
+  /* ── CHECK RESULTS ── */
+  .check-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .check-stat {
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .check-stat.ok { background: var(--ok-bg); }
+  .check-stat.warn { background: var(--warn-bg); }
+  .check-stat.err { background: var(--err-bg); }
+
+  .check-stat-num {
+    font-size: 32px;
+    font-weight: 600;
+    font-family: var(--mono);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .check-stat.ok .check-stat-num { color: var(--ok); }
+  .check-stat.warn .check-stat-num { color: var(--warn); }
+  .check-stat.err .check-stat-num { color: var(--err); }
+
+  .check-stat-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .check-stat.ok .check-stat-label { color: #047857; }
+  .check-stat.warn .check-stat-label { color: #b45309; }
+  .check-stat.err .check-stat-label { color: #dc2626; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: var(--mono);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+
+  .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-chip.active { background: var(--accent); color: #0f1623; border-color: var(--accent); font-weight: 500; }
+
+  .search-input {
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    margin-left: auto;
+  }
+
+  .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
+  /* ── MODULE STATUS INDICATOR ── */
+  .module-header-bar {
+    background: var(--nav-bg);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid var(--nav-border);
+    overflow-x: auto;
+  }
+
+  .module-tab {
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--nav-text);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    font-family: var(--mono);
+    transition: all 0.15s;
+  }
+
+  .module-tab:hover { color: #c8d8e8; }
+  .module-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── GANTT ── */
+  .gantt-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+
+  .gantt-label {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--text);
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .gantt-label small {
+    display: block;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .gantt-track {
+    padding: 8px 12px;
+    position: relative;
+    height: 52px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+  }
+
+  .gantt-bar {
+    height: 24px;
+    border-radius: 4px;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+    white-space: nowrap;
+    overflow: hidden;
+    color: white;
+  }
+
+  .gantt-months {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+  }
+
+  .gantt-months-track {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .gantt-month {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    border-right: 1px dashed var(--border);
+    text-align: center;
+    background: var(--surface2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1200px) {
+    .projects-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <div class="logo-icon">BIM</div>
+      <div class="logo-name">BIM Manager</div>
+    </div>
+    <div class="logo-sub">v0.1 · Prototyp</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Hauptmodule</div>
+
+    <div class="nav-item active" onclick="showPage('projekte')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="3" width="16" height="14" rx="2"/>
+        <path d="M7 3v14M2 8h16"/>
+      </svg>
+      Projektverwaltung
+      <span class="nav-badge">6</span>
+    </div>
+
+    <div class="nav-item" onclick="showPage('pruefung')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 12l2 2 4-4"/>
+        <path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/>
+      </svg>
+      Modellprüfung
+      <span class="nav-badge">3</span>
+    </div>
+
+    <div class="nav-item" onclick="showPage('meilensteine')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 10h14M3 5h14M3 15h8"/>
+        <circle cx="16" cy="15" r="2"/>
+      </svg>
+      Meilensteinplanung
+    </div>
+
+    <div class="nav-item" onclick="showPage('merkmal')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="5" width="16" height="3" rx="1"/>
+        <rect x="2" y="10" width="16" height="3" rx="1"/>
+        <rect x="2" y="15" width="10" height="3" rx="1"/>
+      </svg>
+      Merkmalserver
+    </div>
+
+    <div class="nav-item" onclick="showPage('bericht')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/>
+        <path d="M8 10h4M8 14h2M8 6h4"/>
+      </svg>
+      Berichtsgenerator
+    </div>
+
+    <div class="nav-item" onclick="showPage('protokoll')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="10" cy="10" r="8"/>
+        <path d="M8 7l1.5 1.5-1.5 1.5M12 7l-1.5 1.5 1.5 1.5M7 14h6"/>
+      </svg>
+      Protokollierung
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">TM</div>
+      <div class="user-info">
+        <div class="user-name">Thomas Müller</div>
+        <div class="user-role">BIM Manager</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- ════════════════════════════════
+       PAGE: PROJEKTVERWALTUNG
+  ═══════════════════════════════════ -->
+  <div id="page-projekte" class="page active">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        Projektverwaltung
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="6"/><path d="M15 15l3 3"/></svg>
+          Suchen
+        </button>
+        <button class="btn btn-primary" onclick="alert('In der Finalversion: Neues Projekt anlegen')">
+          + Neues Projekt
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div class="page-title">Projektverwaltung</div>
+        <div class="page-subtitle">Übersicht aller aktiven und archivierten BIM-Projekte</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Aktive Projekte</div>
+          <div class="stat-value stat-accent">6</div>
+          <div class="stat-sub">2 neu seit letztem Monat</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Offene Prüfungen</div>
+          <div class="stat-value" style="color: var(--err);">14</div>
+          <div class="stat-sub">Fehler in 3 Modellen</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Nächster Datadrop</div>
+          <div class="stat-value" style="font-size:20px;padding-top:4px;color:var(--warn);">08. Apr</div>
+          <div class="stat-sub">Neubau Stadtwerke</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Erfasste Parameter</div>
+          <div class="stat-value stat-accent">342</div>
+          <div class="stat-sub">Über alle Projekte</div>
+        </div>
+      </div>
+
+      <div class="projects-grid">
+
+        <!-- Projekt 1 -->
+        <div class="project-card" onclick="showPage('pruefung')">
+          <div class="project-card-top phase-2"></div>
+          <div class="project-card-body">
+            <div class="project-number">PRJ-2024-001</div>
+            <div class="project-name">Neubau Verwaltungsgebäude Nord</div>
+            <div class="project-client">Auftraggeber: Stadtwerke GmbH</div>
+            <div class="project-tags">
+              <span class="tag tag-green">LOD 300</span>
+              <span class="tag tag-blue">Revit 2024</span>
+              <span class="tag tag-purple">Koordination</span>
+            </div>
+            <div class="project-progress">
+              <div class="progress-header"><span>BIM-Leistungsphase 3</span><span>68%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:68%"></div></div>
+            </div>
+            <div class="project-meta">
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3 3"/></svg>
+                08. Apr 2025
+              </span>
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                4 Fachmodelle
+              </span>
+              <span class="status-badge status-warn" style="margin-left:auto">▲ 3 Fehler</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projekt 2 -->
+        <div class="project-card" onclick="showPage('meilensteine')">
+          <div class="project-card-top phase-1"></div>
+          <div class="project-card-body">
+            <div class="project-number">PRJ-2024-002</div>
+            <div class="project-name">Umbau Bibliothek Weststadt</div>
+            <div class="project-client">Auftraggeber: Kulturamt Stadt</div>
+            <div class="project-tags">
+              <span class="tag tag-amber">LOD 200</span>
+              <span class="tag tag-blue">ArchiCAD 27</span>
+              <span class="tag tag-gray">Bestand</span>
+            </div>
+            <div class="project-progress">
+              <div class="progress-header"><span>BIM-Leistungsphase 2</span><span>32%</span></div>
+              <div class="progress-bar"><div class="progress-fill blue" style="width:32%"></div></div>
+            </div>
+            <div class="project-meta">
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3 3"/></svg>
+                22. Mai 2025
+              </span>
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                2 Fachmodelle
+              </span>
+              <span class="status-badge status-ok" style="margin-left:auto">✓ OK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projekt 3 -->
+        <div class="project-card">
+          <div class="project-card-top phase-3"></div>
+          <div class="project-card-body">
+            <div class="project-number">PRJ-2024-003</div>
+            <div class="project-name">Wohnquartier Südpark – BA2</div>
+            <div class="project-client">Auftraggeber: Immobilien AG</div>
+            <div class="project-tags">
+              <span class="tag tag-green">LOD 400</span>
+              <span class="tag tag-blue">Revit 2024</span>
+              <span class="tag tag-purple">TGA inkl.</span>
+            </div>
+            <div class="project-progress">
+              <div class="progress-header"><span>BIM-Leistungsphase 5</span><span>85%</span></div>
+              <div class="progress-bar"><div class="progress-fill amber" style="width:85%"></div></div>
+            </div>
+            <div class="project-meta">
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3 3"/></svg>
+                15. März 2025
+              </span>
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                6 Fachmodelle
+              </span>
+              <span class="status-badge status-err" style="margin-left:auto">✕ 8 Fehler</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projekt 4 -->
+        <div class="project-card">
+          <div class="project-card-top phase-4"></div>
+          <div class="project-card-body">
+            <div class="project-number">PRJ-2025-001</div>
+            <div class="project-name">Schule Neubau Nordstadt</div>
+            <div class="project-client">Auftraggeber: Schulbaugesellschaft</div>
+            <div class="project-tags">
+              <span class="tag tag-amber">LOD 200</span>
+              <span class="tag tag-blue">Revit 2025</span>
+              <span class="tag tag-gray">Neu</span>
+            </div>
+            <div class="project-progress">
+              <div class="progress-header"><span>BIM-Leistungsphase 2</span><span>12%</span></div>
+              <div class="progress-bar"><div class="progress-fill purple" style="width:12%"></div></div>
+            </div>
+            <div class="project-meta">
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3 3"/></svg>
+                10. Juni 2025
+              </span>
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                1 Fachmodell
+              </span>
+              <span class="status-badge status-pending" style="margin-left:auto">○ Setup</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projekt 5 -->
+        <div class="project-card">
+          <div class="project-card-top phase-2"></div>
+          <div class="project-card-body">
+            <div class="project-number">PRJ-2025-002</div>
+            <div class="project-name">Parkhaus Messezentrum</div>
+            <div class="project-client">Auftraggeber: Messe GmbH</div>
+            <div class="project-tags">
+              <span class="tag tag-green">LOD 350</span>
+              <span class="tag tag-blue">Revit 2024</span>
+              <span class="tag tag-purple">Tragwerk</span>
+            </div>
+            <div class="project-progress">
+              <div class="progress-header"><span>BIM-Leistungsphase 4</span><span>55%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div>
+            </div>
+            <div class="project-meta">
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3 3"/></svg>
+                03. Mai 2025
+              </span>
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                3 Fachmodelle
+              </span>
+              <span class="status-badge status-ok" style="margin-left:auto">✓ OK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projekt 6 -->
+        <div class="project-card">
+          <div class="project-card-top phase-1"></div>
+          <div class="project-card-body">
+            <div class="project-number">PRJ-2025-003</div>
+            <div class="project-name">Sanierung Rathaus Mitte</div>
+            <div class="project-client">Auftraggeber: Stadtverwaltung</div>
+            <div class="project-tags">
+              <span class="tag tag-amber">LOD 200</span>
+              <span class="tag tag-gray">IFC-Import</span>
+              <span class="tag tag-purple">Denkmalschutz</span>
+            </div>
+            <div class="project-progress">
+              <div class="progress-header"><span>BIM-Leistungsphase 1</span><span>5%</span></div>
+              <div class="progress-bar"><div class="progress-fill blue" style="width:5%"></div></div>
+            </div>
+            <div class="project-meta">
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3 3"/></svg>
+                01. Aug 2025
+              </span>
+              <span class="meta-item">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                1 Fachmodell
+              </span>
+              <span class="status-badge status-pending" style="margin-left:auto">○ Setup</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       PAGE: MODELLPRÜFUNG
+  ═══════════════════════════════════ -->
+  <div id="page-pruefung" class="page">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span onclick="showPage('projekte')" style="cursor:pointer">Projektverwaltung</span>
+        /
+        <span>Neubau Verwaltungsgebäude Nord</span> /
+        <span>Modellprüfung</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary">Prüfregeln konfigurieren</button>
+        <button class="btn btn-primary" onclick="alert('In der Finalversion: Modell hochladen und Prüfung starten')">
+          ▶ Prüfung starten
+        </button>
+      </div>
+    </div>
+
+    <div class="module-header-bar">
+      <div class="module-tab active">Alle Ergebnisse</div>
+      <div class="module-tab">Semantisch</div>
+      <div class="module-tab">Geometrisch</div>
+      <div class="module-tab">Funktional</div>
+      <div class="module-tab">IDS-Regeln</div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div class="page-title">Modellprüfung</div>
+        <div class="page-subtitle">Letzter Lauf: heute, 09:14 Uhr · Modell: ARK_NVG_Nordgebäude_LPH3_v2.4.ifc</div>
+      </div>
+
+      <div class="check-summary">
+        <div class="check-stat ok">
+          <div class="check-stat-num">47</div>
+          <div class="check-stat-label">Bestanden</div>
+        </div>
+        <div class="check-stat warn">
+          <div class="check-stat-num">8</div>
+          <div class="check-stat-label">Warnung</div>
+        </div>
+        <div class="check-stat err">
+          <div class="check-stat-num">3</div>
+          <div class="check-stat-label">Fehler</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Prüfergebnisse</div>
+            </div>
+            <div class="filter-bar" style="padding:16px 20px 0">
+              <div class="filter-chip active" onclick="filterChip(this)">Alle (58)</div>
+              <div class="filter-chip" onclick="filterChip(this)">Fehler (3)</div>
+              <div class="filter-chip" onclick="filterChip(this)">Warnungen (8)</div>
+              <div class="filter-chip" onclick="filterChip(this)">Bestanden (47)</div>
+              <input class="search-input" placeholder="Prüfung suchen…" type="text">
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Prüfung</th>
+                    <th>Kategorie</th>
+                    <th>Betroffene Elemente</th>
+                    <th>Schwere</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="status-badge status-err"><span class="dot dot-err"></span>Fehler</span></td>
+                    <td><strong>Raumbuch-Vollständigkeit</strong><br><small style="color:var(--text3);font-family:var(--mono)">IDS-RULE-001</small></td>
+                    <td><span class="tag tag-blue">Semantisch</span></td>
+                    <td style="font-family:var(--mono)">14 Räume ohne IfcSpace</td>
+                    <td><span class="tag" style="background:#fee2e2;color:#991b1b">Kritisch</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-badge status-err"><span class="dot dot-err"></span>Fehler</span></td>
+                    <td><strong>Kollisionsfreiheit TGA/Tragwerk</strong><br><small style="color:var(--text3);font-family:var(--mono)">GEO-CHECK-003</small></td>
+                    <td><span class="tag tag-purple">Geometrisch</span></td>
+                    <td style="font-family:var(--mono)">7 harte Kollisionen</td>
+                    <td><span class="tag" style="background:#fee2e2;color:#991b1b">Kritisch</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-badge status-err"><span class="dot dot-err"></span>Fehler</span></td>
+                    <td><strong>Brandabschnitte geschlossen</strong><br><small style="color:var(--text3);font-family:var(--mono)">FUN-CHECK-012</small></td>
+                    <td><span class="tag tag-amber">Funktional</span></td>
+                    <td style="font-family:var(--mono)">BA-03 nicht geschlossen</td>
+                    <td><span class="tag" style="background:#fee2e2;color:#991b1b">Kritisch</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-badge status-warn"><span class="dot dot-warn"></span>Warnung</span></td>
+                    <td><strong>Klassifizierung nach DIN 276</strong><br><small style="color:var(--text3);font-family:var(--mono)">SEM-CHECK-008</small></td>
+                    <td><span class="tag tag-blue">Semantisch</span></td>
+                    <td style="font-family:var(--mono)">23 Elemente ohne KG</td>
+                    <td><span class="tag tag-amber">Mittel</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-badge status-warn"><span class="dot dot-warn"></span>Warnung</span></td>
+                    <td><strong>Mindestlichte Raumhöhe</strong><br><small style="color:var(--text3);font-family:var(--mono)">GEO-CHECK-007</small></td>
+                    <td><span class="tag tag-purple">Geometrisch</span></td>
+                    <td style="font-family:var(--mono)">3 Räume &lt; 2,50m</td>
+                    <td><span class="tag tag-amber">Mittel</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-badge status-ok"><span class="dot dot-ok"></span>OK</span></td>
+                    <td><strong>Georeferenzierung</strong><br><small style="color:var(--text3);font-family:var(--mono)">GEO-CHECK-001</small></td>
+                    <td><span class="tag tag-purple">Geometrisch</span></td>
+                    <td style="font-family:var(--mono)">—</td>
+                    <td><span class="tag tag-gray">Info</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-badge status-ok"><span class="dot dot-ok"></span>OK</span></td>
+                    <td><strong>Türen mit Funktion belegt</strong><br><small style="color:var(--text3);font-family:var(--mono)">SEM-CHECK-022</small></td>
+                    <td><span class="tag tag-blue">Semantisch</span></td>
+                    <td style="font-family:var(--mono)">—</td>
+                    <td><span class="tag tag-gray">Info</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-badge status-ok"><span class="dot dot-ok"></span>OK</span></td>
+                    <td><strong>Stockwerkstruktur vollständig</strong><br><small style="color:var(--text3);font-family:var(--mono)">SEM-CHECK-003</small></td>
+                    <td><span class="tag tag-blue">Semantisch</span></td>
+                    <td style="font-family:var(--mono)">—</td>
+                    <td><span class="tag tag-gray">Info</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel" style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">Modell-Info</div>
+            <div class="info-row"><span class="info-label">Datei</span><span class="info-value" style="font-family:var(--mono);font-size:11px">ARK_NVG_v2.4.ifc</span></div>
+            <div class="info-row"><span class="info-label">IFC-Version</span><span class="info-value">IFC4</span></div>
+            <div class="info-row"><span class="info-label">Größe</span><span class="info-value">184 MB</span></div>
+            <div class="info-row"><span class="info-label">Elemente</span><span class="info-value">12.847</span></div>
+            <div class="info-row"><span class="info-label">Stockwerke</span><span class="info-value">6 (+UG)</span></div>
+            <div class="info-row"><span class="info-label">Software</span><span class="info-value">Revit 2024.2</span></div>
+          </div>
+
+          <div class="info-panel">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">Nächste Schritte</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="padding:10px;background:var(--err-bg);border-radius:6px;font-size:12px;color:#dc2626;border-left:3px solid var(--err)">
+                <strong>14 Räume</strong> erhalten IfcSpace-Zuweisung im Revit-Modell
+              </div>
+              <div style="padding:10px;background:var(--err-bg);border-radius:6px;font-size:12px;color:#dc2626;border-left:3px solid var(--err)">
+                <strong>TGA-Planer</strong> informieren: 7 harte Kollisionen lösen
+              </div>
+              <div style="padding:10px;background:var(--warn-bg);border-radius:6px;font-size:12px;color:#b45309;border-left:3px solid var(--warn)">
+                <strong>23 Elemente</strong> mit KG-Klassifizierung versehen
+              </div>
+            </div>
+            <button class="btn btn-secondary" style="width:100%;margin-top:12px;justify-content:center" onclick="showPage('bericht')">
+              Prüfbericht erstellen →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       PAGE: MEILENSTEINPLANUNG
+  ═══════════════════════════════════ -->
+  <div id="page-meilensteine" class="page">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span onclick="showPage('projekte')" style="cursor:pointer">Projektverwaltung</span> /
+        <span>Meilensteinplanung</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary">Alle Projekte</button>
+        <button class="btn btn-primary" onclick="alert('In der Finalversion: Neuen Meilenstein erfassen')">
+          + Meilenstein
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div class="page-title">Meilensteinplanung</div>
+        <div class="page-subtitle">Projektspezifische Meilensteine und Datadrops · Neubau Verwaltungsgebäude Nord</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <!-- Gantt Chart -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <div class="card-title">Zeitplan 2025 (Gantt-Ansicht)</div>
+            </div>
+            <div class="gantt-months" style="border-bottom:1px solid var(--border)">
+              <div style="background:var(--surface2);border-right:1px solid var(--border);padding:6px 16px;font-size:11px;font-family:var(--mono);color:var(--text3)">Meilenstein</div>
+              <div class="gantt-months-track">
+                <div class="gantt-month">Jan</div>
+                <div class="gantt-month">Feb</div>
+                <div class="gantt-month">Mär</div>
+                <div class="gantt-month">Apr</div>
+                <div class="gantt-month">Mai</div>
+                <div class="gantt-month">Jun</div>
+                <div class="gantt-month">Jul</div>
+                <div class="gantt-month">Aug</div>
+              </div>
+            </div>
+
+            <div class="gantt-row">
+              <div class="gantt-label">Vorplanung<small>LP 2</small></div>
+              <div class="gantt-track">
+                <div class="gantt-bar" style="left:12px;width:22%;background:#3b82f6;">LP 2 abgeschlossen</div>
+              </div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-label">Datadrop 1<small>DD-001 · BIM-Basis</small></div>
+              <div class="gantt-track">
+                <div class="gantt-bar" style="left:24%;width:10%;background:#8b5cf6;">DD-001</div>
+              </div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-label">Entwurfsplanung<small>LP 3</small></div>
+              <div class="gantt-track">
+                <div class="gantt-bar" style="left:24%;width:30%;background:var(--accent);">LP 3 läuft</div>
+              </div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-label">Datadrop 2<small>DD-002 · Koordination</small></div>
+              <div class="gantt-track">
+                <div class="gantt-bar" style="left:46%;width:10%;background:#8b5cf6;opacity:0.6;">DD-002</div>
+              </div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-label">Genehmigung<small>LP 4</small></div>
+              <div class="gantt-track">
+                <div class="gantt-bar" style="left:55%;width:28%;background:#f59e0b;opacity:0.6;">LP 4 geplant</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Meilenstein-Detailansicht</div>
+            </div>
+            <div class="card-body">
+              <div class="timeline-grid">
+                <div class="timeline-item">
+                  <div class="timeline-date">10. Jan 2025<br><small style="color:var(--ok);font-size:10px">✓ abgeschlossen</small></div>
+                  <div class="timeline-marker">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-line"></div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">Kickoff & BIM-Abwicklungsplan</div>
+                    <div class="timeline-desc">Genehmigter BAP, Projektstruktur definiert, Modellstruktur und Namenskonventionen festgelegt.</div>
+                    <div class="timeline-tags">
+                      <span class="tag tag-green">BAP v1.0</span>
+                      <span class="tag tag-gray">Interner MS</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-date">15. Feb 2025<br><small style="color:var(--ok);font-size:10px">✓ abgeschlossen</small></div>
+                  <div class="timeline-marker">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-line"></div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">Datadrop 001 – BIM-Basismodell</div>
+                    <div class="timeline-desc">Lieferung des geokodierten Basismodells mit Gebäudestruktur LOD 200 an AG-CDE.</div>
+                    <div class="timeline-tags">
+                      <span class="tag tag-purple">DD-001</span>
+                      <span class="tag tag-blue">LOD 200</span>
+                      <span class="tag tag-green">IFC4</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-date">08. Apr 2025<br><small style="color:var(--warn);font-size:10px">⚡ in 13 Tagen</small></div>
+                  <div class="timeline-marker">
+                    <div class="timeline-dot critical"></div>
+                    <div class="timeline-line"></div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">Datadrop 002 – Koordinationsmodell LPH 3</div>
+                    <div class="timeline-desc">Zusammengeführtes Koordinationsmodell mit ARK, TGA und TW. Kollisionsprüfung muss bestanden sein.</div>
+                    <div class="timeline-tags">
+                      <span class="tag tag-purple">DD-002</span>
+                      <span class="tag tag-blue">LOD 300</span>
+                      <span class="tag" style="background:#fee2e2;color:#991b1b">Kritisch</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-date">30. Jun 2025</div>
+                  <div class="timeline-marker">
+                    <div class="timeline-dot milestone"></div>
+                    <div class="timeline-line"></div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">Genehmigungsplanung abgeschlossen</div>
+                    <div class="timeline-desc">Vollständige LPH 4 Unterlagen mit Modell für Bauantrag. Alle IDS-Regeln erfüllt.</div>
+                    <div class="timeline-tags">
+                      <span class="tag tag-purple">Meilenstein</span>
+                      <span class="tag tag-amber">LOD 300</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-date">15. Aug 2025</div>
+                  <div class="timeline-marker">
+                    <div class="timeline-dot future"></div>
+                    <div class="timeline-line" style="display:none"></div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">Datadrop 003 – Ausführungsmodell</div>
+                    <div class="timeline-desc">LOD 400 Modell für Ausschreibung und Vergabe. Alle Mengen und Materialangaben vollständig.</div>
+                    <div class="timeline-tags">
+                      <span class="tag tag-purple">DD-003</span>
+                      <span class="tag tag-blue">LOD 400</span>
+                      <span class="tag tag-gray">Geplant</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px">Übersicht</div>
+            <div class="info-row"><span class="info-label">Meilensteine gesamt</span><span class="info-value">8</span></div>
+            <div class="info-row"><span class="info-label">Abgeschlossen</span><span class="info-value" style="color:var(--ok)">2</span></div>
+            <div class="info-row"><span class="info-label">Kritisch (≤14 Tage)</span><span class="info-value" style="color:var(--err)">1</span></div>
+            <div class="info-row"><span class="info-label">Offen</span><span class="info-value">5</span></div>
+            <div class="info-row"><span class="info-label">Datadrops geplant</span><span class="info-value">3</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       PAGE: MERKMALSERVER
+  ═══════════════════════════════════ -->
+  <div id="page-merkmal" class="page">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">Merkmalserver</div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary">Import (IDS/bSDD)</button>
+        <button class="btn btn-primary" onclick="alert('In der Finalversion: Neuen Parameter anlegen')">
+          + Parameter
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div class="page-title">Merkmalserver</div>
+        <div class="page-subtitle">Projektrelevante Parameter und ihre Zuordnung zu Anwendungsfällen</div>
+      </div>
+
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="stat-label">Parameter gesamt</div>
+          <div class="stat-value stat-accent">342</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Anwendungsfälle</div>
+          <div class="stat-value">12</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">bSDD-konform</div>
+          <div class="stat-value" style="color:var(--ok)">287</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Nicht zugeordnet</div>
+          <div class="stat-value" style="color:var(--warn)">23</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Parameterliste</div>
+          <input class="search-input" placeholder="Parameter suchen…" type="text">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>IFC-Property Set</th>
+                <th>Datentyp</th>
+                <th>Anwendungsfälle</th>
+                <th>Quelle</th>
+                <th>Pflicht</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6" style="padding:0">
+                  <div class="param-category">Raum & Flächen</div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Raumbezeichnung</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Pset_SpaceCommon</td>
+                <td><span class="tag tag-blue">IfcLabel</span></td>
+                <td>
+                  <span class="use-case-tag tag-green">Raumbuch</span>
+                  <span class="use-case-tag tag-purple">Brandschutz</span>
+                  <span class="use-case-tag tag-blue">Kostenermittlung</span>
+                </td>
+                <td><span class="tag tag-gray">bSDD</span></td>
+                <td><span class="status-badge status-ok">Pflicht</span></td>
+              </tr>
+              <tr>
+                <td><strong>Nettogrundfläche</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Qto_SpaceBaseQuantities</td>
+                <td><span class="tag tag-amber">IfcAreaMeasure</span></td>
+                <td>
+                  <span class="use-case-tag tag-green">Raumbuch</span>
+                  <span class="use-case-tag tag-blue">Kostenermittlung</span>
+                </td>
+                <td><span class="tag tag-gray">bSDD</span></td>
+                <td><span class="status-badge status-ok">Pflicht</span></td>
+              </tr>
+              <tr>
+                <td><strong>Nutzungsart</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Pset_SpaceCommon</td>
+                <td><span class="tag tag-blue">IfcLabel</span></td>
+                <td>
+                  <span class="use-case-tag tag-green">Raumbuch</span>
+                  <span class="use-case-tag tag-purple">Brandschutz</span>
+                </td>
+                <td><span class="tag tag-gray">bSDD</span></td>
+                <td><span class="status-badge status-warn">Optional</span></td>
+              </tr>
+              <tr>
+                <td colspan="6" style="padding:0">
+                  <div class="param-category">Bauteile – Wände</div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Feuerwiderstandsklasse</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Pset_WallCommon</td>
+                <td><span class="tag tag-blue">IfcLabel</span></td>
+                <td>
+                  <span class="use-case-tag tag-purple">Brandschutz</span>
+                </td>
+                <td><span class="tag tag-green">DIN 4102</span></td>
+                <td><span class="status-badge status-ok">Pflicht</span></td>
+              </tr>
+              <tr>
+                <td><strong>Wandstärke</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Qto_WallBaseQuantities</td>
+                <td><span class="tag tag-amber">IfcLengthMeasure</span></td>
+                <td>
+                  <span class="use-case-tag tag-blue">Kostenermittlung</span>
+                  <span class="use-case-tag tag-gray">Mengenermittlung</span>
+                </td>
+                <td><span class="tag tag-gray">bSDD</span></td>
+                <td><span class="status-badge status-ok">Pflicht</span></td>
+              </tr>
+              <tr>
+                <td><strong>Schallschutzklasse</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Pset_WallCommon</td>
+                <td><span class="tag tag-blue">IfcLabel</span></td>
+                <td>
+                  <span class="use-case-tag tag-gray">Schallschutz</span>
+                </td>
+                <td><span class="tag tag-green">DIN 4109</span></td>
+                <td><span class="status-badge status-warn">Optional</span></td>
+              </tr>
+              <tr>
+                <td colspan="6" style="padding:0">
+                  <div class="param-category">Anlagentechnik (TGA)</div>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Systemzugehörigkeit</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Pset_SystemCommon</td>
+                <td><span class="tag tag-blue">IfcLabel</span></td>
+                <td>
+                  <span class="use-case-tag tag-green">Koordination</span>
+                  <span class="use-case-tag tag-blue">FM-Vorbereitung</span>
+                </td>
+                <td><span class="tag tag-gray">Projektspezifisch</span></td>
+                <td><span class="status-badge status-ok">Pflicht</span></td>
+              </tr>
+              <tr>
+                <td><strong>Wartungsintervall (Monate)</strong></td>
+                <td style="font-family:var(--mono);font-size:12px">Pset_MaintenanceCommon</td>
+                <td><span class="tag tag-amber">IfcInteger</span></td>
+                <td>
+                  <span class="use-case-tag tag-blue">FM-Vorbereitung</span>
+                </td>
+                <td><span class="tag tag-gray">Projektspezifisch</span></td>
+                <td><span class="status-badge status-warn">Optional</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       PAGE: BERICHTSGENERATOR
+  ═══════════════════════════════════ -->
+  <div id="page-bericht" class="page">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">Berichtsgenerator</div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="alert('In der Finalversion: Bericht generieren und als PDF/Excel/Word exportieren')">
+          ⬇ Bericht generieren
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div class="page-title">Berichtsgenerator</div>
+        <div class="page-subtitle">Automatische Berichte auf Basis der Modul-Ergebnisse erstellen</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:16px">Berichtsvorlage wählen</div>
+          <div class="report-grid" style="margin-bottom:24px">
+            <div class="report-card selected" onclick="selectReport(this)">
+              <div class="report-icon">📋</div>
+              <div class="report-name">Modellprüfbericht</div>
+              <div class="report-desc">Vollständige Prüfergebnisse mit Fehlerklassifizierung und Maßnahmenplan</div>
+            </div>
+            <div class="report-card" onclick="selectReport(this)">
+              <div class="report-icon">📅</div>
+              <div class="report-name">Meilensteinbericht</div>
+              <div class="report-desc">Status aller Meilensteine und Datadrops für den Auftraggeber</div>
+            </div>
+            <div class="report-card" onclick="selectReport(this)">
+              <div class="report-icon">🏷️</div>
+              <div class="report-name">Merkmal-Compliance</div>
+              <div class="report-desc">Nachweis der erfüllten Informationsanforderungen gemäß BAP</div>
+            </div>
+            <div class="report-card" onclick="selectReport(this)">
+              <div class="report-icon">📊</div>
+              <div class="report-name">Projektstatusreport</div>
+              <div class="report-desc">Executive Summary über alle aktiven Projekte mit Ampelstatus</div>
+            </div>
+            <div class="report-card" onclick="selectReport(this)">
+              <div class="report-icon">🗒️</div>
+              <div class="report-name">Meeting-Protokoll</div>
+              <div class="report-desc">Strukturiertes Protokoll aus der KI-Transkription</div>
+            </div>
+            <div class="report-card" onclick="selectReport(this)">
+              <div class="report-icon">📦</div>
+              <div class="report-name">Datadrop-Checkliste</div>
+              <div class="report-desc">Übergabeprotokoll für IFC-Lieferungen an die CDE</div>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Vorschau: Modellprüfbericht</div>
+              <span class="tag tag-green" style="margin-left:auto">Vorlage ausgewählt</span>
+            </div>
+            <div class="card-body">
+              <div style="border:1px solid var(--border);border-radius:var(--radius);padding:24px;background:var(--surface2)">
+                <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:4px">MODELLPRÜFBERICHT · PRJ-2024-001</div>
+                <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:2px">Neubau Verwaltungsgebäude Nord</div>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">Erstellt: 26.03.2025 · Prüfer: Thomas Müller · Version: 1</div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+                  <div style="text-align:center;padding:12px;background:var(--ok-bg);border-radius:6px">
+                    <div style="font-size:22px;font-weight:600;color:var(--ok);font-family:var(--mono)">47</div>
+                    <div style="font-size:11px;color:#047857">Bestanden</div>
+                  </div>
+                  <div style="text-align:center;padding:12px;background:var(--warn-bg);border-radius:6px">
+                    <div style="font-size:22px;font-weight:600;color:var(--warn);font-family:var(--mono)">8</div>
+                    <div style="font-size:11px;color:#b45309">Warnungen</div>
+                  </div>
+                  <div style="text-align:center;padding:12px;background:var(--err-bg);border-radius:6px">
+                    <div style="font-size:22px;font-weight:600;color:var(--err);font-family:var(--mono)">3</div>
+                    <div style="font-size:11px;color:#dc2626">Fehler</div>
+                  </div>
+                </div>
+
+                <div style="font-size:12px;color:var(--text2);line-height:1.7">
+                  <strong>1. Zusammenfassung</strong><br>
+                  Das Modell ARK_NVG_Nordgebäude_LPH3_v2.4.ifc wurde am 26.03.2025 geprüft. Es wurden 3 kritische Fehler, 8 Warnungen und 47 bestandene Prüfungen festgestellt.<br><br>
+                  <strong>2. Kritische Fehler (Maßnahmen erforderlich)</strong><br>
+                  ✕ Raumbuch-Vollständigkeit (14 Räume ohne IfcSpace)<br>
+                  ✕ Kollisionsfreiheit TGA/Tragwerk (7 harte Kollisionen)<br>
+                  ✕ Brandabschnitte geschlossen (BA-03 nicht geschlossen)<br>
+                  <div style="opacity:0.4;margin-top:8px">…weitere Inhalte werden automatisch befüllt…</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel" style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px">Konfiguration</div>
+            <div style="margin-bottom:12px">
+              <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Projekt</label>
+              <select style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:13px;color:var(--text)">
+                <option>Neubau Verwaltungsgebäude Nord</option>
+                <option>Umbau Bibliothek Weststadt</option>
+                <option>Wohnquartier Südpark – BA2</option>
+              </select>
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Ausgabeformat</label>
+              <select style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:13px;color:var(--text)">
+                <option>PDF</option>
+                <option>Word (.docx)</option>
+                <option>Excel (.xlsx)</option>
+              </select>
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Empfänger</label>
+              <input type="text" placeholder="E-Mail-Adresse" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:13px;color:var(--text)">
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);margin-top:8px">
+              <input type="checkbox" id="auto" checked>
+              <label for="auto" style="font-size:13px;color:var(--text2)">Automatisch nach Prüfung</label>
+            </div>
+          </div>
+
+          <div class="info-panel">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px">Datenquellen</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                <span style="color:var(--ok)">✓</span>
+                <span>Modellprüfung</span>
+                <span style="margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--text3)">heute</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                <span style="color:var(--ok)">✓</span>
+                <span>Meilensteinplanung</span>
+                <span style="margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--text3)">aktuell</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                <span style="color:var(--ok)">✓</span>
+                <span>Merkmalserver</span>
+                <span style="margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--text3)">aktuell</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                <span style="color:var(--text3)">○</span>
+                <span style="color:var(--text3)">Protokollierung</span>
+                <span style="margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--text3)">kein Eintrag</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       PAGE: PROTOKOLLIERUNG
+  ═══════════════════════════════════ -->
+  <div id="page-protokoll" class="page">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">Protokollierung</div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary" onclick="showPage('bericht')">→ Als Bericht exportieren</button>
+        <button class="btn btn-primary" onclick="alert('In der Finalversion: Audio-Datei hochladen und KI-Transkription starten (Whisper API)')">
+          + Neues Meeting
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <div class="page-title">Protokollierung</div>
+        <div class="page-subtitle">KI-gestützte Transkription und Protokollerstellung aus Meeting-Aufzeichnungen</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <!-- Upload Zone -->
+          <div class="upload-zone" onclick="alert('In der Finalversion: Audio-Upload und automatische KI-Transkription')">
+            <div class="upload-icon">🎙️</div>
+            <div class="upload-title">Audio-Datei hochladen</div>
+            <div class="upload-sub">MP3, M4A, WAV · Automatische Transkription per KI · Max. 2 Stunden</div>
+          </div>
+
+          <!-- Example Transcript -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Transkription: BIM-Koordinationsmeeting</div>
+              <span class="tag tag-green" style="margin-left:auto">KI-generiert</span>
+            </div>
+            <div style="padding:12px 20px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;gap:16px;font-size:12px;color:var(--text3)">
+              <span>📅 24.03.2025 · 10:00–11:15 Uhr</span>
+              <span>👥 6 Teilnehmer</span>
+              <span>⏱ 75 min</span>
+              <span style="margin-left:auto;color:var(--ok)">✓ Fertig</span>
+            </div>
+            <div class="card-body">
+
+              <div style="margin-bottom:20px;padding:14px;background:var(--surface2);border-radius:var(--radius);border-left:3px solid var(--accent)">
+                <div style="font-size:11px;font-family:var(--mono);color:var(--accent);margin-bottom:6px;letter-spacing:0.08em">KI-ZUSAMMENFASSUNG</div>
+                <div style="font-size:13px;color:var(--text2);line-height:1.7">
+                  Meeting zur Klärung der Kollisionen im Koordinationsmodell. Hauptpunkte: TGA-Planer werden Leitungsführung in EG überarbeiten, nächster Datadrop DD-002 wird auf 08. April bestätigt. BIM-Manager erstellt Checkliste für Übergabe.
+                </div>
+              </div>
+
+              <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:12px">Transkript</div>
+
+              <div>
+                <div class="transcript-item">
+                  <div class="transcript-time">00:00</div>
+                  <div>
+                    <div class="transcript-speaker">Thomas Müller (BIM-Manager)</div>
+                    <div class="transcript-text">Ich begrüße alle zum heutigen Koordinationsmeeting. Wir haben drei Hauptpunkte: erstens die offenen Kollisionen im Modell, zweitens der Termin für Datadrop 002, und drittens die Merkmalvervollständigung.</div>
+                  </div>
+                </div>
+                <div class="transcript-item">
+                  <div class="transcript-time">00:04</div>
+                  <div>
+                    <div class="transcript-speaker">Sabine Klein (TGA-Planerin)</div>
+                    <div class="transcript-text">Die sieben harten Kollisionen im Erdgeschoss sind uns bekannt. Wir haben gestern intern besprochen, die Lüftungsleitung im Korridor um 15 Zentimeter abzusenken. Das löst sechs der sieben Kollisionen.</div>
+                  </div>
+                </div>
+                <div class="transcript-item">
+                  <div class="transcript-time">00:08</div>
+                  <div>
+                    <div class="transcript-speaker">Peter Hoffmann (Tragwerksplaner)</div>
+                    <div class="transcript-text">Die verbleibende Kollision betrifft einen Unterzug im Bereich Achse C–5. Ich schaue mir das diese Woche an, ob wir den Unterzug optimieren können, ohne die Statik zu verändern.</div>
+                  </div>
+                </div>
+                <div class="transcript-item">
+                  <div class="transcript-time">00:15</div>
+                  <div>
+                    <div class="transcript-speaker">Thomas Müller (BIM-Manager)</div>
+                    <div class="transcript-text">Gut. Dann halten wir fest: Datadrop 002 findet wie geplant am 8. April statt. Bis dahin müssen alle Kollisionen bereinigt und die Raumbuchzuordnung im Architekturmodell ergänzt sein. Ich schicke die Checkliste bis morgen raus.</div>
+                  </div>
+                </div>
+                <div class="transcript-item">
+                  <div class="transcript-time">00:22</div>
+                  <div>
+                    <div class="transcript-speaker">Maria Schulz (Architektur)</div>
+                    <div class="transcript-text">Die 14 fehlenden IfcSpace-Zuweisungen erledige ich bis Freitag. Ich hatte die Kellerräume vergessen – die werden jetzt nachgepflegt.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Items -->
+            <div style="border-top:1px solid var(--border);padding:16px 20px">
+              <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:12px">Aufgaben (KI-extrahiert)</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+                  <input type="checkbox">
+                  <div style="flex:1">Lüftungsleitung EG um 15cm absenken</div>
+                  <span style="font-size:11px;font-family:var(--mono);color:var(--text3)">S. Klein</span>
+                  <span class="status-badge status-err" style="font-size:11px">bis 04. Apr</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+                  <input type="checkbox">
+                  <div style="flex:1">Kollision Unterzug C–5 prüfen</div>
+                  <span style="font-size:11px;font-family:var(--mono);color:var(--text3)">P. Hoffmann</span>
+                  <span class="status-badge status-warn" style="font-size:11px">bis 07. Apr</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+                  <input type="checkbox">
+                  <div style="flex:1">14 IfcSpace-Zuweisungen ergänzen (Kellerräume)</div>
+                  <span style="font-size:11px;font-family:var(--mono);color:var(--text3)">M. Schulz</span>
+                  <span class="status-badge status-warn" style="font-size:11px">bis 28. Mär</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+                  <input type="checkbox" checked>
+                  <div style="flex:1;text-decoration:line-through;color:var(--text3)">Datadrop-Checkliste versenden</div>
+                  <span style="font-size:11px;font-family:var(--mono);color:var(--text3)">T. Müller</span>
+                  <span class="status-badge status-ok" style="font-size:11px">erledigt</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px">Letzte Protokolle</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="padding:10px;border:1px solid var(--border);border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                <div style="font-size:13px;font-weight:500;color:var(--text)">BIM-Koordinationsmeeting</div>
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">24.03.2025 · 75 min · 4 Aufgaben</div>
+              </div>
+              <div style="padding:10px;border:1px solid var(--border);border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                <div style="font-size:13px;font-weight:500;color:var(--text)">AG-Besprechung LPH 3</div>
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">17.03.2025 · 90 min · 6 Aufgaben</div>
+              </div>
+              <div style="padding:10px;border:1px solid var(--border);border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                <div style="font-size:13px;font-weight:500;color:var(--text)">Brandschutzkoordination</div>
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">10.03.2025 · 45 min · 2 Aufgaben</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    const map = { projekte: 0, pruefung: 1, meilensteine: 2, merkmal: 3, bericht: 4, protokoll: 5 };
+    document.querySelectorAll('.nav-item')[map[id]].classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function filterChip(el) {
+    el.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectReport(el) {
+    el.closest('.report-grid').querySelectorAll('.report-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+</script>
+
+</body>
+</html>

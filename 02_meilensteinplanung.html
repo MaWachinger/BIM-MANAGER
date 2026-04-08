@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM Manager · Meilensteinplanung</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;
+  --nav-hover:#1a2744;--nav-active:#152238;
+  --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.12);
+  --bg:#f5f7fa;--surface:#fff;--surface2:#f0f3f8;--border:#e2e8f0;
+  --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
+  --ok:#10b981;--ok-bg:#ecfdf5;
+  --warn:#f59e0b;--warn-bg:#fffbeb;
+  --err:#ef4444;--err-bg:#fef2f2;
+  --info:#3b82f6;--info-bg:#eff6ff;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --r:8px;--rl:12px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px}
+
+/* SIDEBAR */
+.sidebar{width:240px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
+.logo{padding:24px 20px 20px;border-bottom:1px solid var(--nav-border)}
+.logo-mark{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#0f1623;font-family:var(--mono);flex-shrink:0}
+.logo-name{font-size:15px;font-weight:600;color:#e2e8f0;letter-spacing:-0.02em}
+.logo-sub{font-size:11px;color:var(--nav-text);letter-spacing:0.06em;text-transform:uppercase;margin-left:42px;font-family:var(--mono)}
+.nav{padding:12px 0;flex:1}
+.nav-section{padding:16px 20px 6px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3d5473;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:pointer;color:var(--nav-text);font-size:13.5px;border-left:2px solid transparent;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:#c8d8e8}
+.nav-item.active{background:var(--nav-active);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-icon{width:18px;height:18px;opacity:0.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:#1e2d45;color:var(--nav-text);font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:10px;min-width:20px;text-align:center}
+.nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--nav-border)}
+.user-name{font-size:13px;color:#c8d8e8;font-weight:500}
+.user-role{font-size:11px;color:var(--nav-text)}
+
+/* MAIN */
+.main{margin-left:240px;flex:1;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.content{padding:28px 32px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#0f1623}
+.btn-primary:hover{background:#00b396}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-secondary:hover{background:var(--surface2)}
+.btn-danger{background:var(--err-bg);color:var(--err);border:1px solid #fca5a5}
+.btn-danger:hover{background:#fee2e2}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* PROJECT SELECTOR */
+.proj-sel{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:13px;color:var(--text);background:var(--surface);outline:none;min-width:260px}
+.proj-sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.view-btn{padding:6px 14px;background:var(--surface);cursor:pointer;border:none;color:var(--text3);font-size:13px;font-family:var(--sans);font-weight:500;transition:all 0.15s;border-right:1px solid var(--border)}
+.view-btn:last-child{border-right:none}
+.view-btn.active{background:var(--nav-bg);color:var(--accent)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:6px}
+.stat-value{font-size:24px;font-weight:600;letter-spacing:-0.04em;line-height:1;margin-bottom:3px}
+.stat-sub{font-size:11px;color:var(--text3)}
+
+/* TAGS / BADGES */
+.tag{padding:3px 7px;border-radius:4px;font-size:11px;font-weight:500;font-family:var(--mono)}
+.tag-blue{background:#dbeafe;color:#1e40af}
+.tag-green{background:#d1fae5;color:#065f46}
+.tag-amber{background:#fef3c7;color:#92400e}
+.tag-purple{background:#ede9fe;color:#5b21b6}
+.tag-gray{background:var(--surface2);color:var(--text2)}
+.tag-teal{background:#ccfbf1;color:#0f766e}
+.tag-red{background:#fee2e2;color:#991b1b}
+.sbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:var(--mono)}
+.sb-offen{background:var(--surface2);color:var(--text3)}
+.sb-laufend{background:var(--info-bg);color:#1d4ed8}
+.sb-pruefung{background:var(--warn-bg);color:#b45309}
+.sb-freigegeben{background:var(--ok-bg);color:#047857}
+.sb-verzoegert{background:var(--err-bg);color:#dc2626}
+.sb-abgeschlossen{background:#f3f4f6;color:#6b7280}
+
+/* ═══════════════════════════════════════════════════
+   GANTT  –  correct approach:
+   label column (sticky) + ONE colspan track cell
+═══════════════════════════════════════════════════ */
+.gantt-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
+.gantt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.gtable{border-collapse:collapse;table-layout:fixed}
+
+/* Header row */
+.gh-corner{background:var(--surface2);border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:12}
+.gh-month-cell{background:var(--surface2);border-bottom:1px solid var(--border);border-right:1px dashed var(--border);padding:8px 0;text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;overflow:hidden}
+.gh-month-cell.today-month{color:var(--accent);font-weight:600}
+.gh-month-cell:last-child{border-right:1px solid var(--border)}
+
+/* Label column */
+.glabel-cell{background:var(--surface);border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:5;vertical-align:middle;padding:0;cursor:pointer}
+.glabel-cell:hover .gl-inner{background:var(--surface2)}
+.gl-inner{padding:10px 14px}
+.gl-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.gl-sub{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+
+/* Track cell – spans ALL month columns */
+.gtrack-cell{border-bottom:1px solid var(--border);padding:0;height:52px;position:relative;vertical-align:top}
+
+/* Gantt bar */
+.gbar{position:absolute;top:50%;transform:translateY(-50%);height:22px;border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;cursor:pointer;transition:filter 0.15s,box-shadow 0.15s;z-index:2}
+.gbar:hover{filter:brightness(0.88);box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+.gbar-label{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.9);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Milestone diamond */
+.gdiamond{position:absolute;top:50%;width:14px;height:14px;border-radius:2px;transform:translateY(-50%) rotate(45deg);cursor:pointer;z-index:2;transition:filter 0.15s}
+.gdiamond:hover{filter:brightness(0.85)}
+
+/* Recurring dots */
+.gdot{position:absolute;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;cursor:pointer;z-index:2;border:2px solid var(--surface)}
+.gdot:hover{transform:translateY(-50%) scale(1.3)}
+
+/* Recurring range line */
+.grange-line{position:absolute;top:50%;transform:translateY(-50%);height:3px;border-radius:2px;opacity:0.25;z-index:1;pointer-events:none}
+
+/* Today line */
+.gtoday{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:0.7;z-index:3;pointer-events:none}
+
+/* Month divider */
+.gmonth-div{position:absolute;top:0;bottom:0;width:1px;background:var(--border);opacity:0.6;z-index:1;pointer-events:none}
+
+/* ── TIMELINE ── */
+.tl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:24px;margin-bottom:20px}
+.tl-group-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--mono);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.tl-group{margin-bottom:28px}
+.tl-item{display:grid;grid-template-columns:100px 20px 1fr;gap:0 16px;padding-bottom:24px}
+.tl-item:last-child{padding-bottom:0}
+.tl-date{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right;padding-top:2px;line-height:1.4}
+.tl-date strong{display:block;font-size:13px;color:var(--text2);font-weight:500}
+.tl-marker{display:flex;flex-direction:column;align-items:center}
+.tl-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;margin-top:2px;z-index:1}
+.tl-dot.diamond{border-radius:2px;transform:rotate(45deg);width:11px;height:11px;margin-top:4px}
+.tl-line{width:1px;flex:1;background:var(--border);margin:5px 0;min-height:24px}
+.tl-item:last-child .tl-line{display:none}
+.tl-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.3}
+.tl-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.tl-desc{font-size:12px;color:var(--text3);line-height:1.5}
+.tl-actions{display:flex;gap:6px;margin-top:8px;opacity:0;transition:opacity 0.15s}
+.tl-item:hover .tl-actions{opacity:1}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:24px 28px 18px;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.modal-close{width:32px;height:32px;border:1px solid var(--border);border-radius:var(--r);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3)}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:0 28px 24px}
+.modal-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0}
+
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+label{font-size:12px;font-weight:500;color:var(--text2)}
+input[type=text],input[type=date],input[type=number],select,textarea{padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:13px;color:var(--text);background:var(--surface);outline:none;width:100%;transition:border-color 0.15s,box-shadow 0.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+textarea{resize:vertical;min-height:64px;line-height:1.6}
+.form-hint{font-size:11px;color:var(--text3)}
+
+/* Recurring section */
+.recurring-box{background:var(--info-bg);border:1px solid #bfdbfe;border-radius:var(--r);padding:14px;margin-top:2px}
+.recurring-box.hidden{display:none}
+.recurring-grid{display:grid;grid-template-columns:80px 1fr 1fr;gap:10px;margin-top:10px}
+
+/* Disziplin chips */
+.dz-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.dz-chip{padding:4px 10px;border-radius:20px;font-size:12px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all 0.15s;user-select:none}
+.dz-chip:hover{border-color:var(--accent);color:var(--accent)}
+.dz-chip.sel{background:var(--accent);color:#0f1623;border-color:var(--accent);font-weight:500}
+
+/* Confirm */
+.confirm-box{background:var(--surface);border-radius:var(--rl);padding:28px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .confirm-box{transform:translateY(0)}
+
+/* Legend */
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text3);margin-top:6px;padding:0 4px}
+.legend-item{display:flex;align-items:center;gap:5px}
+
+/* Empty / No project */
+.empty-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:56px;text-align:center;color:var(--text3)}
+.empty-box .ei{font-size:40px;margin-bottom:12px}
+.empty-box .et{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.empty-box .es{font-size:13px;margin-bottom:18px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--nav-bg);color:#e2e8f0;padding:12px 18px;border-radius:var(--r);font-size:13px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><div class="logo-icon">BIM</div><div class="logo-name">BIM Manager</div></div>
+    <div class="logo-sub">v0.1 · Meilensteine</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Hauptmodule</div>
+    <div class="nav-item" onclick="comingSoon()">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung
+    </div>
+    <div class="nav-item" onclick="comingSoon()">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung
+    </div>
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/><circle cx="16" cy="15" r="2"/></svg>Meilensteinplanung
+      <span class="nav-badge" id="nav-count">0</span>
+    </div>
+    <div class="nav-item" onclick="comingSoon()">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver
+    </div>
+    <div class="nav-item" onclick="comingSoon()">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/><path d="M8 10h4M8 14h2M8 6h4"/></svg>Berichtsgenerator
+    </div>
+    <div class="nav-item" onclick="comingSoon()">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M8 7l1.5 1.5-1.5 1.5M12 7l-1.5 1.5 1.5 1.5M7 14h6"/></svg>Protokollierung
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-name" id="sb-user">BIM Manager</div>
+    <div class="user-role">Meilensteinplanung</div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <label style="font-size:12px;color:var(--text3);font-family:var(--mono)">Projekt:</label>
+    <select class="proj-sel" id="proj-sel" onchange="onProjectChange()">
+      <option value="">— Projekt wählen —</option>
+    </select>
+    <div class="topbar-right">
+      <div class="view-toggle">
+        <button class="view-btn active" id="vbtn-gantt"     onclick="setView('gantt')">Gantt</button>
+        <button class="view-btn"        id="vbtn-timeline"  onclick="setView('timeline')">Timeline</button>
+      </div>
+      <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export</button>
+      <button class="btn btn-primary" id="btn-new" onclick="openModal()" disabled>+ Meilenstein</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:4px">Meilensteinplanung</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:24px" id="page-sub">Wähle ein Projekt um Meilensteine zu verwalten</div>
+
+    <div class="stats-row" id="stats-row" style="display:none">
+      <div class="stat-card"><div class="stat-label">Gesamt</div><div class="stat-value" id="st-total" style="color:var(--accent)">0</div><div class="stat-sub">Einträge</div></div>
+      <div class="stat-card"><div class="stat-label">Offen</div><div class="stat-value" id="st-offen" style="color:var(--text3)">0</div><div class="stat-sub">Ausstehend</div></div>
+      <div class="stat-card"><div class="stat-label">Nächster Termin</div><div class="stat-value" id="st-next" style="font-size:17px;padding-top:4px">—</div><div class="stat-sub" id="st-next-name">—</div></div>
+      <div class="stat-card"><div class="stat-label">Verzögert</div><div class="stat-value" id="st-delayed" style="color:var(--err)">0</div><div class="stat-sub">Frist überschritten</div></div>
+      <div class="stat-card"><div class="stat-label">Abgeschlossen</div><div class="stat-value" id="st-done" style="color:var(--ok)">0</div><div class="stat-sub">Freigegeben</div></div>
+    </div>
+
+    <div id="main-area">
+      <div class="empty-box"><div class="ei">📅</div><div class="et">Kein Projekt ausgewählt</div><div class="es">Wähle oben ein Projekt aus</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal-ol" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Neuer Meilenstein</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <div class="fg full">
+          <label>Bezeichnung *</label>
+          <input type="text" id="f-name" placeholder="z. B. Datadrop 002 – Koordinationsmodell LPH 3">
+        </div>
+
+        <div class="fg">
+          <label>Typ</label>
+          <select id="f-typ" onchange="onTypChange()">
+            <option value="datadrop">📦 Datadrop</option>
+            <option value="meilenstein">◆ Meilenstein</option>
+            <option value="freigabe">✓ Freigabe</option>
+            <option value="pruefung">🔍 Prüftermin</option>
+            <option value="besprechung">💬 Besprechung</option>
+            <option value="sonstiges">· Sonstiges</option>
+          </select>
+        </div>
+
+        <div class="fg">
+          <label>Status</label>
+          <select id="f-status">
+            <option value="offen">Offen</option>
+            <option value="laufend">In Bearbeitung</option>
+            <option value="pruefung">In Prüfung</option>
+            <option value="freigegeben">Freigegeben</option>
+            <option value="verzoegert">Verzögert</option>
+            <option value="abgeschlossen">Abgeschlossen</option>
+          </select>
+        </div>
+
+        <div class="fg">
+          <label>Datum (Soll) *</label>
+          <input type="date" id="f-datum">
+        </div>
+
+        <div class="fg">
+          <label>Harte Frist (Deadline)</label>
+          <input type="date" id="f-frist">
+          <span class="form-hint">Optional – wenn abweichend vom Solldatum</span>
+        </div>
+
+        <!-- RECURRING – only visible for datadrop -->
+        <div class="fg full" id="recurring-section">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="f-recurring" onchange="onRecurringChange()" style="width:15px;height:15px;accent-color:var(--accent)">
+            Wiederkehrender Datadrop (zyklisch)
+          </label>
+          <div class="recurring-box hidden" id="recurring-box">
+            <div style="font-size:12px;color:#1d4ed8;margin-bottom:10px;line-height:1.5">
+              Zyklische Datadrops werden als <strong>eine Zeile</strong> im Gantt dargestellt – mit einer Markierung je Termin. Änderungen am Zyklus gelten für alle zukünftigen Termine.
+            </div>
+            <div class="recurring-grid">
+              <div class="fg">
+                <label>Intervall</label>
+                <input type="number" id="f-interval" min="1" max="52" value="3" style="width:100%">
+              </div>
+              <div class="fg">
+                <label>Einheit</label>
+                <select id="f-unit">
+                  <option value="weeks">Wochen</option>
+                  <option value="months">Monate</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Ende des Zyklus</label>
+                <input type="date" id="f-recur-end">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fg full">
+          <label>Verknüpfte Disziplinen</label>
+          <div class="dz-wrap" id="dz-wrap"></div>
+        </div>
+
+        <div class="fg full">
+          <label>Beschreibung / Lieferumfang</label>
+          <textarea id="f-desc" placeholder="Was wird geliefert? Welche Anforderungen gelten?"></textarea>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveMilestone()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="modal-overlay" id="confirm-ol" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <div style="font-size:17px;font-weight:600;color:var(--text);margin-bottom:10px">Meilenstein löschen?</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6">Diese Aktion kann nicht rückgängig gemacht werden.</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Abbrechen</button>
+      <button class="btn btn-danger" id="del-btn">Ja, löschen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────
+const PROJ_KEY  = 'bim_projects_v2';
+const MS_KEY    = 'bim_milestones_v1';
+const SET_KEY   = 'bim_settings_v1';
+const LABEL_W   = 220;   // px – label column width
+const COL_W     = 90;    // px – each month column width
+
+const DISZIPLINEN = [
+  {id:'alle', label:'Alle'},
+  {id:'ark',  label:'ARK'},
+  {id:'tw',   label:'TW'},
+  {id:'tga',  label:'TGA'},
+  {id:'elt',  label:'ELT'},
+  {id:'fre',  label:'FRE'},
+  {id:'koord',label:'Koord.'},
+  {id:'geo',  label:'GEO'},
+];
+
+const TYP = {
+  datadrop:   {label:'Datadrop',    color:'#3b82f6', icon:'📦'},
+  meilenstein:{label:'Meilenstein', color:'#8b5cf6', icon:'◆'},
+  freigabe:   {label:'Freigabe',    color:'#10b981', icon:'✓'},
+  pruefung:   {label:'Prüftermin',  color:'#f59e0b', icon:'🔍'},
+  besprechung:{label:'Besprechung', color:'#ec4899', icon:'💬'},
+  sonstiges:  {label:'Sonstiges',   color:'#8899b0', icon:'·'},
+};
+
+const ST = {
+  offen:        {cls:'sb-offen',         label:'Offen'},
+  laufend:      {cls:'sb-laufend',       label:'In Bearbeitung'},
+  pruefung:     {cls:'sb-pruefung',      label:'In Prüfung'},
+  freigegeben:  {cls:'sb-freigegeben',   label:'Freigegeben'},
+  verzoegert:   {cls:'sb-verzoegert',    label:'Verzögert'},
+  abgeschlossen:{cls:'sb-abgeschlossen', label:'Abgeschlossen'},
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────
+let projects = [], milestones = {}, currentPid = null, editingId = null, deleteId = null;
+let currentView = 'gantt', selectedDz = [];
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+function init() {
+  try { const s=JSON.parse(localStorage.getItem(SET_KEY))||{}; document.getElementById('sb-user').textContent=s.name||'BIM Manager'; } catch(e){}
+  try { projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[]; } catch(e){ projects=[]; }
+  try { milestones=JSON.parse(localStorage.getItem(MS_KEY))||{}; } catch(e){ milestones={}; }
+
+  buildDzChips();
+  populateSelect();
+  document.getElementById('del-btn').addEventListener('click', doDelete);
+}
+
+// ─── PROJECT SELECT ───────────────────────────────────────────────────
+function populateSelect() {
+  const sel = document.getElementById('proj-sel');
+  if (!projects.length) {
+    sel.innerHTML = '<option value="">Keine Projekte in der Projektverwaltung</option>'; return;
+  }
+  sel.innerHTML = '<option value="">— Projekt wählen —</option>' +
+    projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('');
+
+  // inject sample data for first project if empty
+  const pid = projects[0].id;
+  if (!milestones[pid] || !milestones[pid].length) {
+    milestones[pid] = sampleData();
+    save();
+  }
+  sel.value = pid;
+  onProjectChange();
+}
+
+function onProjectChange() {
+  currentPid = document.getElementById('proj-sel').value || null;
+  document.getElementById('btn-new').disabled = !currentPid;
+  if (currentPid) {
+    const p = projects.find(x=>x.id===currentPid);
+    document.getElementById('page-sub').textContent = `${p?.name||''} · Klicke auf einen Eintrag zum Bearbeiten`;
+    if (!milestones[currentPid]) milestones[currentPid] = [];
+    document.getElementById('stats-row').style.display = 'grid';
+    render();
+  } else {
+    document.getElementById('page-sub').textContent = 'Wähle ein Projekt um Meilensteine zu verwalten';
+    document.getElementById('stats-row').style.display = 'none';
+    document.getElementById('main-area').innerHTML = noProject();
+  }
+}
+
+// ─── SAMPLE DATA ──────────────────────────────────────────────────────
+function sampleData() {
+  const y = new Date().getFullYear();
+  return [
+    { id:uid(), name:'Kickoff & BAP',                typ:'meilenstein', status:'abgeschlossen', datum:`${y}-01-10`, frist:'',            disziplinen:['alle'], desc:'BAP genehmigt, Projektstruktur definiert.',       recurring:false },
+    { id:uid(), name:'Datadrop 001 – Basismodell',   typ:'datadrop',    status:'abgeschlossen', datum:`${y}-02-15`, frist:`${y}-02-15`,  disziplinen:['ark','tw'], desc:'LOD 200 Basismodell an CDE.',               recurring:false },
+    { id:uid(), name:'Modellaustausch (wöchentlich)',typ:'datadrop',    status:'laufend',       datum:`${y}-02-01`, frist:`${y}-02-01`,  disziplinen:['ark','tw','tga'], desc:'Wöchentlicher Modellaustausch.',         recurring:true, interval:1, unit:'weeks',  recurEnd:`${y}-07-31` },
+    { id:uid(), name:'Koordinationsrunde',           typ:'besprechung', status:'laufend',       datum:`${y}-02-10`, frist:'',            disziplinen:['koord'], desc:'Alle 3 Wochen Koordinationsrunde.',              recurring:true, interval:3, unit:'weeks',  recurEnd:`${y}-08-31` },
+    { id:uid(), name:'Datadrop 002 – Koordination',  typ:'datadrop',    status:'verzoegert',    datum:`${y}-04-08`, frist:`${y}-04-08`,  disziplinen:['ark','tw','tga','elt'], desc:'Koordinationsmodell LPH 3.',        recurring:false },
+    { id:uid(), name:'Freigabe Genehmigungsplanung', typ:'freigabe',    status:'offen',         datum:`${y}-06-30`, frist:`${y}-06-30`,  disziplinen:['alle'], desc:'LPH 4 Unterlagen für Bauantrag.',                recurring:false },
+    { id:uid(), name:'Datadrop 003 – Ausführung',    typ:'datadrop',    status:'offen',         datum:`${y}-08-15`, frist:`${y}-08-15`,  disziplinen:['ark','tw','tga','elt','fre'], desc:'LOD 400 für Ausschreibung.', recurring:false },
+  ];
+}
+
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function save() { localStorage.setItem(MS_KEY, JSON.stringify(milestones)); }
+
+// ─── STATS ────────────────────────────────────────────────────────────
+function updateStats() {
+  const list = milestones[currentPid]||[];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const done    = list.filter(m=>['abgeschlossen','freigegeben'].includes(m.status)).length;
+  const offen   = list.filter(m=>!['abgeschlossen','freigegeben'].includes(m.status)).length;
+  const delayed = list.filter(m=>{
+    if(['abgeschlossen','freigegeben'].includes(m.status)) return false;
+    const d=new Date(m.frist||m.datum); return d<today;
+  }).length;
+  const upcoming = list.filter(m=>{
+    if(['abgeschlossen','freigegeben'].includes(m.status)) return false;
+    return new Date(m.datum)>=today;
+  }).sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+
+  document.getElementById('st-total').textContent   = list.length;
+  document.getElementById('st-offen').textContent   = offen;
+  document.getElementById('st-delayed').textContent = delayed;
+  document.getElementById('st-done').textContent    = done;
+  document.getElementById('nav-count').textContent  = list.length;
+
+  if (upcoming.length) {
+    const d = new Date(upcoming[0].datum);
+    document.getElementById('st-next').textContent      = d.toLocaleDateString('de-DE',{day:'2-digit',month:'short'});
+    document.getElementById('st-next').style.color      = (d-today)<14*864e5 ? 'var(--warn)' : 'var(--text)';
+    document.getElementById('st-next-name').textContent = upcoming[0].name.slice(0,24);
+  } else {
+    document.getElementById('st-next').textContent      = '—';
+    document.getElementById('st-next').style.color      = 'var(--text3)';
+    document.getElementById('st-next-name').textContent = 'Kein offener Termin';
+  }
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function render() {
+  if (!currentPid) return;
+  updateStats();
+  currentView==='gantt' ? renderGantt() : renderTimeline();
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('vbtn-gantt').classList.toggle('active', v==='gantt');
+  document.getElementById('vbtn-timeline').classList.toggle('active', v==='timeline');
+  render();
+}
+
+// ═════════════════════════════════════════════════════
+//  GANTT
+// ═════════════════════════════════════════════════════
+function renderGantt() {
+  const list   = milestones[currentPid]||[];
+  const area   = document.getElementById('main-area');
+  if (!list.length) { area.innerHTML = emptyHtml(); return; }
+
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const allDates = [];
+
+  // collect all relevant dates (including recurring occurrences)
+  list.forEach(m => {
+    allDates.push(new Date(m.datum));
+    if (m.recurring && m.recurEnd) allDates.push(new Date(m.recurEnd));
+    if (m.frist) allDates.push(new Date(m.frist));
+  });
+
+  // range: 1 month before first, 2 months after last
+  let rangeStart = new Date(Math.min(...allDates));
+  let rangeEnd   = new Date(Math.max(...allDates));
+  rangeStart.setDate(1); rangeStart.setMonth(rangeStart.getMonth()-1);
+  rangeEnd.setDate(1);   rangeEnd.setMonth(rangeEnd.getMonth()+2);
+
+  // build months array
+  const months = [];
+  const cur = new Date(rangeStart);
+  while (cur < rangeEnd) { months.push(new Date(cur)); cur.setMonth(cur.getMonth()+1); }
+
+  const totalMs    = rangeEnd - rangeStart;
+  const trackWidth = months.length * COL_W;   // total track px
+
+  // helper: date → px offset within track
+  const px = d => Math.round((new Date(d) - rangeStart) / totalMs * trackWidth);
+  // today px
+  const todayPx = px(today);
+
+  // month divider px positions
+  const dividers = months.slice(1).map(m => px(m));
+
+  // build rows
+  const sortedList = list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+
+  const headerCols = months.map(m=>{
+    const isNow = m.getFullYear()===today.getFullYear() && m.getMonth()===today.getMonth();
+    return `<th class="gh-month-cell${isNow?' today-month':''}" style="width:${COL_W}px;min-width:${COL_W}px">${
+      m.toLocaleDateString('de-DE',{month:'short',year:'2-digit'})
+    }</th>`;
+  }).join('');
+
+  const rows = sortedList.map(m => {
+    const color   = TYP[m.typ]?.color || '#8899b0';
+    const isDone  = ['abgeschlossen','freigegeben'].includes(m.status);
+    const dStart  = new Date(m.datum);
+    const dEnd    = m.frist ? new Date(m.frist) : new Date(m.datum);
+    const delayed = !isDone && new Date(m.frist||m.datum) < today;
+    const barColor = delayed ? 'var(--err)' : color;
+    const opacity  = isDone ? 0.45 : 1;
+
+    let bars = '';
+
+    if (m.recurring && m.recurEnd) {
+      // ── RECURRING ROW ──
+      const occurrences = getOccurrences(m);
+      const rStart = px(m.datum);
+      const rEnd   = px(new Date(m.recurEnd));
+
+      // background range line
+      bars += `<div class="grange-line" style="left:${rStart}px;width:${Math.max(0,rEnd-rStart)}px;background:${barColor}"></div>`;
+
+      // dot per occurrence
+      occurrences.forEach(d => {
+        const x = px(d) - 5;
+        const isPast = d < today;
+        const c = isPast && !isDone ? (delayed?'var(--err)':barColor+'99') : barColor;
+        bars += `<div class="gdot" title="${d.toLocaleDateString('de-DE')}" style="left:${x}px;background:${c};opacity:${opacity}" onclick="openModal('${m.id}')"></div>`;
+      });
+
+    } else if (m.typ === 'meilenstein') {
+      // ── DIAMOND ──
+      const x = px(m.datum) - 7;
+      bars += `<div class="gdiamond" style="left:${x}px;background:${barColor};opacity:${opacity}" onclick="openModal('${m.id}')" title="${m.name}"></div>`;
+
+    } else {
+      // ── NORMAL BAR ──
+      const x1 = px(m.datum);
+      const x2 = m.frist ? px(dEnd) : x1;
+      const w  = Math.max(8, x2 - x1 + 2);
+      const showLabel = w > 50;
+      bars += `<div class="gbar" style="left:${x1}px;width:${w}px;background:${barColor};opacity:${opacity};color:#fff" onclick="openModal('${m.id}')" title="${m.name}">
+        ${showLabel ? `<span class="gbar-label">${m.name}</span>` : ''}
+      </div>`;
+    }
+
+    // dividers + today line inside track cell
+    const divHtml = dividers.map(x=>`<div class="gmonth-div" style="left:${x}px"></div>`).join('');
+    const todayHtml = todayPx>=0&&todayPx<=trackWidth ? `<div class="gtoday" style="left:${todayPx}px"></div>` : '';
+
+    // sub-label
+    const recurLabel = m.recurring ? `<span style="font-size:10px;color:var(--info);font-family:var(--mono)">↻ alle ${m.interval} ${m.unit==='weeks'?'Wo.':'Mo.'}</span>` : '';
+    const dzHtml = dzTags(m.disziplinen);
+
+    return `<tr>
+      <td class="glabel-cell" style="width:${LABEL_W}px;min-width:${LABEL_W}px" onclick="openModal('${m.id}')">
+        <div class="gl-inner">
+          <div class="gl-name">${TYP[m.typ]?.icon||''} ${m.name}</div>
+          <div class="gl-sub">${sbHtml(m.status)} ${recurLabel} ${dzHtml}</div>
+        </div>
+      </td>
+      <td class="gtrack-cell" colspan="${months.length}" style="width:${trackWidth}px;min-width:${trackWidth}px">
+        ${divHtml}${todayHtml}${bars}
+      </td>
+    </tr>`;
+  }).join('');
+
+  // legend
+  const legendHtml = `<div class="legend">
+    ${Object.entries(TYP).map(([k,v])=>`<div class="legend-item"><div style="width:10px;height:10px;border-radius:2px;background:${v.color}"></div>${v.label}</div>`).join('')}
+    <div class="legend-item" style="margin-left:auto"><div style="width:2px;height:12px;background:var(--accent)"></div>Heute</div>
+    <div class="legend-item"><div style="width:10px;height:10px;border-radius:2px;background:var(--err)"></div>Verzögert</div>
+    <div class="legend-item"><div style="width:10px;height:4px;border-radius:2px;background:#3b82f6;opacity:0.25"></div>Zyklus</div>
+  </div>`;
+
+  area.innerHTML = `
+    <div class="gantt-outer">
+      <div class="gantt-scroll">
+        <table class="gtable" style="width:${LABEL_W+trackWidth}px">
+          <colgroup>
+            <col style="width:${LABEL_W}px;min-width:${LABEL_W}px">
+            ${months.map(()=>`<col style="width:${COL_W}px;min-width:${COL_W}px">`).join('')}
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="gh-corner" style="width:${LABEL_W}px;min-width:${LABEL_W}px;padding:8px 14px;font-size:11px;font-weight:500">Meilenstein</th>
+              ${headerCols}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+    ${legendHtml}`;
+}
+
+// expand recurring occurrences
+function getOccurrences(m) {
+  const result = [];
+  const start  = new Date(m.datum);
+  const end    = new Date(m.recurEnd);
+  const step   = m.unit === 'weeks' ? m.interval * 7 : 0;
+  let cur = new Date(start);
+  let safety = 0;
+
+  while (cur <= end && safety++ < 200) {
+    result.push(new Date(cur));
+    if (m.unit === 'weeks') {
+      cur.setDate(cur.getDate() + m.interval * 7);
+    } else {
+      cur.setMonth(cur.getMonth() + m.interval);
+    }
+  }
+  return result;
+}
+
+// ═════════════════════════════════════════════════════
+//  TIMELINE
+// ═════════════════════════════════════════════════════
+function renderTimeline() {
+  const list   = milestones[currentPid]||[];
+  const area   = document.getElementById('main-area');
+  if (!list.length) { area.innerHTML = emptyHtml(); return; }
+
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const sorted = list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+
+  // group by month
+  const groups = {};
+  sorted.forEach(m => {
+    const key = new Date(m.datum).toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+
+  const html = Object.entries(groups).map(([month,items])=>`
+    <div class="tl-group">
+      <div class="tl-group-title">${month}</div>
+      ${items.map(m=>{
+        const color   = TYP[m.typ]?.color||'#8899b0';
+        const delayed = !['abgeschlossen','freigegeben'].includes(m.status) && new Date(m.frist||m.datum)<today;
+        const dotColor= delayed?'var(--err)':(['abgeschlossen','freigegeben'].includes(m.status)?'var(--ok)':color);
+        const isDiamond = m.typ==='meilenstein';
+        const recurLabel = m.recurring
+          ? `<span class="tag tag-blue">↻ alle ${m.interval} ${m.unit==='weeks'?'Wo.':'Mo.'} · bis ${new Date(m.recurEnd).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '';
+        return `<div class="tl-item">
+          <div class="tl-date">
+            <strong>${new Date(m.datum).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</strong>
+            ${m.frist&&m.frist!==m.datum?`<span style="font-size:10px;color:var(--err);display:block">⚡ ${new Date(m.frist).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</span>`:''}
+          </div>
+          <div class="tl-marker">
+            <div class="tl-dot${isDiamond?' diamond':''}" style="background:${dotColor};box-shadow:0 0 0 2px ${dotColor},0 0 0 4px var(--surface)"></div>
+            <div class="tl-line"></div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-title">${TYP[m.typ]?.icon||''} ${m.name}</div>
+            <div class="tl-tags">
+              ${sbHtml(m.status)}
+              <span class="tag" style="background:${color}20;color:${color}">${TYP[m.typ]?.label||''}</span>
+              ${recurLabel}
+              ${dzTags(m.disziplinen)}
+            </div>
+            ${m.desc?`<div class="tl-desc">${m.desc}</div>`:''}
+            <div class="tl-actions">
+              <button class="btn btn-secondary btn-sm" onclick="openModal('${m.id}')">✎ Bearbeiten</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('${m.id}')">⌫</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  area.innerHTML = `<div class="tl-wrap">${html}</div>`;
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────
+function sbHtml(s) {
+  const m = ST[s]||{cls:'sb-offen',label:s};
+  return `<span class="sbadge ${m.cls}">${m.label}</span>`;
+}
+function dzTags(dz) {
+  if (!dz||!dz.length) return '';
+  return dz.map(id=>{
+    const d=DISZIPLINEN.find(x=>x.id===id);
+    return d?`<span class="tag tag-gray">${d.label}</span>`:'';
+  }).join('');
+}
+function emptyHtml() {
+  return `<div class="empty-box"><div class="ei">📅</div><div class="et">Noch keine Meilensteine</div><div class="es">Lege jetzt den ersten Eintrag an.</div><button class="btn btn-primary" onclick="openModal()">+ Erster Meilenstein</button></div>`;
+}
+function noProject() {
+  return `<div class="empty-box"><div class="ei">📅</div><div class="et">Kein Projekt ausgewählt</div><div class="es">Wähle oben ein Projekt aus der Projektverwaltung</div></div>`;
+}
+
+// ─── DZ CHIPS ─────────────────────────────────────────────────────────
+function buildDzChips() {
+  document.getElementById('dz-wrap').innerHTML = DISZIPLINEN.map(d=>
+    `<div class="dz-chip" id="dz-${d.id}" onclick="toggleDz('${d.id}')">${d.label}</div>`).join('');
+}
+function toggleDz(id) {
+  if (id==='alle') { selectedDz = selectedDz.includes('alle') ? [] : ['alle']; }
+  else { selectedDz=selectedDz.filter(x=>x!=='alle'); selectedDz.includes(id)?selectedDz=selectedDz.filter(x=>x!==id):selectedDz.push(id); }
+  DISZIPLINEN.forEach(d=>document.getElementById('dz-'+d.id)?.classList.toggle('sel',selectedDz.includes(d.id)));
+}
+function setDz(arr) {
+  selectedDz=arr||[];
+  DISZIPLINEN.forEach(d=>document.getElementById('dz-'+d.id)?.classList.toggle('sel',selectedDz.includes(d.id)));
+}
+
+// ─── FORM LOGIC ───────────────────────────────────────────────────────
+function onTypChange() {
+  const isDD = document.getElementById('f-typ').value === 'datadrop';
+  document.getElementById('recurring-section').style.display = isDD ? '' : 'none';
+  if (!isDD) { document.getElementById('f-recurring').checked=false; onRecurringChange(); }
+}
+function onRecurringChange() {
+  const checked = document.getElementById('f-recurring').checked;
+  document.getElementById('recurring-box').classList.toggle('hidden', !checked);
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────
+function openModal(id=null) {
+  if (!currentPid) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = id ? 'Meilenstein bearbeiten' : 'Neuer Meilenstein';
+  document.getElementById('save-btn').textContent    = id ? 'Änderungen speichern' : 'Speichern';
+
+  if (id) {
+    const m=(milestones[currentPid]||[]).find(x=>x.id===id); if(!m) return;
+    document.getElementById('f-name').value   = m.name||'';
+    document.getElementById('f-typ').value    = m.typ||'datadrop';
+    document.getElementById('f-status').value = m.status||'offen';
+    document.getElementById('f-datum').value  = m.datum||'';
+    document.getElementById('f-frist').value  = m.frist||'';
+    document.getElementById('f-desc').value   = m.desc||'';
+    document.getElementById('f-recurring').checked = !!m.recurring;
+    document.getElementById('f-interval').value    = m.interval||3;
+    document.getElementById('f-unit').value        = m.unit||'weeks';
+    document.getElementById('f-recur-end').value   = m.recurEnd||'';
+    setDz(m.disziplinen||[]);
+  } else {
+    ['f-name','f-datum','f-frist','f-desc','f-recur-end'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('f-typ').value    = 'datadrop';
+    document.getElementById('f-status').value = 'offen';
+    document.getElementById('f-recurring').checked = false;
+    document.getElementById('f-interval').value    = 3;
+    document.getElementById('f-unit').value        = 'weeks';
+    setDz([]);
+  }
+  onTypChange(); onRecurringChange();
+  document.getElementById('modal-ol').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(),200);
+}
+
+function closeModal() { document.getElementById('modal-ol').classList.remove('open'); editingId=null; }
+function bgClose(e)   { if(e.target===document.getElementById('modal-ol')) closeModal(); }
+
+function saveMilestone() {
+  const name  = document.getElementById('f-name').value.trim();
+  const datum = document.getElementById('f-datum').value;
+  if (!name||!datum) { showToast('Bitte Bezeichnung und Datum ausfüllen.'); return; }
+
+  const isRecur = document.getElementById('f-typ').value==='datadrop' && document.getElementById('f-recurring').checked;
+
+  const data = {
+    id:         editingId||uid(), name,
+    typ:        document.getElementById('f-typ').value,
+    status:     document.getElementById('f-status').value,
+    datum, frist: document.getElementById('f-frist').value||'',
+    disziplinen:selectedDz.length?selectedDz:['alle'],
+    desc:       document.getElementById('f-desc').value.trim(),
+    recurring:  isRecur,
+    interval:   isRecur ? parseInt(document.getElementById('f-interval').value)||3 : null,
+    unit:       isRecur ? document.getElementById('f-unit').value : null,
+    recurEnd:   isRecur ? document.getElementById('f-recur-end').value : null,
+    created:    editingId?((milestones[currentPid]||[]).find(m=>m.id===editingId)?.created||new Date().toISOString()):new Date().toISOString(),
+    updated:    new Date().toISOString(),
+  };
+
+  if (!milestones[currentPid]) milestones[currentPid]=[];
+  if (editingId) {
+    const i=milestones[currentPid].findIndex(m=>m.id===editingId);
+    if(i>-1) milestones[currentPid][i]=data;
+    showToast('✓ Aktualisiert');
+  } else {
+    milestones[currentPid].push(data);
+    showToast('✓ Meilenstein angelegt');
+  }
+  save(); closeModal(); render();
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────
+function confirmDelete(id) { deleteId=id; document.getElementById('confirm-ol').classList.add('open'); }
+function closeConfirm()    { document.getElementById('confirm-ol').classList.remove('open'); deleteId=null; }
+function doDelete() {
+  if (!deleteId||!currentPid) return;
+  milestones[currentPid]=(milestones[currentPid]||[]).filter(m=>m.id!==deleteId);
+  save(); closeConfirm(); render(); showToast('Meilenstein gelöscht'); deleteId=null;
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!currentPid) { showToast('Erst Projekt wählen'); return; }
+  const list = milestones[currentPid]||[];
+  const p    = projects.find(x=>x.id===currentPid);
+  const rows = [['Projekt','Bezeichnung','Typ','Status','Datum','Frist','Wiederkehrend','Intervall','Einheit','Zyklusende','Disziplinen','Beschreibung']];
+  list.forEach(m=>rows.push([p?.name||'',m.name,TYP[m.typ]?.label||m.typ,ST[m.status]?.label||m.status,m.datum,m.frist||'',m.recurring?'Ja':'Nein',m.interval||'',m.unit||'',m.recurEnd||'',(m.disziplinen||[]).join('; '),m.desc||'']));
+  const csv  = rows.map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`meilensteine-${p?.number||'export'}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url); showToast('✓ Export gestartet');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function comingSoon()   { showToast('Modul wird in Kürze entwickelt'); }
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeModal();closeConfirm();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='n'){e.preventDefault();openModal();}
+});
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM Manager · Merkmalserver</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;--nav-hover:#1a2744;--nav-active:#152238;
+  --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.13);--accent-mid:rgba(0,201,167,0.3);
+  --global:#8b5cf6;--global-dim:rgba(139,92,246,0.1);
+  --bg:#f0f3f8;--surface:#fff;--surface2:#f5f7fa;--border:#e2e8f0;--border2:#d0d9e8;
+  --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
+  --ok:#10b981;--ok-bg:#ecfdf5;--warn:#f59e0b;--warn-bg:#fffbeb;
+  --err:#ef4444;--err-bg:#fef2f2;--info:#3b82f6;--info-bg:#eff6ff;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --r:6px;--rl:10px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+
+/* SIDEBAR */
+.sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
+.logo{padding:20px 18px 18px;border-bottom:1px solid var(--nav-border)}
+.logo-mark{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0f1623;font-family:var(--mono);flex-shrink:0}
+.logo-name{font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:-0.02em}
+.logo-sub{font-size:10px;color:var(--nav-text);letter-spacing:0.06em;text-transform:uppercase;margin-left:39px;font-family:var(--mono)}
+.nav{padding:8px 0;flex:1}
+.nav-section{padding:14px 18px 5px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3d5473;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--nav-text);font-size:13px;border-left:2px solid transparent;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:#c8d8e8}
+.nav-item.active{background:var(--nav-active);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-icon{width:17px;height:17px;opacity:0.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:#1e2d45;color:var(--nav-text);font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;min-width:18px;text-align:center}
+.nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;flex-shrink:0}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+
+/* MODE TABS */
+.mode-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0;gap:0}
+.mode-tab{padding:10px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.mode-tab:hover{color:var(--text2)}
+.mode-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.mode-tab.g.active{color:var(--global);border-bottom-color:var(--global)}
+.tb{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;background:var(--surface2);color:var(--text3)}
+.mode-tab.active .tb{background:var(--accent-dim);color:var(--accent)}
+.mode-tab.g.active .tb{background:var(--global-dim);color:var(--global)}
+
+/* PROJECT SELECTOR BAR */
+.proj-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.proj-bar label{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.psel{padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none}
+.psel:focus{border-color:var(--accent)}
+
+/* ══════════════════════════════════════
+   MAIN 3-COLUMN WORKSPACE
+══════════════════════════════════════ */
+.workspace{flex:1;display:flex;min-height:0;overflow:hidden}
+
+/* COL 1: PARAMETER LIST */
+.param-col{width:270px;min-width:270px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.col-header{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.col-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)}
+.col-scroll{flex:1;overflow-y:auto;padding:6px 0}
+.search-row{padding:6px 10px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.search-box{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none}
+.search-box:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+
+/* Parameter groups */
+.pgrp{border-bottom:1px solid var(--border)}
+.pgrp-header{padding:7px 12px;display:flex;align-items:center;gap:7px;cursor:grab;user-select:none;transition:background 0.1s}
+.pgrp-header:hover{background:var(--surface2)}
+.pgrp-code{font-size:10px;font-family:var(--mono);font-weight:600;min-width:30px;flex-shrink:0}
+.pgrp-name{font-size:12px;font-weight:500;color:var(--text);flex:1}
+.pgrp-count{font-size:10px;font-family:var(--mono);color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:8px}
+.pgrp-toggle{font-size:10px;color:var(--text3);transition:transform 0.15s}
+.pgrp-toggle.open{transform:rotate(90deg)}
+.pgrp-items{display:none;padding:2px 0 4px}
+.pgrp.expanded .pgrp-items{display:block}
+
+/* Individual parameter card */
+.pcard{margin:2px 8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);cursor:grab;background:var(--surface);transition:all 0.12s;user-select:none;position:relative}
+.pcard:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(0,201,167,0.15)}
+.pcard.dragging{opacity:0.45;border-color:var(--accent)}
+.pcard.assigned-here{background:var(--ok-bg);border-color:#a7f3d0}
+.pcard-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+.pcard-sub{font-size:10px;font-family:var(--mono);color:var(--text3)}
+.pcard-badge{position:absolute;top:5px;right:7px;font-size:10px;color:var(--ok);font-weight:600}
+
+/* COL 2: OBJECT TREE */
+.tree-col{width:300px;min-width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.tree-scroll{flex:1;overflow-y:auto;padding:4px 0}
+
+/* Tree nodes */
+.tnode{display:flex;align-items:center;gap:0;padding:0;cursor:pointer;user-select:none}
+.tnode-inner{display:flex;align-items:center;gap:6px;flex:1;padding:5px 10px;border-radius:0;transition:background 0.1s;border-left:3px solid transparent}
+.tnode:hover .tnode-inner{background:var(--surface2)}
+.tnode.selected .tnode-inner{background:var(--accent-dim);border-left-color:var(--accent)}
+.tnode.drop-over .tnode-inner{background:var(--accent-mid);border-left-color:var(--accent);border-left-style:dashed;border-width:2px}
+.tnode-toggle{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px;flex-shrink:0;transition:transform 0.15s}
+.tnode-toggle.open{transform:rotate(90deg)}
+.tnode-toggle.leaf{opacity:0;pointer-events:none}
+.tnode-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center;line-height:1}
+.tnode-label{font-size:12px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.tnode-label.l0{font-weight:600;color:var(--text);font-size:13px}
+.tnode-label.l1{font-weight:600;color:var(--text2)}
+.tnode-label.l2{font-weight:500;color:var(--text2)}
+.tnode-label.l3{font-weight:400;color:var(--text2)}
+.tnode-label.l4{font-weight:400;color:var(--text3)}
+.tnode-count{font-size:10px;font-family:var(--mono);color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:8px;flex-shrink:0}
+.tnode.selected .tnode-count{background:var(--accent-dim);color:var(--accent)}
+.inherited-dot{width:5px;height:5px;border-radius:50%;background:var(--warn);flex-shrink:0;opacity:0.7}
+.tchildren{display:none}
+.tchildren.open{display:block}
+
+/* COL 3: AWF MATRIX */
+.awf-col{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.matrix-wrap{flex:1;overflow:auto;position:relative}
+.matrix-hint{padding:24px;text-align:center;color:var(--text3);font-size:13px;line-height:1.6}
+.matrix-hint .ei{font-size:32px;margin-bottom:10px}
+
+/* Matrix table */
+.mtable{border-collapse:collapse;min-width:100%;font-size:12px}
+.mtable th{padding:0;background:var(--surface);position:sticky;top:0;z-index:10;white-space:nowrap}
+.mtable .th-param{width:240px;min-width:240px;padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);border-right:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);position:sticky;left:0;background:var(--surface);z-index:20}
+.mtable .th-awf{padding:6px 12px;text-align:center;border-bottom:2px solid var(--border);border-right:1px solid var(--border);min-width:110px}
+.th-awf-name{font-size:11px;font-weight:600;color:var(--text);display:block;margin-bottom:2px}
+.th-awf-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.th-awf-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+
+.mtable td{padding:0;border-bottom:1px solid var(--border);vertical-align:middle}
+.mtable tr:last-child td{border-bottom:none}
+.mtable tr:hover .td-param,.mtable tr:hover .td-check{background:#fafbfd}
+
+.td-param{padding:8px 12px;border-right:1px solid var(--border);position:sticky;left:0;background:var(--surface);z-index:5;min-width:240px;width:240px}
+.td-param-name{font-weight:500;color:var(--text);margin-bottom:2px;font-size:12px}
+.td-param-sub{font-size:10px;font-family:var(--mono);color:var(--text3);display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
+.inherited-label{font-size:10px;background:var(--warn-bg);color:#92400e;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+
+.td-check{padding:6px;text-align:center;border-right:1px solid var(--border);vertical-align:middle}
+.awf-cb{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+
+.td-pflicht{padding:5px 8px;border-right:1px solid var(--border);text-align:center}
+.pflicht-tag{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px;cursor:pointer;user-select:none;display:inline-block}
+.pflicht-tag.on{background:var(--err-bg);color:var(--err)}
+.pflicht-tag.off{background:var(--surface2);color:var(--text3)}
+
+.td-remove{padding:4px 8px;text-align:center}
+.rm-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:3px;transition:all 0.1s}
+.rm-btn:hover{background:var(--err-bg);color:var(--err)}
+
+/* AWF header color bar */
+.awf-color-bar{height:3px;width:100%;display:block;margin-bottom:4px;border-radius:1px}
+
+/* ══════════════════════════════════════
+   GLOBAL LIBRARY MODE
+══════════════════════════════════════ */
+.glib-layout{flex:1;display:flex;overflow:hidden}
+.glib-side{width:210px;min-width:210px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto}
+.glib-body{flex:1;overflow-y:auto;padding:20px 24px}
+.glib-banner{background:var(--global-dim);border:1px solid #c4b5fd;border-radius:var(--r);padding:10px 14px;font-size:12px;color:#5b21b6;margin-bottom:16px;line-height:1.6}
+.glib-cat{padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text2);border-left:3px solid transparent;transition:all 0.12s}
+.glib-cat:hover{background:var(--surface2)}
+.glib-cat.active{background:var(--global-dim);border-left-color:var(--global);color:var(--global);font-weight:500}
+
+/* Param table */
+.ptable{width:100%;border-collapse:collapse;font-size:12px}
+.ptable th{padding:7px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);background:var(--surface2);border-bottom:1px solid var(--border)}
+.ptable td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:#fafbfd}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#0f1623}
+.btn-primary:hover{background:#00b396}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-secondary:hover{background:var(--surface2)}
+.btn-global{background:var(--global-dim);border:1px solid #c4b5fd;color:var(--global)}
+.btn-global:hover{background:#ddd6fe}
+.btn-danger{background:var(--err-bg);color:var(--err);border:1px solid #fca5a5}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-xs{padding:2px 7px;font-size:10px;font-family:var(--mono)}
+.btn-ghost{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:13px;display:inline-flex;align-items:center;transition:all 0.12s}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+
+/* TAGS */
+.tag{padding:2px 5px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);display:inline-block}
+.tag-blue{background:#dbeafe;color:#1e40af}
+.tag-green{background:#d1fae5;color:#065f46}
+.tag-amber{background:#fef3c7;color:#92400e}
+.tag-purple{background:#ede9fe;color:#5b21b6}
+.tag-gray{background:var(--surface2);color:var(--text2)}
+.tag-teal{background:#ccfbf1;color:#0f766e}
+.tag-global{background:var(--global-dim);color:var(--global)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:20px 24px 14px;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.modal-close{width:28px;height:28px;border:1px solid var(--border);border-radius:var(--r);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3)}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:0 24px 20px}
+.modal-section{padding-top:14px;border-top:1px solid var(--border);margin-top:14px}
+.modal-section-title{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:10px}
+.modal-footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg label{font-size:11px;font-weight:500;color:var(--text2)}
+.fg input,.fg select,.fg textarea{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%;transition:border-color 0.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.fg textarea{resize:vertical;min-height:56px;line-height:1.5}
+.form-hint{font-size:10px;color:var(--text3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+
+/* IFC selector */
+.ifc-sel{border:1px solid var(--border);border-radius:var(--r);padding:6px;max-height:180px;overflow-y:auto;background:var(--surface)}
+.ifc-g{margin-bottom:6px}
+.ifc-g-label{font-size:10px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;padding:2px 4px;letter-spacing:0.06em}
+.ifc-opt{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:3px;cursor:pointer;transition:background 0.1s}
+.ifc-opt:hover{background:var(--surface2)}
+.ifc-opt input{width:12px;height:12px;accent-color:var(--accent);cursor:pointer}
+.ifc-opt label{font-size:11px;font-family:var(--mono);color:var(--text2);cursor:pointer}
+.ifc-opt.sel label{color:var(--accent);font-weight:500}
+
+/* Phase chips */
+.phase-grid{display:flex;gap:4px;flex-wrap:wrap}
+.ph{display:inline-flex;align-items:center;justify-content:center;width:30px;height:18px;border-radius:3px;font-size:10px;font-weight:600;font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text3);transition:all 0.12s;user-select:none}
+.ph.on{background:var(--accent);color:#0f1623;border-color:var(--accent)}
+
+/* AWF color swatches */
+.cswatch{width:22px;height:22px;border-radius:5px;cursor:pointer;border:2px solid transparent;display:inline-block;transition:all 0.13s}
+.cswatch:hover{transform:scale(1.15)}
+.cswatch.sel{border-color:var(--text);box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--text)}
+
+/* IMPORT */
+.import-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+.itab{padding:7px 14px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.12s}
+.itab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--surface2)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone input{display:none}
+
+/* CONFIRM */
+.confirm-box{background:var(--surface);border-radius:var(--rl);padding:24px;max-width:380px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .confirm-box{transform:translateY(0)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--nav-bg);color:#e2e8f0;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+.info-box{padding:8px 12px;border-radius:var(--r);font-size:12px;line-height:1.6;margin-bottom:12px}
+.info-blue{background:var(--info-bg);border:1px solid #bfdbfe;color:#1d4ed8}
+.info-purple{background:var(--global-dim);border:1px solid #c4b5fd;color:#5b21b6}
+.info-amber{background:var(--warn-bg);border:1px solid #fde68a;color:#92400e}
+
+/* No-project state */
+.no-project{flex:1;display:flex;align-items:center;justify-content:center}
+.no-project-inner{text-align:center;color:var(--text3)}
+.no-project-inner .ei{font-size:36px;margin-bottom:10px}
+.no-project-inner .et{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><div class="logo-icon">BIM</div><div class="logo-name">BIM Manager</div></div>
+    <div class="logo-sub">Merkmalserver</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Module</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/><circle cx="16" cy="15" r="2"/></svg>Meilensteinplanung</div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver<span class="nav-badge" id="nav-count">0</span></div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M8 7l1.5 1.5-1.5 1.5M12 7l-1.5 1.5 1.5 1.5M7 14h6"/></svg>Protokollierung</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
+    <div style="font-size:10px;color:var(--nav-text)">Merkmalserver</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span style="font-size:12px;color:var(--text3)">Merkmalserver</span>
+    <div class="topbar-right" id="topbar-right"></div>
+  </div>
+  <div class="mode-tabs">
+    <div class="mode-tab g active" id="tab-global" onclick="setMode('global')">◈ Globale Bibliothek<span class="tb" id="tb-global">0</span></div>
+    <div class="mode-tab" id="tab-proj" onclick="setMode('proj')">Projektparameter<span class="tb" id="tb-proj">0</span></div>
+  </div>
+  <div id="proj-bar-wrap"></div>
+  <div class="workspace" id="workspace"></div>
+</div>
+
+<!-- PARAM FORM MODAL -->
+<div class="modal-overlay" id="param-ol" onclick="if(event.target===this)closeParamModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="pm-title">Neuer Parameter</div>
+      <button class="modal-close" onclick="closeParamModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg full"><label>Parametername *</label><input type="text" id="p-name" placeholder="z. B. Feuerwiderstandsklasse"></div>
+        <div class="fg full"><label>Beschreibung</label><textarea id="p-desc" rows="2" placeholder="Wofür wird dieser Parameter benötigt?"></textarea></div>
+        <div class="fg"><label>IFC Property Set *</label><input type="text" id="p-pset" placeholder="Pset_WallCommon"><span class="form-hint">Exakter IFC-Name</span></div>
+        <div class="fg"><label>IFC Attributname *</label><input type="text" id="p-attr" placeholder="FireRating"></div>
+        <div class="fg"><label>Datentyp</label>
+          <select id="p-dtype">
+            <option value="IfcLabel">IfcLabel – Text</option>
+            <option value="IfcText">IfcText – Langer Text</option>
+            <option value="IfcReal">IfcReal – Dezimalzahl</option>
+            <option value="IfcInteger">IfcInteger – Ganzzahl</option>
+            <option value="IfcBoolean">IfcBoolean – Ja/Nein</option>
+            <option value="Datum">Datum</option>
+            <option value="IfcLengthMeasure">IfcLengthMeasure – Länge (m)</option>
+            <option value="IfcAreaMeasure">IfcAreaMeasure – Fläche (m²)</option>
+            <option value="IfcVolumeMeasure">IfcVolumeMeasure – Volumen (m³)</option>
+            <option value="IfcIdentifier">IfcIdentifier – ID/Kennung</option>
+          </select>
+        </div>
+        <div class="fg"><label>Merkmalsgruppe</label>
+          <select id="p-grp">
+            <option value="000">000 – Waveware Klassifizierung</option>
+            <option value="001">001 – Identifikation</option>
+            <option value="010">010 – Baukonstruktion</option>
+            <option value="011">011 – Raum Merkmale</option>
+            <option value="019">019 – Treppen Merkmale</option>
+            <option value="030">030 – Allg. tech. Anlagen</option>
+            <option value="031">031 – AKS-Klassifizierung</option>
+            <option value="050">050 – Produktinformationen</option>
+            <option value="051">051 – Betriebsrelevante Merkmale</option>
+            <option value="AA-Beton">AA – Stahlbeton Merkmale</option>
+            <option value="AA-Stahl">AA – Stahlmerkmale</option>
+            <option value="BA-Tuer">BA – Tür Merkmale</option>
+            <option value="EH-BM">E+H – Betriebsmittel Merkmale</option>
+            <option value="ZZ">ZZ – Sonstige</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">IFC-Elementtypen</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5">Übergeordnete Typen vererben automatisch auf alle Untertypen.</div>
+        <div class="ifc-sel" id="ifc-sel-wrap"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Leistungsphasen</div>
+        <div class="phase-grid" id="phase-grid-modal"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeParamModal()">Abbrechen</button>
+      <button class="btn btn-primary" id="pm-save" onclick="saveParam()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-ol" onclick="if(event.target===this)closeImport()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="import-title">Parameter importieren</div>
+      <button class="modal-close" onclick="closeImport()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-tabs">
+        <div class="itab active" id="itab-csv" onclick="setImportTab('csv')">CSV</div>
+        <div class="itab" id="itab-excel" onclick="setImportTab('excel')">Excel (.xlsx)</div>
+        <div class="itab" id="itab-ids" onclick="setImportTab('ids')">IDS (.ids XML)</div>
+      </div>
+      <div id="import-body-inner"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeImport()">Abbrechen</button>
+      <button class="btn btn-primary" id="import-ok" onclick="doImport()" disabled>Importieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="modal-overlay" id="confirm-ol" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px" id="confirm-title">Löschen?</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6" id="confirm-body"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Abbrechen</button>
+      <button class="btn btn-danger" id="confirm-btn">Ja, löschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- GRUPPEN MODAL -->
+<div class="modal-overlay" id="grp-ol" onclick="if(event.target===this)closeGrpModal()">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title" id="grp-title">Neue Merkmalsgruppe</div>
+      <button class="modal-close" onclick="closeGrpModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg"><label>Gruppencode *</label><input type="text" id="g-code" placeholder="z. B. 060 oder BA-Fenster"><span class="form-hint">Kurzcode – wird in der Parameteranzeige verwendet</span></div>
+        <div class="fg"><label>Name *</label><input type="text" id="g-name" placeholder="z. B. Fenster Merkmale"></div>
+        <div class="fg full"><label>Scope / Geltungsbereich</label><input type="text" id="g-scope" placeholder="z. B. Fenster, TGA, Alle Objekte"></div>
+        <div class="fg full"><label>Farbe</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="grp-color-swatches"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeGrpModal()">Abbrechen</button>
+      <button class="btn btn-primary" id="grp-save" onclick="saveGrp()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ─── STORAGE KEYS ─────────────────────────────────────────────────────
+const PROJ_KEY   = 'bim_projects_v2';
+const GLOBAL_KEY = 'bim_global_params_v2';
+const PPARAM_KEY = 'bim_proj_params_v1';
+const ASSIGN_KEY = 'bim_obj_assignments_v1';
+const EXCL_KEY   = 'bim_obj_exclusions_v2';
+const AWF_KEY    = 'bim_awf_v1';
+const SET_KEY    = 'bim_settings_v1';
+const GRP_KEY    = 'bim_param_groups_v1'; // editable Merkmalsgruppen
+
+// ─── MERKMALSGRUPPEN (editierbar, aus localStorage) ──────────────────
+const DEFAULT_GROUPS = [
+  { code:'000', name:'Waveware Klassifizierung',    color:'#6366f1', scope:'Projektspezifisch' },
+  { code:'001', name:'Identifikation',              color:'#00c9a7', scope:'Alle Objekte' },
+  { code:'010', name:'Baukonstruktion',             color:'#8b5cf6', scope:'Bauteile' },
+  { code:'011', name:'Raum Merkmale',               color:'#3b82f6', scope:'Räume & Flächen' },
+  { code:'019', name:'Treppen Merkmale',            color:'#f59e0b', scope:'Treppen' },
+  { code:'030', name:'Allg. tech. Anlagen',         color:'#f97316', scope:'TGA' },
+  { code:'031', name:'AKS-Klassifizierung',         color:'#ef4444', scope:'TGA' },
+  { code:'050', name:'Produktinformationen',        color:'#6366f1', scope:'Produkte/Geräte' },
+  { code:'051', name:'Betriebsrelevante Merkmale',  color:'#10b981', scope:'FM / Betrieb' },
+  { code:'AA-Beton', name:'Stahlbeton Merkmale',    color:'#64748b', scope:'Material Beton' },
+  { code:'AA-Stahl', name:'Stahlmerkmale',          color:'#94a3b8', scope:'Material Stahl' },
+  { code:'BA-Tuer',  name:'Tür Merkmale',           color:'#ec4899', scope:'Türen' },
+  { code:'EH-BM',    name:'E+H Betriebsmittel',     color:'#0ea5e9', scope:'Projektspezifisch' },
+  { code:'ZZ',       name:'Sonstige',               color:'#8899b0', scope:'' },
+];
+let PARAM_GROUPS = [];
+let GRP_MAP = {};
+function rebuildGrpMap(){ GRP_MAP={}; PARAM_GROUPS.forEach(g=>GRP_MAP[g.code]=g); }
+function saveGroups(){ localStorage.setItem(GRP_KEY,JSON.stringify(PARAM_GROUPS)); rebuildGrpMap(); }
+
+// ─── OBJECT TREE ──────────────────────────────────────────────────────
+// Based on LastBIM Spezifikationsübersicht
+const OBJ_TREE = {
+  id:'root', label:'Bauwerksinformationen', icon:'🏛', level:0, children:[
+    { id:'rau', label:'Roh- und Ausbau', icon:'🧱', level:1, children:[
+      { id:'aus', label:'Ausbau und Raumbegrenzung', icon:'▦', level:2, children:[
+        { id:'bod', label:'Bodenaufbauten / Beläge', icon:'▬', level:3, children:[
+          {id:'bod-e',label:'Bodenaufbau Estrich',icon:'·',level:4},
+          {id:'bod-f',label:'Bodenaufbau Fliesen',icon:'·',level:4},
+          {id:'bod-p',label:'Bodenaufbau Parkett',icon:'·',level:4},
+          {id:'bod-t',label:'Bodenaufbau Teppich',icon:'·',level:4},
+        ]},
+        { id:'dec', label:'Deckenbekleidungen / Abhangdecken', icon:'▭', level:3, children:[
+          {id:'dec-a',label:'Akustikdecken',icon:'·',level:4},
+          {id:'dec-g',label:'GK-Decken',icon:'·',level:4},
+          {id:'dec-m',label:'Metalldecken',icon:'·',level:4},
+        ]},
+        { id:'rtr', label:'Raumtrennungen', icon:'⬜', level:3, children:[
+          {id:'rtr-gl',label:'Glas-Trennwand',icon:'·',level:4},
+          {id:'rtr-mo',label:'mobile Trennwand',icon:'·',level:4},
+          {id:'rtr-sy',label:'Systemtrennwand',icon:'·',level:4},
+        ]},
+        { id:'wbe', label:'Wandbekleidungen / Vorsatzschalen', icon:'▋', level:3, children:[
+          {id:'wbe-a',label:'Akustikverkleidung',icon:'·',level:4},
+          {id:'wbe-f',label:'Fliesenbelag',icon:'·',level:4},
+          {id:'wbe-g',label:'GK-Vorsatzschale',icon:'·',level:4},
+        ]},
+      ]},
+      { id:'aau', label:'Außenanlagen', icon:'🌳', level:2, children:[
+        {id:'aau-m',label:'Außenmöblierung',icon:'·',level:3,children:[{id:'aau-fs',label:'Fahrradständer',icon:'·',level:4},{id:'aau-po',label:'Poller',icon:'·',level:4},{id:'aau-si',label:'Sitzbank',icon:'·',level:4}]},
+        {id:'aau-e',label:'Einfriedungen',icon:'·',level:3,children:[{id:'aau-ma',label:'Mauer',icon:'·',level:4},{id:'aau-to',label:'Toranlage',icon:'·',level:4},{id:'aau-za',label:'Zaun',icon:'·',level:4}]},
+        {id:'aau-fl',label:'Flächenbefestigungen',icon:'·',level:3,children:[{id:'aau-as',label:'Asphaltfläche',icon:'·',level:4},{id:'aau-be',label:'Betonfläche',icon:'·',level:4},{id:'aau-gr',label:'Grasfläche',icon:'·',level:4},{id:'aau-pf',label:'Pflasterfläche',icon:'·',level:4}]},
+        {id:'aau-vg',label:'Vegetation',icon:'·',level:3,children:[{id:'aau-bm',label:'Baum',icon:'·',level:4},{id:'aau-st',label:'Strauch',icon:'·',level:4}]},
+      ]},
+      { id:'bau', label:'Bauteile', icon:'🧱', level:2, children:[
+        {id:'bau-bal',label:'Balken / Träger',icon:'—',level:3,children:[{id:'bau-ht',label:'Holzträger',icon:'·',level:4},{id:'bau-sbt',label:'Stahlbetonträger',icon:'·',level:4},{id:'bau-st',label:'Stahlträger',icon:'·',level:4}]},
+        {id:'bau-dac',label:'Dächer',icon:'⛛',level:3,children:[{id:'bau-fd',label:'Flachdach',icon:'·',level:4},{id:'bau-gd',label:'Gründach',icon:'·',level:4},{id:'bau-sd',label:'Steildach',icon:'·',level:4}]},
+        {id:'bau-dek',label:'Decken',icon:'▬',level:3,children:[{id:'bau-fi',label:'Filigrandecke',icon:'·',level:4},{id:'bau-hb',label:'Holzbalkendecke',icon:'·',level:4},{id:'bau-ob',label:'Ortbetondecke',icon:'·',level:4}]},
+        {id:'bau-fun',label:'Fundamente',icon:'⬛',level:3,children:[{id:'bau-bp',label:'Bodenplatte',icon:'·',level:4},{id:'bau-ef',label:'Einzelfundament',icon:'·',level:4},{id:'bau-sf',label:'Streifenfundament',icon:'·',level:4}]},
+        {id:'bau-stu',label:'Stützen',icon:'|',level:3,children:[{id:'bau-hs',label:'Holzstütze',icon:'·',level:4},{id:'bau-sbs',label:'Stahlbetonstütze',icon:'·',level:4},{id:'bau-ss',label:'Stahlstütze',icon:'·',level:4}]},
+        {id:'bau-tre',label:'Treppen',icon:'⬆',level:3,children:[{id:'bau-htr',label:'Holztreppe',icon:'·',level:4},{id:'bau-sbtr',label:'Stahlbetontreppe',icon:'·',level:4},{id:'bau-str',label:'Stahltreppe',icon:'·',level:4}]},
+        {id:'bau-wan',label:'Wände',icon:'▋',level:3,children:[{id:'bau-mw',label:'Mauerwerkswand',icon:'·',level:4},{id:'bau-sbw',label:'Stahlbetonwand',icon:'·',level:4},{id:'bau-tw',label:'Trockenbauwand',icon:'·',level:4}]},
+      ]},
+      { id:'fla', label:'Flächen und Räume', icon:'⬡', level:2, children:[
+        {id:'fla-nf',label:'Nutzflächen (DIN 277)',icon:'⬡',level:3,children:[{id:'fla-bu',label:'Bürofläche',icon:'·',level:4},{id:'fla-te',label:'Technikfläche',icon:'·',level:4},{id:'fla-vk',label:'Verkehrsfläche',icon:'·',level:4}]},
+        {id:'fla-rm',label:'Räume',icon:'⬡',level:3,children:[{id:'fla-mep',label:'MEP-Raum',icon:'·',level:4},{id:'fla-ra',label:'Raum',icon:'·',level:4}]},
+        {id:'fla-rz',label:'Raumzonen',icon:'⬢',level:3,children:[{id:'fla-az',label:'Akustikzone',icon:'·',level:4},{id:'fla-ba',label:'Brandabschnitt',icon:'·',level:4},{id:'fla-kz',label:'Klimazone',icon:'·',level:4}]},
+      ]},
+      { id:'hub', label:'Gebäudehülle und Fassade', icon:'▦', level:2, children:[
+        {id:'hub-fa',label:'Fassadenelemente',icon:'·',level:3,children:[{id:'hub-pa',label:'Paneelfassade',icon:'·',level:4},{id:'hub-pr',label:'Pfosten-Riegel-Fassade',icon:'·',level:4},{id:'hub-vo',label:'Vorhangfassade',icon:'·',level:4}]},
+        {id:'hub-ss',label:'Sonnenschutz',icon:'·',level:3,children:[{id:'hub-la',label:'Lamellen',icon:'·',level:4},{id:'hub-rs',label:'Raffstore',icon:'·',level:4},{id:'hub-sc',label:'Screen',icon:'·',level:4}]},
+        {id:'hub-wd',label:'Wärmedämmung',icon:'·',level:3},
+      ]},
+      { id:'oef', label:'Öffnungen und Abschlüsse', icon:'🚪', level:2, children:[
+        {id:'oef-fen',label:'Fenster',icon:'⬜',level:3,children:[{id:'oef-dk',label:'Dreh-Kipp-Fenster',icon:'·',level:4},{id:'oef-fv',label:'Festverglasung',icon:'·',level:4},{id:'oef-ol',label:'Oberlicht',icon:'·',level:4}]},
+        {id:'oef-tor',label:'Tore',icon:'·',level:3,children:[{id:'oef-ro',label:'Rolltor',icon:'·',level:4},{id:'oef-sch',label:'Schiebetor',icon:'·',level:4},{id:'oef-sek',label:'Sektionaltor',icon:'·',level:4}]},
+        {id:'oef-tue',label:'Türen',icon:'🚪',level:3,children:[{id:'oef-at',label:'Außentür',icon:'·',level:4},{id:'oef-bt',label:'Brandschutztür',icon:'·',level:4},{id:'oef-it',label:'Innentür',icon:'·',level:4}]},
+        {id:'oef-dub',label:'Durchbrüche',icon:'·',level:3,children:[{id:'oef-dd',label:'Deckendurchbruch',icon:'·',level:4},{id:'oef-so',label:'Schachtöffnung',icon:'·',level:4},{id:'oef-wd2',label:'Wanddurchbruch',icon:'·',level:4}]},
+      ]},
+    ]},
+    { id:'tga', label:'Technische Gebäudeausrüstung', icon:'⚙', level:1, children:[
+      { id:'tga-erz', label:'001 – Erzeugungssysteme', icon:'⚡', level:2, children:[
+        {id:'tga-el',label:'Elektro (Energieerzeuger)',icon:'⚡',level:3,children:[{id:'tga-pv',label:'PV-Anlage',icon:'·',level:4},{id:'tga-gen',label:'Generator',icon:'·',level:4},{id:'tga-bat',label:'Batterie',icon:'·',level:4},{id:'tga-usv',label:'USV',icon:'·',level:4}]},
+        {id:'tga-hk',label:'Heizung / Kälte (Wärmeerzeuger)',icon:'🌡',level:3,children:[{id:'tga-wp',label:'Wärmepumpe',icon:'·',level:4},{id:'tga-hkess',label:'Heizkessel',icon:'·',level:4},{id:'tga-km',label:'Kältemaschine',icon:'·',level:4},{id:'tga-fw',label:'Fernwärmeübergabestation',icon:'·',level:4}]},
+        {id:'tga-lu',label:'Lüftung (Luftaufbereitung)',icon:'💨',level:3,children:[{id:'tga-rlt',label:'RLT-Gerät',icon:'·',level:4},{id:'tga-wrg',label:'Wärmerückgewinner',icon:'·',level:4}]},
+        {id:'tga-san',label:'Sanitär (Wasseraufbereitung)',icon:'💧',level:3,children:[{id:'tga-dea',label:'Druckerhöhungsanlagen',icon:'·',level:4},{id:'tga-enw',label:'Enthärtungsanlagen',icon:'·',level:4}]},
+        {id:'tga-msr',label:'MSR (Steuerzentralen)',icon:'🖥',level:3,children:[{id:'tga-as',label:'Automationsserver',icon:'·',level:4},{id:'tga-ast',label:'Automationsstation',icon:'·',level:4},{id:'tga-ddc',label:'DDC-Regler',icon:'·',level:4}]},
+      ]},
+      { id:'tga-abg', label:'002 – Abgabesysteme', icon:'📡', level:2, children:[
+        {id:'tga-elabg',label:'Elektro (Steckdosen / Leuchten)',icon:'💡',level:3,children:[{id:'tga-le',label:'Leuchte',icon:'·',level:4},{id:'tga-sd',label:'Steckdose',icon:'·',level:4},{id:'tga-schal',label:'Schalter',icon:'·',level:4}]},
+        {id:'tga-hkabg',label:'Heizung / Kälte (Heizflächen)',icon:'·',level:3,children:[{id:'tga-fbh',label:'Fußbodenheizung',icon:'·',level:4},{id:'tga-hkrp',label:'Heizkörper',icon:'·',level:4},{id:'tga-kd',label:'Kühldecken',icon:'·',level:4}]},
+        {id:'tga-luabg',label:'Lüftung (Luftauslässe)',icon:'·',level:3,children:[{id:'tga-gal',label:'Gitterauslass',icon:'·',level:4},{id:'tga-tv',label:'Tellerventil',icon:'·',level:4}]},
+        {id:'tga-sanabg',label:'Sanitär (Entnahmestellen)',icon:'·',level:3,children:[{id:'tga-du',label:'Dusche',icon:'·',level:4},{id:'tga-wt',label:'Waschtischarmatur',icon:'·',level:4},{id:'tga-wc',label:'WC Spülung',icon:'·',level:4}]},
+      ]},
+      { id:'tga-ver', label:'003 – Verteilungssysteme', icon:'🔗', level:2, children:[
+        {id:'tga-elver',label:'Elektro (Kabeltrassen)',icon:'·',level:3,children:[{id:'tga-kt',label:'Kabeltrassen',icon:'·',level:4}]},
+        {id:'tga-hkver',label:'Heizung / Kälte (Rohrleitungen)',icon:'·',level:3,children:[{id:'tga-rohr',label:'Rohre',icon:'·',level:4},{id:'tga-pump',label:'Pumpen',icon:'·',level:4}]},
+        {id:'tga-luver',label:'Lüftung (Luftleitungen)',icon:'·',level:3,children:[{id:'tga-lk',label:'Luftkanal',icon:'·',level:4}]},
+        {id:'tga-sanver',label:'Sanitär (Wasserleitungen)',icon:'·',level:3,children:[{id:'tga-srohr',label:'Rohr',icon:'·',level:4}]},
+      ]},
+      { id:'tga-ste', label:'004 – Steuerungssysteme', icon:'🎛', level:2, children:[
+        {id:'tga-elste',label:'Elektro (Schalt-/Sicherungstechnik)',icon:'·',level:3,children:[{id:'tga-sich',label:'Sicherungsautomat',icon:'·',level:4},{id:'tga-rel',label:'Relais',icon:'·',level:4}]},
+        {id:'tga-msrste',label:'MSR (Sensorik / Aktorik)',icon:'·',level:3,children:[{id:'tga-ds',label:'Drucksensor',icon:'·',level:4},{id:'tga-pm',label:'Präsenzmelder',icon:'·',level:4},{id:'tga-tf',label:'Temperaturfühler',icon:'·',level:4}]},
+      ]},
+    ]},
+  ]
+};
+
+// Flat node map
+const NODE_MAP = {};
+function flattenNodes(node) { NODE_MAP[node.id]=node; (node.children||[]).forEach(flattenNodes); }
+flattenNodes(OBJ_TREE);
+
+// Get all ancestor IDs
+function getAncestors(nodeId) {
+  const res=[];
+  function search(n, path) {
+    if(n.id===nodeId) { res.push(...path); return true; }
+    for(const c of (n.children||[])) { if(search(c,[...path,n.id])) return true; }
+    return false;
+  }
+  search(OBJ_TREE,[]); return res;
+}
+
+// Get all descendant IDs
+function getDescendants(node) {
+  const res=[];
+  function collect(n) { (n.children||[]).forEach(c=>{ res.push(c.id); collect(c); }); }
+  collect(node); return res;
+}
+
+// ─── IFC GROUPS FOR PARAM MODAL ───────────────────────────────────────
+const IFC_GROUPS_MODAL = [
+  {label:'Räumlich', types:['IfcSite','IfcBuilding','IfcBuildingStorey','IfcSpace','IfcZone']},
+  {label:'Bauteile allg.', types:['IfcElement','IfcBuildingElement']},
+  {label:'Bauteile spez.', types:['IfcWall','IfcSlab','IfcColumn','IfcBeam','IfcDoor','IfcWindow','IfcStair','IfcRoof','IfcCurtainWall']},
+  {label:'TGA', types:['IfcDistributionElement','IfcFlowTerminal','IfcFlowSegment']},
+];
+const LP_LIST=['LP1','LP2','LP3','LP4','LP5','LP6','LP7','LP8','LP9'];
+const AWF_COLORS_LIST=['#3b82f6','#00c9a7','#8b5cf6','#f59e0b','#ef4444','#10b981','#ec4899','#0ea5e9'];
+const DTYPE_SHORT={IfcLabel:'Text',IfcText:'L.Text',IfcReal:'Dez.',IfcInteger:'Ganz.',IfcBoolean:'Bool.',Datum:'Datum',IfcLengthMeasure:'Länge',IfcAreaMeasure:'Fläche',IfcVolumeMeasure:'Vol.',IfcIdentifier:'ID'};
+
+// ─── STATE ────────────────────────────────────────────────────────────
+let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={};
+let mode='global', pid=null, selectedNodeId=null;
+let editParamId=null, editParamScope=null;
+let confirmCb=null, importRows=[], importScope='global', importTab2='csv';
+let selectedIfcTypes=[], selectedPhases=[];
+let dragParamId=null;
+let glibCat='alle', libSearch='', libCatFilter='alle';
+let expandedNodes=new Set(['root','rau','tga']); // default expanded
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+function init() {
+  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};document.getElementById('sb-user').textContent=s.name||'BIM Manager';}catch(e){}
+  try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
+  try{PARAM_GROUPS=JSON.parse(localStorage.getItem(GRP_KEY))||[];}catch(e){PARAM_GROUPS=[];}
+  if(!PARAM_GROUPS.length){PARAM_GROUPS=[...DEFAULT_GROUPS];saveGroups();}
+  else rebuildGrpMap();
+  try{globalParams=JSON.parse(localStorage.getItem(GLOBAL_KEY))||[];}catch(e){globalParams=[];}
+  try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
+  try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
+  try{exclusions=JSON.parse(localStorage.getItem(EXCL_KEY))||{};}catch(e){exclusions={};}
+  try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
+  if(!globalParams.length){globalParams=sampleGlobal();saveGlobal();}
+  buildIfcSelector(); buildPhaseGridModal(); buildAwfColorGrid();
+  render();
+}
+function saveGlobal(){localStorage.setItem(GLOBAL_KEY,JSON.stringify(globalParams));}
+function savePP(){localStorage.setItem(PPARAM_KEY,JSON.stringify(projParams));}
+function saveAssign(){localStorage.setItem(ASSIGN_KEY,JSON.stringify(assignments));}
+function saveExcl() {localStorage.setItem(EXCL_KEY, JSON.stringify(exclusions));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+// ─── SAMPLE GLOBAL PARAMS ─────────────────────────────────────────────
+function sampleGlobal(){
+  // Vollständig übernommen aus LastBIM Objekt-Stammkatalog – Reiter "Merkmalsübersicht"
+  return [
+    // ── 000 Waveware Klassifizierung (projektspezifisch) ──────────────
+    {id:uid(),name:'E+H Gebäudescode',             pset:'Pset_BuildingCommon',              attr:'BuildingID',                dtype:'IfcLabel',   grp:'000',ifcTypes:['IfcBuilding'],            phases:[],              desc:'Interner Gebäudecode',                   guid:'1d463616-4b59-44e0-9ce3-2281c2518686'},
+    {id:uid(),name:'E+H Liegenschaftscode',         pset:'Pset_SiteCommon',                  attr:'SiteID',                    dtype:'IfcLabel',   grp:'000',ifcTypes:['IfcSite'],                phases:[],              desc:'Interner Liegenschaftscode',             guid:'39c23cc6-8878-456a-a2aa-e150858f9794'},
+    // ── 001 Identifikation (alle Objekte) ─────────────────────────────
+    {id:uid(),name:'Geschoss',                      pset:'Pset_ElementCommon',               attr:'Level',                     dtype:'IfcLabel',   grp:'001',ifcTypes:['IfcElement'],             phases:['LP2','LP3','LP4'],desc:'Geschosszuordnung des Objekts',          guid:'1cdaf294-71f2-4bf6-a026-887d25c7de39'},
+    {id:uid(),name:'Material',                      pset:'Pset_ElementCommon',               attr:'Material',                  dtype:'IfcLabel',   grp:'001',ifcTypes:['IfcElement'],             phases:['LP3','LP4'],   desc:'Materialbezeichnung',                    guid:'d756747c-f117-4dff-af2f-287b872c899c'},
+    {id:uid(),name:'Material-Klassifizierung',      pset:'Pset_ElementCommon',               attr:'MaterialClassification',    dtype:'IfcLabel',   grp:'001',ifcTypes:['IfcElement'],             phases:['LP3','LP4'],   desc:'z. B. Beton, Dämmung, Glas, Holz, Mauerwerk, Stahl',guid:'4a2ffd07-e3f4-4fcc-aeea-db2ac5135715'},
+    {id:uid(),name:'Name',                          pset:'Pset_ElementCommon',               attr:'Reference',                 dtype:'IfcLabel',   grp:'001',ifcTypes:['IfcElement'],             phases:['LP3','LP4','LP5'],desc:'Eindeutige Bezeichnung des Objekts',     guid:'0dc44a57-6941-419f-bb28-a6f0ca726228'},
+    {id:uid(),name:'Objekttyp',                     pset:'Pset_ElementCommon',               attr:'Category',                  dtype:'IfcLabel',   grp:'001',ifcTypes:['IfcElement'],             phases:['LP3','LP4'],   desc:'Typbezeichnung / Bauteilkategorie',      guid:'3958d757-0177-4e62-a4e4-396cf3fdeb19'},
+    {id:uid(),name:'Zuordnung DIN 276',             pset:'Pset_ElementCommon',               attr:'Classification',            dtype:'IfcLabel',   grp:'001',ifcTypes:['IfcElement'],             phases:['LP3','LP4','LP5'],desc:'Kostengruppe nach DIN 276',             guid:'2fb4e110-a91e-458f-93bd-3d0f131944b6'},
+    // ── 010 Baukonstruktion (Bauteile) ────────────────────────────────
+    {id:uid(),name:'Brandschutzanforderungen',      pset:'Pset_ElementCommon',               attr:'FireRating',                dtype:'IfcBoolean', grp:'010',ifcTypes:['IfcBuildingElement'],    phases:['LP3','LP4'],   desc:'Brandschutzklassifizierung vorhanden Ja/Nein', guid:'31232079-9a83-4cc9-8b72-c42185f76e95'},
+    {id:uid(),name:'Innen / Aussen',                pset:'Pset_ElementCommon',               attr:'IsExternal',                dtype:'IfcLabel',   grp:'010',ifcTypes:['IfcBuildingElement'],    phases:['LP2','LP3'],   desc:'Kennzeichnung als Innen- oder Außenbauteil', guid:'2c5f9f7f-2ba2-4d79-99ce-e4c978695c0a'},
+    {id:uid(),name:'Schallschutzanforderungen',     pset:'Pset_ElementCommon',               attr:'AcousticRating',            dtype:'IfcBoolean', grp:'010',ifcTypes:['IfcBuildingElement'],    phases:['LP3','LP4'],   desc:'Schallschutzklassifizierung vorhanden Ja/Nein', guid:'acbcb2c9-3d26-4527-b7e2-919b1a3aa5aa'},
+    {id:uid(),name:'Tragendes Bauteil',             pset:'Pset_WallCommon',                  attr:'LoadBearing',               dtype:'IfcBoolean', grp:'010',ifcTypes:['IfcBuildingElement'],    phases:['LP3'],         desc:'Tragendes Bauteil Ja / Nein',            guid:'f5aa90d7-4a68-4ccc-b911-681c6fa690ab'},
+    // ── 011 Raum Merkmale ─────────────────────────────────────────────
+    {id:uid(),name:'Belegung (Personenanzahl)',      pset:'Pset_SpaceCommon',                 attr:'OccupantNumber',            dtype:'IfcInteger', grp:'011',ifcTypes:['IfcSpace'],               phases:['LP3'],         desc:'Maximale Anzahl Personen im Raum',       guid:'72f4a184-db5b-44c1-b838-51c4b935b421'},
+    {id:uid(),name:'Bodenbelag',                    pset:'Pset_SpaceCommon',                 attr:'FloorCovering',             dtype:'IfcLabel',   grp:'011',ifcTypes:['IfcSpace'],               phases:['LP4','LP5'],   desc:'Art des Bodenbelags',                    guid:'8f63d183-83cf-494e-9ade-adc532074445'},
+    {id:uid(),name:'Deckenbekleidung',              pset:'Pset_SpaceCommon',                 attr:'CeilingCovering',           dtype:'IfcLabel',   grp:'011',ifcTypes:['IfcSpace'],               phases:['LP4','LP5'],   desc:'Art der Deckenbekleidung',               guid:'5f73edda-2756-4fb3-8b40-45d33b3c6a3c'},
+    {id:uid(),name:'Flächenart nach DIN 277',       pset:'Qto_SpaceBaseQuantities',          attr:'NetFloorArea',              dtype:'IfcLabel',   grp:'011',ifcTypes:['IfcSpace'],               phases:['LP3','LP4'],   desc:'Flächenkategorie nach DIN 277',          guid:'a8be61d4-08e1-4d57-a3d6-12915c72e09c'},
+    {id:uid(),name:'Installationsboden',            pset:'Pset_SpaceCommon',                 attr:'HasInstallationFloor',      dtype:'IfcBoolean', grp:'011',ifcTypes:['IfcSpace'],               phases:['LP4'],         desc:'Doppelboden / Installationsboden vorhanden Ja/Nein', guid:'4212ba40-f01b-44d4-a735-bb8cbd776d40'},
+    {id:uid(),name:'Installationsdecke',            pset:'Pset_SpaceCommon',                 attr:'HasInstallationCeiling',    dtype:'IfcBoolean', grp:'011',ifcTypes:['IfcSpace'],               phases:['LP4'],         desc:'Systemdecke / Installationsdecke vorhanden Ja/Nein', guid:'d1ac17ef-f800-4f7d-84d2-3f852f105a0d'},
+    {id:uid(),name:'Notausgangsraum',               pset:'Pset_SpaceCommon',                 attr:'IsEmergencyExit',           dtype:'IfcBoolean', grp:'011',ifcTypes:['IfcSpace'],               phases:['LP3','LP4'],   desc:'Raum ist Notausgang Ja / Nein',          guid:'ffadc4ca-a187-46af-b9e6-08ae1e66485c'},
+    {id:uid(),name:'Nutzungsart nach DIN 277',      pset:'Pset_SpaceCommon',                 attr:'OccupancyType',             dtype:'IfcLabel',   grp:'011',ifcTypes:['IfcSpace'],               phases:['LP2','LP3'],   desc:'Raumnutzungsart gemäß DIN 277',          guid:'dc984cd7-1756-47f5-9fd4-d3cc7b96c526'},
+    {id:uid(),name:'Raumnummer',                    pset:'Pset_SpaceCommon',                 attr:'Reference',                 dtype:'IfcLabel',   grp:'011',ifcTypes:['IfcSpace'],               phases:['LP2','LP3'],   desc:'Raumnummer aus Raumprogramm',            guid:'4f3d0d34-c28a-495a-ba9c-4f32cf09d175'},
+    {id:uid(),name:'Raumtyp',                       pset:'Pset_SpaceCommon',                 attr:'Category',                  dtype:'IfcLabel',   grp:'011',ifcTypes:['IfcSpace'],               phases:['LP2','LP3'],   desc:'Raumtypbezeichnung',                     guid:'365936e8-732e-41f3-bdff-80cfc290dc38'},
+    // ── 019 Treppen Merkmale ──────────────────────────────────────────
+    {id:uid(),name:'Anzahl der Auftritte',          pset:'Pset_StairCommon',                 attr:'NumberOfTreads',            dtype:'IfcInteger', grp:'019',ifcTypes:['IfcStair'],               phases:['LP3','LP4'],   desc:'Anzahl der Trittstufen',                 guid:'23ef192a-4ff3-4314-a8d8-d94d1e141450'},
+    {id:uid(),name:'Anzahl der Steigungen',         pset:'Pset_StairCommon',                 attr:'NumberOfRisers',            dtype:'IfcInteger', grp:'019',ifcTypes:['IfcStair'],               phases:['LP3','LP4'],   desc:'Anzahl der Steigungen',                  guid:'53cd2ae8-f0c7-4cba-baaa-a76d563a87c7'},
+    {id:uid(),name:'Auftrittsbreite',               pset:'Pset_StairCommon',                 attr:'TreadDepth',                dtype:'IfcReal',    grp:'019',ifcTypes:['IfcStair'],               phases:['LP3','LP4'],   desc:'Auftrittsbreite in mm',                  guid:'1fbeece3-ef8a-424b-badb-e26f1d2947d0'},
+    {id:uid(),name:'Steigung',                      pset:'Pset_StairCommon',                 attr:'RiserHeight',               dtype:'IfcInteger', grp:'019',ifcTypes:['IfcStair'],               phases:['LP3','LP4'],   desc:'Steigungshöhe in mm',                    guid:'f05cf162-be9d-4d36-a05b-a58ec141a4eb'},
+    // ── 030 Allg. tech. Anlagen (TGA) ────────────────────────────────
+    {id:uid(),name:'Systemabkürzung',               pset:'Pset_SystemCommon',                attr:'SystemAbbreviation',        dtype:'IfcLabel',   grp:'030',ifcTypes:['IfcDistributionElement'], phases:['LP4','LP5'],   desc:'Kurzbezeichnung des TGA-Systems',        guid:'29143f51-7d6d-40a7-bf88-fc9373b5d659'},
+    {id:uid(),name:'Systemklassifizierung',         pset:'Pset_SystemCommon',                attr:'SystemClassification',      dtype:'IfcLabel',   grp:'030',ifcTypes:['IfcDistributionElement'], phases:['LP4','LP5'],   desc:'Klassifizierung des TGA-Systems',        guid:'933c8c33-845f-40bd-b973-a0a451414350'},
+    {id:uid(),name:'Systemname',                    pset:'Pset_SystemCommon',                attr:'SystemName',                dtype:'IfcLabel',   grp:'030',ifcTypes:['IfcDistributionElement'], phases:['LP4','LP5'],   desc:'Vollständiger Name des TGA-Systems',     guid:'a6876846-d516-468e-9e6f-e7d61755cb38'},
+    {id:uid(),name:'Systemtyp',                     pset:'Pset_SystemCommon',                attr:'SystemType',                dtype:'IfcLabel',   grp:'030',ifcTypes:['IfcDistributionElement'], phases:['LP4','LP5'],   desc:'Typ des TGA-Systems',                    guid:'09c8afd9-9422-461c-be1e-24185840acc7'},
+    // ── 031 AKS-Klassifizierung ───────────────────────────────────────
+    {id:uid(),name:'AKS-Nummer',                    pset:'Pset_SystemCommon',                attr:'AKSNumber',                 dtype:'IfcLabel',   grp:'031',ifcTypes:['IfcDistributionElement'], phases:['LP4','LP5'],   desc:'Anlagenkennzeichnungssystem-Nummer',     guid:'243497b5-6d25-47b6-a8cc-1185c895d227'},
+    // ── 050 Produktinformationen ──────────────────────────────────────
+    {id:uid(),name:'Anzahl Netzanschluss 230V',     pset:'Pset_ElectricalDeviceCommon',      attr:'NumberOf230VConnections',   dtype:'IfcInteger', grp:'050',ifcTypes:['IfcDistributionElement'], phases:['LP5','LP6'],   desc:'Anzahl der 230V-Netzanschlüsse',         guid:'22ad8862-c06a-4965-b55f-2ae3af6bc170'},
+    {id:uid(),name:'Anzahl Netzanschluss 400V',     pset:'Pset_ElectricalDeviceCommon',      attr:'NumberOf400VConnections',   dtype:'IfcInteger', grp:'050',ifcTypes:['IfcDistributionElement'], phases:['LP5','LP6'],   desc:'Anzahl der 400V-Netzanschlüsse',         guid:'2d4549b7-de6b-40e1-b41e-aee94dde44be'},
+    {id:uid(),name:'Artikelnummer',                 pset:'Pset_ManufacturerTypeInformation', attr:'ArticleNumber',             dtype:'IfcLabel',   grp:'050',ifcTypes:['IfcElement'],             phases:['LP5','LP6'],   desc:'Herstellerartikelnummer',                guid:'248f9784-8e56-4d17-bcb2-b7f2e8e9ab33'},
+    {id:uid(),name:'Hersteller',                    pset:'Pset_ManufacturerTypeInformation', attr:'Manufacturer',              dtype:'IfcLabel',   grp:'050',ifcTypes:['IfcElement'],             phases:['LP5','LP6'],   desc:'Name des Herstellers',                   guid:'9000d14f-2ff8-4d2a-82ae-74a19bc3d77e'},
+    {id:uid(),name:'Nennleistung in KW',            pset:'Pset_ElectricalDeviceCommon',      attr:'RatedPower',                dtype:'IfcInteger', grp:'050',ifcTypes:['IfcDistributionElement'], phases:['LP5','LP6'],   desc:'Elektrische Nennleistung in Kilowatt',   guid:'07ad2d83-e5ac-40be-a524-f939bd305efd'},
+    {id:uid(),name:'Produktname',                   pset:'Pset_ManufacturerTypeInformation', attr:'ModelLabel',                dtype:'IfcLabel',   grp:'050',ifcTypes:['IfcElement'],             phases:['LP5','LP6'],   desc:'Produktbezeichnung laut Hersteller',     guid:'59b06d3f-f837-4cf1-b7fd-a0c250adf23c'},
+    // ── 051 Betriebsrelevante Merkmale (FM) ──────────────────────────
+    {id:uid(),name:'Ansprechpartner',               pset:'Pset_MaintenanceCommon',           attr:'ContactPerson',             dtype:'IfcLabel',   grp:'051',ifcTypes:['IfcElement'],             phases:['LP8','LP9'],   desc:'Ansprechpartner für Wartung und Betrieb',guid:'71de0910-71f0-436f-b483-03a1393d5b30'},
+    {id:uid(),name:'Gewährleistungsbeginn',         pset:'Pset_MaintenanceCommon',           attr:'WarrantyStartDate',         dtype:'Datum',      grp:'051',ifcTypes:['IfcElement'],             phases:['LP8','LP9'],   desc:'Beginn der Gewährleistungsfrist',        guid:'c69d15a1-378b-48d3-bc8b-d2646d6d3b08'},
+    {id:uid(),name:'Gewährleistungsende',           pset:'Pset_MaintenanceCommon',           attr:'WarrantyEndDate',           dtype:'Datum',      grp:'051',ifcTypes:['IfcElement'],             phases:['LP9'],         desc:'Ende der Gewährleistungsfrist',          guid:'dcf02ea2-9c92-4b58-b040-82872e7be469'},
+    {id:uid(),name:'Identifikationsnummer',         pset:'Pset_MaintenanceCommon',           attr:'Identifier',                dtype:'IfcLabel',   grp:'051',ifcTypes:['IfcElement'],             phases:['LP8','LP9'],   desc:'Eindeutige FM-Identifikationsnummer',   guid:'6c16642d-4d81-467e-9a63-b9f697302263'},
+    {id:uid(),name:'Inbetriebnahme',                pset:'Pset_MaintenanceCommon',           attr:'CommissioningDate',         dtype:'Datum',      grp:'051',ifcTypes:['IfcElement'],             phases:['LP8'],         desc:'Datum der Inbetriebnahme',               guid:'7b067386-df07-4c19-b4b3-b05c54e30d65'},
+    {id:uid(),name:'Kaufdatum',                     pset:'Pset_MaintenanceCommon',           attr:'PurchaseDate',              dtype:'Datum',      grp:'051',ifcTypes:['IfcElement'],             phases:['LP8'],         desc:'Datum des Kaufs / der Beschaffung',     guid:'59223c18-dfe2-41a5-8295-b9da0cad8372'},
+    {id:uid(),name:'Lieferant',                     pset:'Pset_MaintenanceCommon',           attr:'Supplier',                  dtype:'IfcLabel',   grp:'051',ifcTypes:['IfcElement'],             phases:['LP5','LP6','LP8'],desc:'Name des Lieferanten',                  guid:'c2f0d8bb-6189-4484-a6ce-dde7949e4ee1'},
+    // ── AA Stahlbeton Merkmale ────────────────────────────────────────
+    {id:uid(),name:'Bewehrungsgrad',                pset:'Pset_ConcreteElementCommon',       attr:'ReinforcementContent',      dtype:'IfcInteger', grp:'AA-Beton',ifcTypes:['IfcBuildingElement'],phases:['LP4','LP5'],   desc:'Bewehrungsgehalt in kg/m³',              guid:'86c16861-701f-4260-9f9d-d43405383b80'},
+    {id:uid(),name:'Druckfestigkeitsklasse Beton',  pset:'Pset_ConcreteElementCommon',       attr:'StrengthClass',             dtype:'IfcLabel',   grp:'AA-Beton',ifcTypes:['IfcBuildingElement'],phases:['LP3','LP4','LP5'],desc:'z. B. C25/30 nach DIN EN 206',        guid:'c587fbae-79d2-4752-b5cf-ee7f60a04aa0'},
+    {id:uid(),name:'Expositionsklasse',             pset:'Pset_ConcreteElementCommon',       attr:'ExposureClass',             dtype:'IfcLabel',   grp:'AA-Beton',ifcTypes:['IfcBuildingElement'],phases:['LP3','LP4'],   desc:'Expositionsklasse nach DIN EN 206',      guid:'67091739-0248-4494-86a1-bc27d0cc07ba'},
+    // ── AA Stahlmerkmale ──────────────────────────────────────────────
+    {id:uid(),name:'Baustahlgüte',                  pset:'Pset_SteelElementCommon',          attr:'SteelGrade',                dtype:'IfcLabel',   grp:'AA-Stahl',ifcTypes:['IfcBuildingElement'],phases:['LP4','LP5'],   desc:'z. B. S235, S355',                       guid:'2789b2f8-f35e-451f-b621-b225c6cbb996'},
+    {id:uid(),name:'Korrosionsschutz',              pset:'Pset_SteelElementCommon',          attr:'CorrosionProtection',       dtype:'IfcBoolean', grp:'AA-Stahl',ifcTypes:['IfcBuildingElement'],phases:['LP4','LP5'],   desc:'Korrosionsschutz vorhanden Ja/Nein',     guid:'a9edddf5-0625-4032-b8d2-55c52e246012'},
+    {id:uid(),name:'Stahlprofil',                   pset:'Pset_SteelElementCommon',          attr:'SteelProfile',              dtype:'IfcLabel',   grp:'AA-Stahl',ifcTypes:['IfcBuildingElement'],phases:['LP4','LP5'],   desc:'Profilbezeichnung z. B. HEA 200',        guid:'3c79187b-4d77-4581-b3c8-94f174ed546b'},
+    // ── BA Tür Merkmale ───────────────────────────────────────────────
+    {id:uid(),name:'Brandschutztür',                pset:'Pset_DoorCommon',                  attr:'FireRating',                dtype:'IfcBoolean', grp:'BA-Tuer',ifcTypes:['IfcDoor'],            phases:['LP3','LP4'],   desc:'T30 / T60 / T90',                        guid:'aa2013c8-33c1-4f14-a505-fbc1b6111796'},
+    {id:uid(),name:'Code Handle',                   pset:'Pset_DoorCommon',                  attr:'HasCodeHandle',             dtype:'IfcBoolean', grp:'BA-Tuer',ifcTypes:['IfcDoor'],            phases:['LP5'],         desc:'Codierbarer Türgriff vorhanden',          guid:'a5bf942b-4e9d-42e4-851f-7a65fd461909'},
+    {id:uid(),name:'Exit Controller',               pset:'Pset_DoorCommon',                  attr:'HasExitController',         dtype:'IfcBoolean', grp:'BA-Tuer',ifcTypes:['IfcDoor'],            phases:['LP5'],         desc:'Türöffner / Exit Controller vorhanden',  guid:'3b5b6037-3d3f-4239-aea3-d9b86e62d846'},
+    {id:uid(),name:'Luftfrachtsicherheit Anforderungen',pset:'Pset_DoorCommon',             attr:'AirCargoSecurity',          dtype:'IfcBoolean', grp:'BA-Tuer',ifcTypes:['IfcDoor'],            phases:['LP4','LP5'],   desc:'Anforderungen Luftfrachtsicherheit',     guid:'a30368b0-5591-464c-ae2d-1df00f1d63f5'},
+    {id:uid(),name:'Mozy Eco Schließsystem',        pset:'Pset_DoorCommon',                  attr:'HasMozyEcoLock',            dtype:'IfcBoolean', grp:'BA-Tuer',ifcTypes:['IfcDoor'],            phases:['LP5'],         desc:'Mozy Eco Schließzylinder vorhanden',     guid:'0d220049-8176-4beb-a3ea-34b5576fdf84'},
+    {id:uid(),name:'Trafo Zugang',                  pset:'Pset_DoorCommon',                  attr:'TransformerAccess',         dtype:'IfcBoolean', grp:'BA-Tuer',ifcTypes:['IfcDoor'],            phases:['LP4','LP5'],   desc:'Tür dient als Trafo-Zugang',             guid:'3f67ae75-4201-4a13-95d3-5e3d2a4bc209'},
+    {id:uid(),name:'Zylindernummer',                pset:'Pset_DoorCommon',                  attr:'CylinderNumber',            dtype:'IfcLabel',   grp:'BA-Tuer',ifcTypes:['IfcDoor'],            phases:['LP5','LP6'],   desc:'Schließanlagen-Zylindernummer',          guid:'5cbc3c31-e5c8-43f3-b2be-df90e1d81d00'},
+    // ── E+H Betriebsmittel Merkmale ───────────────────────────────────
+    {id:uid(),name:'Anlagengruppe',                 pset:'Pset_AssetCommon',                 attr:'AssetGroup',                dtype:'IfcLabel',   grp:'EH-BM',ifcTypes:['IfcDistributionElement'],phases:['LP5','LP8'],  desc:'Anlagengruppe nach E+H-Systematik',      guid:'0ed97005-c53b-45b8-8537-bbd8c83939e5'},
+    {id:uid(),name:'Anlagen Typ',                   pset:'Pset_AssetCommon',                 attr:'AssetType',                 dtype:'IfcLabel',   grp:'EH-BM',ifcTypes:['IfcDistributionElement'],phases:['LP5','LP8'],  desc:'Anlagentyp nach E+H-Systematik',         guid:'d983f632-f1a7-4aa2-b40d-8cecdf0e26bd'},
+    {id:uid(),name:'Betriebsmittel-Gruppe',         pset:'Pset_AssetCommon',                 attr:'EquipmentGroup',            dtype:'IfcLabel',   grp:'EH-BM',ifcTypes:['IfcDistributionElement'],phases:['LP5','LP8'],  desc:'Betriebsmittelgruppe nach E+H',          guid:'5f2b6168-66eb-4f5e-a9fb-cbb8d425f72a'},
+    {id:uid(),name:'Betriebsmitteltyp',             pset:'Pset_AssetCommon',                 attr:'EquipmentType',             dtype:'IfcLabel',   grp:'EH-BM',ifcTypes:['IfcDistributionElement'],phases:['LP5','LP8'],  desc:'Betriebsmitteltyp nach E+H',             guid:'94bb83ab-4330-4e81-b201-309562221b7e'},
+  ];
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function render(){
+  updateBadges(); renderTopbarRight();
+  mode==='global' ? renderGlobal() : renderProject();
+}
+function updateBadges(){
+  document.getElementById('tb-global').textContent=globalParams.length;
+  document.getElementById('nav-count').textContent=globalParams.length;
+  // Count unique global params that have been assigned in this project
+  const assignedSet=new Set();
+  if(pid) Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedSet.add(a.globalRef); }));
+  document.getElementById('tb-proj').textContent=pid?assignedSet.size:0;
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('tab-global').classList.toggle('active',m==='global');
+  document.getElementById('tab-proj').classList.toggle('active',m==='proj');
+  document.getElementById('tab-global').classList.toggle('g',true);
+  render();
+}
+function renderTopbarRight(){
+  const el=document.getElementById('topbar-right');
+  if(mode==='global'){
+    el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport('global')">⬆ Import</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportGlobalCSV()">⬇ Export</button>
+      <button class="btn btn-primary btn-sm" onclick="openParamModal(null,'global')">+ Merkmal</button>`;
+  } else {
+    el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport('proj')" ${!pid?'disabled':''}>⬆ Import</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportIDS()" ${!pid?'disabled':''}>⬇ IDS</button>
+      <button class="btn btn-primary btn-sm" onclick="openParamModal(null,'proj')" ${!pid?'disabled':''}>+ Merkmal</button>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// GLOBAL LIBRARY
+// ═══════════════════════════════════════════════════
+function renderGlobal(){
+  document.getElementById('proj-bar-wrap').innerHTML='';
+  const cats=['alle',...PARAM_GROUPS.map(g=>g.code)];
+  const list=globalParams.filter(p=>glibCat==='alle'||p.grp===glibCat);
+
+  document.getElementById('workspace').innerHTML=`
+  <div class="glib-layout">
+    <div class="glib-side">
+      <div style="padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)">Merkmalsgruppen</span>
+        <button class="btn btn-primary btn-sm" onclick="openGrpModal()" title="Neue Gruppe anlegen" style="padding:3px 8px;font-size:11px">+</button>
+      </div>
+      <div class="glib-cat ${glibCat==='alle'?'active':''}" onclick="glibCat='alle';renderGlobal()">
+        Alle Merkmale <span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${globalParams.length}</span>
+      </div>
+      ${PARAM_GROUPS.map(g=>`
+        <div class="glib-cat ${glibCat===g.code?'active':''}" style="border-left-color:${g.color};padding-right:4px;gap:0">
+          <span style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer;overflow:hidden" onclick="glibCat='${g.code}';renderGlobal()">
+            <span style="width:7px;height:7px;border-radius:50%;background:${g.color};flex-shrink:0"></span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><strong style="font-size:10px;font-family:var(--mono)">${g.code}</strong> ${g.name}</span>
+          </span>
+          <span style="display:flex;align-items:center;gap:1px;flex-shrink:0;margin-left:4px">
+            <span style="font-size:10px;font-family:var(--mono);color:var(--text3);padding:0 4px">${globalParams.filter(p=>p.grp===g.code).length}</span>
+            <button class="btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--text3)" onclick="event.stopPropagation();openGrpModal('${g.code}')" title="Bearbeiten">✎</button>
+            <button class="btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--text3)" onclick="event.stopPropagation();confirmDelGrp('${g.code}')" title="Löschen">⌫</button>
+          </span>
+        </div>`).join('')}
+    </div>
+    <div class="glib-body">
+      <div class="glib-banner">
+        <strong>◈ Globale Bibliothek</strong> – Merkmale hier sind projektübergreifende Vorlagen. Projekte erhalten beim Übernehmen eigene Kopien. Änderungen hier wirken sich nicht auf bestehende Projektkonfigurationen aus.
+      </div>
+      <div class="info-amber">
+        <strong>Strukturiert nach LastBIM-Katalog:</strong> 001-Identifikation (alle Objekte) · 010-Baukonstruktion · 011-Raum · 030-TGA · 050-Produkt · 051-Betrieb · AA/BA-Objektspezifisch
+      </div>
+      <div class="ptable-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
+        <div style="padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <input class="search-box" style="width:200px" placeholder="Suchen…" id="glib-q" value="" oninput="glibSearch()">
+        </div>
+        <div id="glib-table">${glibRows(list)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+function glibSearch(){const q=document.getElementById('glib-q')?.value.toLowerCase()||'';const list=globalParams.filter(p=>(glibCat==='alle'||p.grp===glibCat)&&(!q||p.name.toLowerCase().includes(q)||p.pset.toLowerCase().includes(q)));document.getElementById('glib-table').innerHTML=glibRows(list);}
+function glibRows(list){
+  if(!list.length) return `<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">Keine Merkmale gefunden.</div>`;
+  return `<table class="ptable"><thead><tr><th>Merkmal</th><th>Property Set · Attribut</th><th>Gruppe</th><th>Typ</th><th>LP</th><th style="width:100px"></th></tr></thead>
+  <tbody>${list.map(p=>{const g=GRP_MAP[p.grp]||{color:'#8899b0',name:p.grp,code:p.grp};return `<tr>
+    <td><div style="font-weight:500;color:var(--text);margin-bottom:2px">${p.name}</div>${p.desc?`<div style="font-size:10px;color:var(--text3)">${p.desc.slice(0,50)}</div>`:''}</td>
+    <td><div style="font-family:var(--mono);font-size:10px;color:var(--text2)">${p.pset}</div><div style="font-family:var(--mono);font-size:10px;color:var(--accent)">.${p.attr}</div></td>
+    <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono)"><span style="width:6px;height:6px;border-radius:50%;background:${g.color}"></span>${g.code}</span></td>
+    <td><span class="tag tag-gray">${DTYPE_SHORT[p.dtype]||p.dtype}</span></td>
+    <td><div style="display:flex;gap:2px;flex-wrap:wrap">${(p.phases||[]).map(ph=>`<span style="font-size:9px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 3px;border-radius:2px">${ph}</span>`).join('')}</div></td>
+    <td><div style="display:flex;gap:4px;justify-content:flex-end">
+      <button class="btn btn-xs btn-global" onclick="copyToProject('${p.id}')">→ Projekt</button>
+      <button class="btn-ghost" style="font-size:12px" onclick="openParamModal('${p.id}','global')">✎</button>
+      <button class="btn-ghost" style="font-size:12px;color:var(--err)" onclick="confirmDelParam('${p.id}','global')">⌫</button>
+    </div></td>
+  </tr>`;}).join('')}</tbody></table>`;
+}
+function copyToProject(gid){
+  if(!pid){setMode('proj');showToast('Wähle zuerst ein Projekt');return;}
+  const src=globalParams.find(p=>p.id===gid);if(!src) return;
+  if(!projParams[pid]) projParams[pid]=[];
+  if(projParams[pid].find(p=>p.globalRef===gid)){showToast('Bereits im Projekt vorhanden');return;}
+  projParams[pid].push({...src,id:uid(),globalRef:gid,addedAt:new Date().toISOString()});
+  savePP();setMode('proj');showToast(`✓ "${src.name}" in Projekt übernommen`);
+}
+
+// ═══════════════════════════════════════════════════
+// PROJECT MODE – 3 columns
+// ═══════════════════════════════════════════════════
+function renderProject(){
+  const awfList=pid?(awfData[pid]||[]):[];
+  document.getElementById('proj-bar-wrap').innerHTML=`
+    <div class="proj-bar">
+      <label>Projekt:</label>
+      <select class="psel" id="psel" onchange="onProjChange()">
+        <option value="">— Projekt wählen —</option>
+        ${projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('')}
+      </select>
+      ${pid?`<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(()=>{const s=new Set();Object.values(assignments[pid]||{}).forEach(l=>l.forEach(a=>{if(a.globalRef)s.add(a.globalRef);}));return s.size;})()}/${globalParams.length} Merkmale zugewiesen · ${awfList.length} AWF</span>`:''}
+      <div style="margin-left:auto;display:flex;gap:6px">
+        ${pid?`<button class="btn btn-secondary btn-sm" onclick="exportIDS()">⬇ IDS</button>`:''}
+      </div>
+    </div>`;
+  if(pid) setTimeout(()=>{const s=document.getElementById('psel');if(s) s.value=pid;},0);
+
+  if(!pid){
+    document.getElementById('workspace').innerHTML=`<div class="no-project"><div class="no-project-inner"><div class="ei">🏗️</div><div class="et">Kein Projekt ausgewählt</div><div style="font-size:12px">Wähle oben ein Projekt um Merkmale zu konfigurieren</div></div></div>`;
+    return;
+  }
+
+  const pp=projParams[pid]||[];
+  const awfs=awfData[pid]||[];
+  // Count unique global params assigned in this project
+  const assignedGlobalIds=new Set();
+  Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedGlobalIds.add(a.globalRef); }));
+
+  document.getElementById('workspace').innerHTML=`
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;flex:1;overflow:hidden">
+
+      <!-- COL 1: GLOBALE MERKMALSBIBLIOTHEK -->
+      <div class="param-col">
+        <div class="col-header">
+          <span class="col-title">◈ Globale Merkmale</span>
+          <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${assignedGlobalIds.size} zugewiesen</span>
+        </div>
+        <div class="search-row">
+          <input class="search-box" placeholder="Suchen…" value="${libSearch}" oninput="libSearch=this.value;renderProject()">
+        </div>
+        <div class="col-scroll" id="lib-scroll">${renderParamList(globalParams, assignedGlobalIds)}</div>
+      </div>
+
+      <!-- COL 2: OBJEKTBAUM -->
+      <div class="tree-col">
+        <div class="col-header">
+          <span class="col-title">Objektbaum</span>
+          <span style="font-size:10px;color:var(--text3)">Drag → Zuweisung</span>
+        </div>
+        <div class="col-header" style="padding:6px 14px;background:var(--surface2)">
+          <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Klicken: Merkmale anzeigen · Ziehen: Merkmal zuweisen</span>
+        </div>
+        <div class="tree-scroll">${renderTree(OBJ_TREE, 0)}</div>
+      </div>
+
+      <!-- COL 3: AWF-MATRIX -->
+      <div class="awf-col">
+        <div class="col-header">
+          <span class="col-title">${selectedNodeId?`Zuweisungen: ${NODE_MAP[selectedNodeId]?.label||''}`:!awfs.length?'AWF-Zuweisung':'Klicke ein Objekt im Baum'}</span>
+          ${selectedNodeId?`<span style="font-size:10px;color:var(--text3)">${countAssigned(selectedNodeId)} Merkmale zugewiesen</span>`:''}
+        </div>
+        <div class="matrix-wrap">
+          ${!selectedNodeId
+            ? `<div class="matrix-hint"><div class="ei">←</div>Klicke ein Objekt im Baum um Merkmale zu sehen und AWF-Checkboxen zu setzen.<br><br>Ziehe Merkmale oder ganze Gruppen auf Objekte um sie zuzuweisen.</div>`
+            : renderMatrix(selectedNodeId, awfs)}
+        </div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+function onProjChange(){
+  pid=document.getElementById('psel')?.value||null;
+  selectedNodeId=null;libSearch='';
+  if(pid&&!projParams[pid]) projParams[pid]=[];
+  if(pid&&!assignments[pid]) assignments[pid]={};
+  if(pid&&!exclusions[pid]) exclusions[pid]={};
+  if(pid&&!awfData[pid]) awfData[pid]=[];
+  render();
+}
+
+// ─── PARAM LIST (col 1) ───────────────────────────────────────────────
+function renderParamList(source, assignedGlobalIds){
+  const q=libSearch.toLowerCase();
+  const filtered=source.filter(p=>!q||p.name.toLowerCase().includes(q)||p.pset.toLowerCase().includes(q));
+  const grpOrder=PARAM_GROUPS.map(g=>g.code);
+  const byGrp={};
+  filtered.forEach(p=>{if(!byGrp[p.grp])byGrp[p.grp]=[];byGrp[p.grp].push(p);});
+  const grpCodes=[...grpOrder.filter(c=>byGrp[c]),...Object.keys(byGrp).filter(c=>!grpOrder.includes(c))];
+
+  if(!filtered.length) return `<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Keine Merkmale gefunden.</div>`;
+
+  return grpCodes.map(code=>{
+    const g=GRP_MAP[code]||{color:'#8899b0',name:code,code};
+    const items=byGrp[code];
+    const isOpen=libSearch||expandedNodes.has('grp-'+code);
+    // Count how many in this group are already assigned in this node
+    const assignedInGrp=items.filter(p=>assignedGlobalIds?.has(p.id)).length;
+    return `<div class="pgrp ${isOpen?'expanded':''}">
+      <div class="pgrp-header"
+        draggable="true"
+        ondragstart="onDragStartGroup(event,'${code}')"
+        ondragend="this.classList.remove('dragging')"
+        title="Gruppe auf Objekt ziehen → alle ${items.length} Merkmale auf einmal zuweisen"
+        onclick="toggleGrp('${code}')">
+        <div style="width:9px;height:9px;border-radius:50%;background:${g.color};flex-shrink:0"></div>
+        <span class="pgrp-code" style="color:${g.color}">${g.code}</span>
+        <span class="pgrp-name">${g.name}</span>
+        <span class="pgrp-count" style="${assignedInGrp>0?'background:var(--ok-bg);color:var(--ok)':''}">${assignedInGrp>0?assignedInGrp+'/':''}${items.length}</span>
+        <span style="font-size:9px;color:var(--text3);margin-left:2px" title="Gruppe ziehen = alle zuweisen">⠿</span>
+        <span class="pgrp-toggle ${isOpen?'open':''}">▶</span>
+      </div>
+      <div class="pgrp-items">
+        ${items.map(p=>{
+          const asgn=assignedGlobalIds?.has(p.id) && isAssignedToNode(p.id, selectedNodeId);
+          const assignedAnywhere=assignedGlobalIds?.has(p.id);
+          return `<div class="pcard ${asgn?'assigned-here':''}"
+            draggable="true"
+            ondragstart="onDragStart(event,'${p.id}')"
+            ondragend="this.classList.remove('dragging')"
+            title="Auf Objekt im Baum ziehen um zuzuweisen">
+            <div class="pcard-name">${p.name}${assignedAnywhere&&!asgn?` <span style="font-size:9px;color:var(--text3)">✓anders</span>`:''}${asgn?` <span class="pcard-badge">✓</span>`:''}</div>
+            <div class="pcard-sub">${p.pset}.${p.attr} · ${DTYPE_SHORT[p.dtype]||p.dtype}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleGrp(code){
+  const key='grp-'+code;
+  expandedNodes.has(key)?expandedNodes.delete(key):expandedNodes.add(key);
+  renderProject();
+}
+
+// ─── OBJECT TREE (col 2) ─────────────────────────────────────────────
+function renderTree(node, depth){
+  const hasChildren=node.children&&node.children.length>0;
+  const isOpen=expandedNodes.has(node.id);
+  const isSelected=selectedNodeId===node.id;
+  const count=countAssigned(node.id);
+  const inheritedCount=countInherited(node.id);
+  const indent=depth*14;
+
+  const nodeHtml=`<div class="tnode ${isSelected?'selected':''}" id="tnode-${node.id}"
+    style="padding-left:${indent}px"
+    onclick="selectNode('${node.id}')"
+    ondragover="event.preventDefault();document.getElementById('tnode-${node.id}').classList.add('drop-over')"
+    ondragleave="document.getElementById('tnode-${node.id}').classList.remove('drop-over')"
+    ondrop="onDrop(event,'${node.id}')">
+    <div class="tnode-inner">
+      <span class="tnode-toggle ${hasChildren?(isOpen?'open':''):('leaf')}"
+        onclick="event.stopPropagation();toggleNode('${node.id}')">${hasChildren?'▶':''}</span>
+      <span class="tnode-icon">${node.icon||'·'}</span>
+      <span class="tnode-label l${Math.min(node.level,4)}">${node.label}</span>
+      ${count>0?`<span class="tnode-count">${count}</span>`:''}
+      ${inheritedCount>0&&count===0?`<span class="tnode-count" style="opacity:0.4;font-size:9px">↓${inheritedCount}</span>`:''}
+    </div>
+  </div>
+  ${hasChildren?`<div class="tchildren ${isOpen?'open':''}" id="tch-${node.id}">
+    ${node.children.map(c=>renderTree(c,depth+1)).join('')}
+  </div>`:''}`;
+  return nodeHtml;
+}
+function toggleNode(id){
+  expandedNodes.has(id)?expandedNodes.delete(id):expandedNodes.add(id);
+  const el=document.getElementById('tch-'+id);
+  const tog=document.querySelector(`#tnode-${id} .tnode-toggle`);
+  if(el){el.classList.toggle('open',expandedNodes.has(id));}
+  if(tog){tog.classList.toggle('open',expandedNodes.has(id));}
+}
+function selectNode(id){selectedNodeId=id;renderProject();}
+
+function countAssigned(nodeId){
+  if(!pid||!assignments[pid]||!nodeId) return 0;
+  return (assignments[pid][nodeId]||[]).length;
+}
+function countInherited(nodeId){
+  if(!pid||!nodeId) return 0;
+  const node=NODE_MAP[nodeId]; if(!node) return 0;
+  const excluded=exclusions[pid]?.[nodeId]||[];
+  const anc=getAncestors(nodeId);
+  let cnt=0;
+  anc.forEach(aid=>{
+    (assignments[pid]?.[aid]||[]).forEach(a=>{
+      if(!excluded.includes(a.globalRef)) cnt++;
+    });
+  });
+  return cnt;
+}
+function isAssignedToNode(globalId, nodeId){
+  // Check if a global param (by its global ID) is assigned to this specific node
+  if(!pid||!nodeId||!assignments[pid]) return false;
+  return !!(assignments[pid][nodeId]||[]).find(a=>a.globalRef===globalId);
+}
+// Legacy helper kept for matrix rendering
+function isAssignedTo(paramId, nodeId){
+  if(!pid||!nodeId||!assignments[pid]) return false;
+  return !!(assignments[pid][nodeId]||[]).find(a=>a.paramId===paramId||a.globalRef===paramId);
+}
+
+// ─── DRAG & DROP ──────────────────────────────────────────────────────
+function onDragStart(e, globalId){
+  dragParamId = 'PARAM:'+globalId;
+  e.dataTransfer.setData('text/plain', 'PARAM:'+globalId);
+  e.dataTransfer.effectAllowed='copy';
+  e.target.classList.add('dragging');
+}
+function onDragStartGroup(e, grpCode){
+  dragParamId = 'GROUP:'+grpCode;
+  e.dataTransfer.setData('text/plain', 'GROUP:'+grpCode);
+  e.dataTransfer.effectAllowed='copy';
+  e.target.classList.add('dragging');
+}
+
+// Auto-create project copy of a global param if not yet present, return project param ID
+function ensureProjParam(globalId){
+  if(!projParams[pid]) projParams[pid]=[];
+  const existing=projParams[pid].find(p=>p.globalRef===globalId);
+  if(existing) return existing.id;
+  const src=globalParams.find(p=>p.id===globalId); if(!src) return null;
+  const copy={...src, id:uid(), globalRef:globalId, addedAt:new Date().toISOString()};
+  projParams[pid].push(copy);
+  savePP();
+  return copy.id;
+}
+
+// Returns true if globalId is assigned at any ancestor AND not excluded at nodeId
+function isInheritedAt(globalId, nodeId){
+  const excluded = exclusions[pid]?.[nodeId] || [];
+  if(excluded.includes(globalId)) return false;
+  return getAncestors(nodeId).some(aid=>
+    (assignments[pid]?.[aid]||[]).some(a=>a.globalRef===globalId)
+  );
+}
+
+function assignOneParam(globalId, nodeId){
+  if(!assignments[pid]) assignments[pid]={};
+  if(!assignments[pid][nodeId]) assignments[pid][nodeId]=[];
+  // Already directly assigned here
+  if(assignments[pid][nodeId].find(a=>a.globalRef===globalId)) return false;
+  // If this param was explicitly excluded at this node, remove the exclusion (user re-adds it)
+  if(exclusions[pid]?.[nodeId]){
+    exclusions[pid][nodeId] = exclusions[pid][nodeId].filter(r=>r!==globalId);
+    saveExcl();
+  }
+  // Inherited from an ancestor AND not excluded → no need to add again
+  if(isInheritedAt(globalId, nodeId)) return false;
+  const projId=ensureProjParam(globalId); if(!projId) return false;
+  assignments[pid][nodeId].push({id:uid(), paramId:projId, globalRef:globalId, pflicht:true, awfIds:[]});
+  return true;
+}
+
+function onDrop(e, nodeId){
+  e.preventDefault();
+  document.getElementById('tnode-'+nodeId)?.classList.remove('drop-over');
+  const data=dragParamId||e.dataTransfer.getData('text/plain');
+  dragParamId=null;
+  if(!data||!pid){ showToast('Bitte zuerst ein Projekt wählen'); return; }
+  if(!assignments[pid]) assignments[pid]={};
+  if(!assignments[pid][nodeId]) assignments[pid][nodeId]=[];
+
+  if(data.startsWith('GROUP:')){
+    // Assign all params in this group
+    const grpCode=data.slice(6);
+    const grpParams=globalParams.filter(p=>p.grp===grpCode);
+    if(!grpParams.length){ showToast('Keine Merkmale in dieser Gruppe'); return; }
+    let added=0;
+    grpParams.forEach(p=>{ if(assignOneParam(p.id, nodeId)) added++; });
+    saveAssign();
+    selectedNodeId=nodeId;
+    renderProject();
+    const g=GRP_MAP[grpCode];
+    showToast(`✓ ${added} Merkmale aus „${g?.name||grpCode}" zugewiesen${added<grpParams.length?' ('+( grpParams.length-added)+' bereits vorhanden)':''}`);
+  } else {
+    // Single param
+    const globalId=data.startsWith('PARAM:')?data.slice(6):data;
+    const added=assignOneParam(globalId, nodeId);
+    saveAssign();
+    selectedNodeId=nodeId;
+    renderProject();
+    const p=globalParams.find(x=>x.id===globalId);
+    if(added) showToast(`✓ „${p?.name||globalId}" → ${NODE_MAP[nodeId]?.label||nodeId}`);
+    else showToast('Bereits zugewiesen');
+  }
+}
+
+// ─── AWF MATRIX (col 3) ───────────────────────────────────────────────
+function renderMatrix(nodeId, awfs){
+  const nodeAssign=(assignments[pid]?.[nodeId]||[]);
+  // Inherited: from ancestors, minus any explicitly excluded at this node
+  const nodeExcluded = exclusions[pid]?.[nodeId] || [];
+  const anc=getAncestors(nodeId);
+  const inherited=[];
+  anc.forEach(aid=>{
+    (assignments[pid]?.[aid]||[]).forEach(a=>{
+      // Skip if this globalRef is in the exclusion list for this node
+      if(nodeExcluded.includes(a.globalRef)) return;
+      inherited.push({...a, _from:NODE_MAP[aid]?.label||aid, _sourceNodeId:aid});
+    });
+  });
+
+  const allRows=[...inherited.map(a=>({...a,_inherited:true})), ...nodeAssign.map(a=>({...a,_inherited:false,_sourceNodeId:nodeId}))];
+
+  if(!allRows.length) return `<div class="matrix-hint" id="drop-zone-main"
+    ondragover="event.preventDefault();this.classList.add('active')"
+    ondragleave="this.classList.remove('active')"
+    ondrop="onDrop(event,'${nodeId}');this.classList.remove('active')">
+    <div class="ei">↖</div>Noch keine Merkmale für <strong>${NODE_MAP[nodeId]?.label}</strong>.<br>
+    Ziehe Merkmale aus der Liste links hier her oder auf den Knoten im Baum.
+  </div>`;
+
+  const awfCols=awfs.length>0?awfs:[];
+
+  // Resolve param for each row
+  const resolvedRows = allRows.map(row=>{
+    const param=(projParams[pid]||[]).find(p=>p.id===row.paramId)
+               || globalParams.find(p=>p.id===row.globalRef);
+    return param ? {...row, _param:param} : null;
+  }).filter(Boolean);
+
+  // Group by Merkmalsgruppe, preserving inherited vs direct info
+  const grpOrder = PARAM_GROUPS.map(g=>g.code);
+  const byGrp = {};
+  resolvedRows.forEach(row=>{
+    const code = row._param.grp || 'ZZ';
+    if(!byGrp[code]) byGrp[code]=[];
+    byGrp[code].push(row);
+  });
+  const grpCodes=[...grpOrder.filter(c=>byGrp[c]),...Object.keys(byGrp).filter(c=>!grpOrder.includes(c))];
+
+  // AWF column headers
+  const awfHeaders = awfCols.map(a=>`<th class="th-awf">
+    <div class="awf-color-bar" style="background:${a.color||'#8899b0'}"></div>
+    <span class="th-awf-name">${a.name}</span>
+  </th>`).join('') + (!awfCols.length?`<th class="th-awf" style="opacity:0.4;min-width:130px"><span class="th-awf-name">AWF 1</span><div class="th-awf-sub">im AWF-Modul anlegen</div></th>`:'');
+
+  const tableBody = grpCodes.map(code=>{
+    const g = GRP_MAP[code]||{color:'#8899b0',name:code,code};
+    const rows = byGrp[code];
+    const inheritedCount = rows.filter(r=>r._inherited).length;
+
+    // Group header row
+    const groupHeaderRow = `<tr>
+      <td colspan="${1 + awfCols.length + (!awfCols.length?1:0) + 1}"
+        style="padding:6px 12px;background:${g.color}18;border-bottom:1px solid ${g.color}40;border-top:1px solid var(--border)">
+        <span style="display:inline-flex;align-items:center;gap:7px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${g.color}"></span>
+          <span style="font-size:11px;font-weight:600;font-family:var(--mono);color:${g.color}">${g.code}</span>
+          <span style="font-size:11px;color:var(--text2)">${g.name}</span>
+          <span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-left:4px">${rows.length} Merkmale${inheritedCount>0?` · ${inheritedCount} vererbt`:''}</span>
+        </span>
+      </td>
+    </tr>`;
+
+    const paramRows = rows.map(row=>{
+      const param = row._param;
+      return `<tr style="${row._inherited?'background:#fffbeb':''}" title="${row._inherited?'Vererbt von: '+row._from:'Direkt zugewiesen'}">
+        <td class="td-param">
+          <div class="td-param-name">${param.name}${row._inherited?` <span class="inherited-label">↑ ${row._from}</span>`:''}</div>
+          <div class="td-param-sub">
+            <span style="font-family:var(--mono);font-size:9px">${param.pset}.${param.attr}</span>
+            <span class="tag tag-gray" style="font-size:9px;padding:1px 4px">${DTYPE_SHORT[param.dtype]||param.dtype}</span>
+          </div>
+        </td>
+        ${awfCols.map(awf=>`<td class="td-check">
+          <input type="checkbox" class="awf-cb" ${(row.awfIds||[]).includes(awf.id)?'checked':''}
+            onchange="toggleAwf('${nodeId}','${row.id}','${awf.id}',this.checked)" ${row._inherited?'disabled':''}>
+        </td>`).join('')}
+        ${!awfCols.length?`<td class="td-check"><input type="checkbox" class="awf-cb" disabled></td>`:''}
+        <td class="td-remove">
+          <button class="rm-btn"
+            onclick="removeAssignment('${row._inherited?nodeId:row._sourceNodeId}','${row.id}',${row._inherited},${row._inherited?`'${row.globalRef}'`:'null'})"
+            title="${row._inherited?'Hier und in Unterknoten ausblenden – Ursprungsknoten bleibt erhalten':'Aus Zuweisung entfernen'}">×</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    return groupHeaderRow + paramRows;
+  }).join('');
+
+  return `<div style="overflow:auto;flex:1;height:100%">
+    ${allRows.length>0?`<div class="info-blue" style="margin:12px 16px 0;font-size:11px;line-height:1.5">
+      Gelb hinterlegte Zeilen werden von übergeordneten Objektknoten <strong>vererbt</strong> und können hier nicht entfernt werden.
+      AWF-Checkboxen werden aktiv sobald Anwendungsfälle im Modul <em>Anwendungsfälle</em> angelegt sind.
+    </div>`:''}
+    <table class="mtable" style="margin:12px 0">
+      <thead>
+        <tr>
+          <th class="th-param">Merkmal</th>
+          ${awfHeaders}
+          <th style="padding:6px 10px;border-bottom:2px solid var(--border);font-size:10px;color:var(--text3);font-family:var(--mono);background:var(--surface);position:sticky;top:0;width:30px"></th>
+        </tr>
+      </thead>
+      <tbody>${tableBody}</tbody>
+    </table>
+    <div style="margin:0 16px 16px;border:2px dashed var(--border);border-radius:var(--r);padding:14px;text-align:center;font-size:12px;color:var(--text3)"
+      ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='var(--accent-dim)'"
+      ondragleave="this.style.borderColor='';this.style.background=''"
+      ondrop="onDrop(event,'${nodeId}');this.style.borderColor='';this.style.background=''">
+      Merkmal oder Gruppe hier ablegen
+    </div>
+  </div>`;
+}
+function toggleAwf(nodeId,assignId,awfId,checked){
+  const list=assignments[pid]?.[nodeId]; if(!list) return;
+  const a=list.find(x=>x.id===assignId); if(!a) return;
+  if(!a.awfIds) a.awfIds=[];
+  if(checked&&!a.awfIds.includes(awfId)) a.awfIds.push(awfId);
+  if(!checked) a.awfIds=a.awfIds.filter(x=>x!==awfId);
+  saveAssign();
+}
+function togglePflicht(nodeId,assignId){
+  const list=assignments[pid]?.[nodeId]; if(!list) return;
+  const a=list.find(x=>x.id===assignId); if(!a) return;
+  a.pflicht=!a.pflicht; saveAssign(); renderProject();
+}
+function removeAssignment(nodeId, assignId, isInherited, globalRef){
+  if(!pid) return;
+
+  if(!isInherited){
+    // Direct assignment: remove from this node
+    if(!assignments[pid]?.[nodeId]) return;
+    const entry = assignments[pid][nodeId].find(x=>x.id===assignId);
+    if(!entry) return;
+    const gRef = entry.globalRef;
+    assignments[pid][nodeId] = assignments[pid][nodeId].filter(x=>x.id!==assignId);
+
+    // Also remove from all descendants (direct assignments there)
+    const node = NODE_MAP[nodeId];
+    if(node && gRef){
+      getDescendants(node).forEach(descId=>{
+        if(assignments[pid]?.[descId])
+          assignments[pid][descId] = assignments[pid][descId].filter(a=>a.globalRef!==gRef);
+        // Also clear any exclusions in descendants since param is gone from ancestor now
+        if(exclusions[pid]?.[descId])
+          exclusions[pid][descId] = exclusions[pid][descId].filter(r=>r!==gRef);
+      });
+    }
+    saveAssign(); saveExcl();
+
+  } else {
+    // Inherited: add exclusion at THIS node and all its descendants
+    // The origin (ancestor) keeps its assignment untouched
+    if(!exclusions[pid]) exclusions[pid]={};
+    const applyExclusion = (nid) => {
+      if(!exclusions[pid][nid]) exclusions[pid][nid]=[];
+      if(!exclusions[pid][nid].includes(globalRef)) exclusions[pid][nid].push(globalRef);
+    };
+    applyExclusion(nodeId);
+    const node = NODE_MAP[nodeId];
+    if(node) getDescendants(node).forEach(applyExclusion);
+    saveExcl();
+  }
+
+  renderProject();
+  showToast(isInherited
+    ? 'Merkmal hier und in allen Unterknoten ausgeblendet – Ursprungsknoten bleibt unberührt'
+    : 'Merkmal aus diesem Knoten und allen Unterknoten entfernt');
+}
+
+// ─── GLOBAL PICKER ───────────────────────────────────────────────────
+function openGlobalPicker(){
+  if(!pid) return;
+  const alreadyRefs=(projParams[pid]||[]).map(p=>p.globalRef).filter(Boolean);
+  const available=globalParams.filter(p=>!alreadyRefs.includes(p.id));
+  if(!available.length){showToast('Alle globalen Merkmale bereits im Projekt');return;}
+  document.getElementById('import-title').textContent='Aus Globaler Bibliothek übernehmen';
+  document.getElementById('import-ol').classList.add('open');
+  document.getElementById('import-body-inner').innerHTML=`
+    <div class="info-purple" style="margin-bottom:12px">Wähle Merkmale für <strong>${projects.find(p=>p.id===pid)?.name||''}</strong>. Das Projekt erhält eigene Kopien.</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.gpick').forEach(c=>c.checked=true)">Alle</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.gpick').forEach(c=>c.checked=false)">Keine</button>
+    </div>
+    ${PARAM_GROUPS.map(g=>{
+      const items=available.filter(p=>p.grp===g.code);
+      if(!items.length) return '';
+      return `<div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:600;font-family:var(--mono);color:${g.color};text-transform:uppercase;padding:4px 0;display:flex;align-items:center;gap:6px">
+          <span style="width:7px;height:7px;border-radius:50%;background:${g.color}"></span>${g.code} – ${g.name}
+        </div>
+        ${items.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--border);font-size:12px">
+          <input type="checkbox" class="gpick" value="${p.id}" style="width:13px;height:13px;accent-color:var(--accent);flex-shrink:0">
+          <div style="flex:1"><div style="font-weight:500">${p.name}</div><div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${p.pset}.${p.attr}</div></div>
+          <span class="tag tag-gray">${DTYPE_SHORT[p.dtype]||p.dtype}</span>
+        </div>`).join('')}
+      </div>`;
+    }).join('')}`;
+  const btn=document.getElementById('import-ok');
+  btn.disabled=false;
+  btn.onclick=()=>{
+    const ids=[...document.querySelectorAll('.gpick:checked')].map(c=>c.value);
+    if(!ids.length){showToast('Nichts ausgewählt');return;}
+    if(!projParams[pid]) projParams[pid]=[];
+    ids.forEach(gid=>{const src=globalParams.find(p=>p.id===gid);if(src) projParams[pid].push({...src,id:uid(),globalRef:gid,addedAt:new Date().toISOString()});});
+    savePP();closeImport();renderProject();showToast(`✓ ${ids.length} Merkmale übernommen`);
+  };
+}
+
+// ─── PARAM MODAL ─────────────────────────────────────────────────────
+function buildIfcSelector(){
+  document.getElementById('ifc-sel-wrap').innerHTML=IFC_GROUPS_MODAL.map(g=>`
+    <div class="ifc-g">
+      <div class="ifc-g-label">${g.label}</div>
+      ${g.types.map(t=>`<div class="ifc-opt" id="io-${t}" onclick="toggleIfc('${t}')">
+        <input type="checkbox" id="ic-${t}" onclick="event.stopPropagation();toggleIfc('${t}')">
+        <label for="ic-${t}">${t}</label>
+      </div>`).join('')}
+    </div>`).join('');
+}
+function toggleIfc(t){
+  if(selectedIfcTypes.includes(t)) selectedIfcTypes=selectedIfcTypes.filter(x=>x!==t);
+  else selectedIfcTypes.push(t);
+  IFC_GROUPS_MODAL.flatMap(g=>g.types).forEach(x=>{
+    document.getElementById('ic-'+x)&&(document.getElementById('ic-'+x).checked=selectedIfcTypes.includes(x));
+    document.getElementById('io-'+x)?.classList.toggle('sel',selectedIfcTypes.includes(x));
+  });
+}
+function syncIfcCbs(){IFC_GROUPS_MODAL.flatMap(g=>g.types).forEach(t=>{const cb=document.getElementById('ic-'+t);const opt=document.getElementById('io-'+t);if(cb) cb.checked=selectedIfcTypes.includes(t);if(opt) opt.classList.toggle('sel',selectedIfcTypes.includes(t));});}
+
+function buildPhaseGridModal(){
+  document.getElementById('phase-grid-modal').innerHTML=LP_LIST.map(lp=>`<div class="ph ${selectedPhases.includes(lp)?'on':''}" id="ph-${lp}" onclick="togglePh('${lp}')">${lp}</div>`).join('');
+}
+function togglePh(lp){
+  if(selectedPhases.includes(lp)) selectedPhases=selectedPhases.filter(x=>x!==lp);
+  else selectedPhases.push(lp);
+  LP_LIST.forEach(p=>document.getElementById('ph-'+p)?.classList.toggle('on',selectedPhases.includes(p)));
+}
+function syncPhases(){LP_LIST.forEach(p=>document.getElementById('ph-'+p)?.classList.toggle('on',selectedPhases.includes(p)));}
+
+function openParamModal(id=null, scope='global'){
+  editParamId=id; editParamScope=scope;
+  document.getElementById('pm-title').textContent=id?'Merkmal bearbeiten':'Neues Merkmal';
+  document.getElementById('pm-save').textContent=id?'Änderungen speichern':'Speichern';
+  const list=scope==='global'?globalParams:(projParams[pid]||[]);
+  const src=id?list.find(p=>p.id===id):null;
+  if(src){
+    document.getElementById('p-name').value=src.name||'';
+    document.getElementById('p-desc').value=src.desc||'';
+    document.getElementById('p-pset').value=src.pset||'';
+    document.getElementById('p-attr').value=src.attr||'';
+    document.getElementById('p-dtype').value=src.dtype||'IfcLabel';
+    document.getElementById('p-grp').value=src.grp||'001';
+    selectedIfcTypes=[...(src.ifcTypes||[])];
+    selectedPhases=[...(src.phases||[])];
+  } else {
+    ['p-name','p-desc','p-pset','p-attr'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('p-dtype').value='IfcLabel';
+    document.getElementById('p-grp').value='001';
+    selectedIfcTypes=[]; selectedPhases=[];
+  }
+  syncIfcCbs(); syncPhases();
+  document.getElementById('param-ol').classList.add('open');
+  setTimeout(()=>document.getElementById('p-name').focus(),200);
+}
+function closeParamModal(){document.getElementById('param-ol').classList.remove('open');editParamId=null;}
+function saveParam(){
+  const name=document.getElementById('p-name').value.trim();
+  const pset=document.getElementById('p-pset').value.trim();
+  const attr=document.getElementById('p-attr').value.trim();
+  if(!name||!pset||!attr){showToast('Name, PSet und Attribut erforderlich');return;}
+  const data={id:editParamId||uid(),name,pset,attr,
+    desc:document.getElementById('p-desc').value.trim(),
+    dtype:document.getElementById('p-dtype').value,
+    grp:document.getElementById('p-grp').value,
+    ifcTypes:[...selectedIfcTypes],phases:[...selectedPhases],
+    updated:new Date().toISOString()};
+  const scope=editParamScope||'global';
+  if(scope==='global'){
+    if(editParamId){const i=globalParams.findIndex(p=>p.id===editParamId);if(i>-1) globalParams[i]=data;showToast('✓ Aktualisiert');}
+    else{globalParams.push(data);showToast('✓ Merkmal angelegt');}
+    saveGlobal();
+  } else {
+    if(!projParams[pid]) projParams[pid]=[];
+    if(editParamId){const i=projParams[pid].findIndex(p=>p.id===editParamId);if(i>-1) projParams[pid][i]={...data,globalRef:projParams[pid][i]?.globalRef};}
+    else projParams[pid].push(data);
+    savePP(); showToast('✓ Projektmerkmal '+(editParamId?'aktualisiert':'angelegt'));
+  }
+  closeParamModal(); render();
+}
+function confirmDelParam(id,scope){
+  if(scope==='global'){
+    const p=globalParams.find(x=>x.id===id);if(!p) return;
+    const usedIn=Object.entries(projParams).filter(([_,list])=>list.find(x=>x.globalRef===id)).map(([ppid])=>projects.find(x=>x.id===ppid)?.name||ppid).filter(Boolean);
+    document.getElementById('confirm-title').textContent='Globales Merkmal löschen?';
+    document.getElementById('confirm-body').innerHTML=`
+      <div style="background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--err)">
+        ⚠ Du löschst ein <strong>globales Merkmal</strong> aus der Bibliothek. Es muss danach neu erfasst werden – Projektkopien bleiben erhalten, aber der Bezug zur Bibliothek geht verloren.
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px"><strong>${p.name}</strong></div>
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${p.pset}.${p.attr}</div>
+      ${usedIn.length?`<div style="font-size:12px;color:var(--text3);margin-top:8px">Verwendet in: ${usedIn.join(', ')}</div>`:''}`;
+    confirmCb=()=>{
+      globalParams=globalParams.filter(x=>x.id!==id);
+      saveGlobal();closeConfirm();render();showToast('Globales Merkmal gelöscht');
+    };
+    document.getElementById('confirm-btn').onclick=confirmCb;
+    document.getElementById('confirm-ol').classList.add('open');
+  } else {
+    // Project param: remove instantly – no confirmation needed
+    projParams[pid]=(projParams[pid]||[]).filter(x=>x.id!==id);
+    Object.keys(assignments[pid]||{}).forEach(nodeId=>{
+      assignments[pid][nodeId]=(assignments[pid][nodeId]||[]).filter(a=>a.paramId!==id);
+    });
+    savePP();saveAssign();render();showToast('Projektmerkmal entfernt');
+  }
+}
+
+// ─── IMPORT ──────────────────────────────────────────────────────────
+function openImport(scope){
+  importScope=scope; importRows=[]; importTab2='csv';
+  document.getElementById('import-title').textContent=scope==='global'?'In Bibliothek importieren':'In Projekt importieren';
+  setImportTab('csv');
+  document.getElementById('import-ok').disabled=true;
+  document.getElementById('import-ok').onclick=doImport;
+  document.getElementById('import-ol').classList.add('open');
+}
+function closeImport(){document.getElementById('import-ol').classList.remove('open');importRows=[];}
+function setImportTab(t){
+  importTab2=t;
+  ['csv','excel','ids'].forEach(x=>document.getElementById('itab-'+x).classList.toggle('active',x===t));
+  const bd=document.getElementById('import-body-inner');
+  if(t==='csv'){bd.innerHTML=`<div class="info-blue" style="margin-bottom:10px">Spalten: <code>Name, PSet, Attribut, Datentyp, Gruppe, Leistungsphasen, Beschreibung</code></div>
+    <div class="drop-zone" onclick="document.getElementById('f-csv').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'csv')">
+      <input type="file" id="f-csv" accept=".csv,.txt" onchange="handleFile(this.files[0],'csv')">
+      <div style="font-size:28px">📄</div><div style="font-weight:600;color:var(--text2);margin-bottom:4px">CSV ablegen oder klicken</div><div style="font-size:11px;color:var(--text3)">.csv</div>
+    </div><div id="prev"></div>`;}
+  else if(t==='excel'){bd.innerHTML=`<div class="info-blue" style="margin-bottom:10px">Gleiche Spaltenstruktur wie CSV. Erste Zeile = Kopfzeile.</div>
+    <div class="drop-zone" onclick="document.getElementById('f-xl').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'excel')">
+      <input type="file" id="f-xl" accept=".xlsx,.xls" onchange="handleFile(this.files[0],'excel')">
+      <div style="font-size:28px">📊</div><div style="font-weight:600;color:var(--text2);margin-bottom:4px">Excel ablegen oder klicken</div><div style="font-size:11px;color:var(--text3)">.xlsx / .xls</div>
+    </div><div id="prev"></div>`;}
+  else{bd.innerHTML=`<div class="info-blue" style="margin-bottom:10px">IDS-Dateien (.ids XML) nach buildingSMART-Standard.</div>
+    <div class="drop-zone" onclick="document.getElementById('f-ids').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'ids')">
+      <input type="file" id="f-ids" accept=".ids,.xml" onchange="handleFile(this.files[0],'ids')">
+      <div style="font-size:28px">📋</div><div style="font-weight:600;color:var(--text2);margin-bottom:4px">IDS ablegen oder klicken</div><div style="font-size:11px;color:var(--text3)">.ids / .xml</div>
+    </div><div id="prev"></div>`;}
+}
+function handleFile(file,type){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{
+    if(type==='csv') parseCSV(e.target.result);
+    else if(type==='excel') parseExcel(e.target.result);
+    else parseIDS(e.target.result);
+  }catch(err){showToast('Fehler: '+err.message);}};
+  if(type==='excel') reader.readAsArrayBuffer(file);
+  else reader.readAsText(file,'utf-8');
+}
+function parseCSV(txt){
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+  const sep=lines[0].includes(';')?';':',';
+  const hdrs=lines[0].split(sep).map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  importRows=lines.slice(1).map(l=>{
+    const cols=l.split(sep).map(c=>c.replace(/^"|"$/g,'').trim());
+    const row={};hdrs.forEach((h,i)=>row[h]=cols[i]||'');return mapImportRow(row);
+  }).filter(r=>r.name&&r.pset&&r.attr);showPreview();
+}
+function parseExcel(buf){
+  if(typeof XLSX==='undefined'){showToast('Excel-Bibliothek nicht geladen');return;}
+  const wb=XLSX.read(buf,{type:'array'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+  importRows=data.map(row=>{const n={};Object.entries(row).forEach(([k,v])=>n[k.toLowerCase().trim()]=String(v).trim());return mapImportRow(n);}).filter(r=>r.name&&r.pset&&r.attr);showPreview();
+}
+function parseIDS(xml){
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  importRows=[];
+  doc.querySelectorAll('specification').forEach(spec=>{
+    const ifc=spec.querySelector('applicability entity name simpleValue')?.textContent||'IfcElement';
+    spec.querySelectorAll('requirements property').forEach(prop=>{
+      const pset=prop.querySelector('propertySet simpleValue')?.textContent||'';
+      const attr=prop.querySelector('baseName simpleValue')?.textContent||'';
+      const dtype=prop.getAttribute('datatype')||'IfcLabel';
+      if(pset&&attr) importRows.push({id:uid(),name:attr,pset,attr,dtype,grp:'ZZ',ifcTypes:[ifc],phases:[],desc:''});
+    });
+  });showPreview();
+}
+function mapImportRow(row){
+  const g=k=>([k,k.replace(/ /g,''),k.replace(/-/g,'')].map(x=>row[x]).find(v=>v!==undefined&&v!==''))||'';
+  return{id:uid(),name:g('name')||g('parametername')||g('merkmal'),pset:g('pset')||g('propertyset')||g('ifc property set'),attr:g('attribut')||g('attr')||g('attributname'),dtype:g('datentyp')||g('dtype')||'IfcLabel',grp:g('gruppe')||g('merkmalsgruppe')||'ZZ',ifcTypes:(g('ifc-typen')||'').split(/[;,]/).map(x=>x.trim()).filter(Boolean),phases:(g('leistungsphasen')||'').split(/[;,]/).map(x=>x.trim()).filter(Boolean),desc:g('beschreibung')||g('description')||''};
+}
+function showPreview(){
+  const el=document.getElementById('prev');if(!el) return;
+  if(!importRows.length){el.innerHTML=`<div style="padding:10px;color:var(--err);font-size:12px">Keine gültigen Merkmale erkannt.</div>`;return;}
+  document.getElementById('import-ok').disabled=false;
+  el.innerHTML=`<div style="font-size:11px;color:var(--text2);margin:10px 0 6px">${importRows.length} Merkmale erkannt:</div>
+    <div style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr>${['Name','PSet','Attribut','Typ','Gruppe'].map(h=>`<th style="padding:5px 8px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:left;font-size:10px;font-family:var(--mono);color:var(--text3)">${h}</th>`).join('')}</tr></thead>
+        <tbody>${importRows.slice(0,12).map(r=>`<tr>${[r.name,r.pset,r.attr,DTYPE_SHORT[r.dtype]||r.dtype,r.grp].map(v=>`<td style="padding:5px 8px;border-bottom:1px solid var(--border)">${v||'—'}</td>`).join('')}</tr>`).join('')}
+        ${importRows.length>12?`<tr><td colspan="5" style="padding:5px 8px;text-align:center;color:var(--text3);font-size:11px">… ${importRows.length-12} weitere</td></tr>`:''}</tbody>
+      </table>
+    </div>`;
+}
+function doImport(){
+  if(!importRows.length) return;
+  if(importScope==='global'){importRows.forEach(r=>globalParams.push(r));saveGlobal();showToast(`✓ ${importRows.length} Merkmale in Bibliothek importiert`);}
+  else{if(!pid){showToast('Kein Projekt');return;}if(!projParams[pid]) projParams[pid]=[];importRows.forEach(r=>projParams[pid].push(r));savePP();showToast(`✓ ${importRows.length} Merkmale in Projekt importiert`);}
+  closeImport();render();
+}
+
+// ─── AWF COLOR GRID ──────────────────────────────────────────────────
+function buildAwfColorGrid(){} // Placeholder - AWF creation in separate module
+
+// ─── GRUPPEN MODAL ────────────────────────────────────────────────────
+const GRP_COLORS = ['#00c9a7','#3b82f6','#8b5cf6','#f59e0b','#ef4444','#10b981','#f97316','#ec4899','#6366f1','#0ea5e9','#64748b','#94a3b8','#8899b0','#1e2d45'];
+let editingGrpCode = null;
+let grpColor = GRP_COLORS[0];
+
+function buildGrpColorSwatches(){
+  document.getElementById('grp-color-swatches').innerHTML = GRP_COLORS.map(c=>
+    `<div class="cswatch ${c===grpColor?'sel':''}" style="background:${c}" data-c="${c}" onclick="pickGrpColor('${c}')"></div>`
+  ).join('');
+}
+function pickGrpColor(c){
+  grpColor=c;
+  document.querySelectorAll('#grp-color-swatches .cswatch').forEach(s=>s.classList.toggle('sel',s.dataset.c===c));
+}
+
+function openGrpModal(code=null){
+  editingGrpCode=code;
+  document.getElementById('grp-title').textContent = code ? 'Gruppe bearbeiten' : 'Neue Merkmalsgruppe';
+  document.getElementById('grp-save').textContent  = code ? 'Änderungen speichern' : 'Anlegen';
+  if(code){
+    const g=GRP_MAP[code];
+    document.getElementById('g-code').value  = g?.code  || '';
+    document.getElementById('g-name').value  = g?.name  || '';
+    document.getElementById('g-scope').value = g?.scope || '';
+    grpColor = g?.color || GRP_COLORS[0];
+    // Lock code field when editing
+    document.getElementById('g-code').readOnly = true;
+    document.getElementById('g-code').style.opacity = '0.5';
+  } else {
+    document.getElementById('g-code').value  = '';
+    document.getElementById('g-name').value  = '';
+    document.getElementById('g-scope').value = '';
+    grpColor = GRP_COLORS[Math.floor(Math.random()*GRP_COLORS.length)];
+    document.getElementById('g-code').readOnly = false;
+    document.getElementById('g-code').style.opacity = '1';
+  }
+  buildGrpColorSwatches();
+  document.getElementById('grp-ol').classList.add('open');
+  setTimeout(()=>document.getElementById(code?'g-name':'g-code').focus(), 200);
+}
+function closeGrpModal(){ document.getElementById('grp-ol').classList.remove('open'); editingGrpCode=null; }
+
+function saveGrp(){
+  const code = document.getElementById('g-code').value.trim().replace(/\s+/g,'-');
+  const name = document.getElementById('g-name').value.trim();
+  if(!code || !name){ showToast('Code und Name sind Pflichtfelder'); return; }
+  if(!editingGrpCode && GRP_MAP[code]){ showToast(`Code „${code}" ist bereits vergeben`); return; }
+  if(editingGrpCode){
+    const i=PARAM_GROUPS.findIndex(g=>g.code===editingGrpCode);
+    if(i>-1) PARAM_GROUPS[i]={ code:editingGrpCode, name, color:grpColor, scope:document.getElementById('g-scope').value.trim() };
+  } else {
+    PARAM_GROUPS.push({ code, name, color:grpColor, scope:document.getElementById('g-scope').value.trim() });
+  }
+  saveGroups(); closeGrpModal(); renderGlobal();
+  showToast(editingGrpCode ? `✓ Gruppe „${name}" aktualisiert` : `✓ Gruppe „${name}" angelegt`);
+}
+
+function confirmDelGrp(code){
+  const g=GRP_MAP[code]; if(!g) return;
+  const paramCount=globalParams.filter(p=>p.grp===code).length;
+  document.getElementById('confirm-title').textContent='Merkmalsgruppe löschen?';
+  document.getElementById('confirm-body').innerHTML = paramCount > 0
+    ? `<div style="background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--err)">
+        ⚠ Die Gruppe <strong>${g.code} – ${g.name}</strong> enthält noch <strong>${paramCount} Merkmale</strong>. Diese werden der Gruppe <em>ZZ – Sonstige</em> zugewiesen.
+       </div>`
+    : `Gruppe <strong>${g.code} – ${g.name}</strong> wird dauerhaft gelöscht.`;
+  confirmCb=()=>{
+    if(paramCount>0){
+      globalParams.filter(p=>p.grp===code).forEach(p=>p.grp='ZZ');
+      saveGlobal();
+    }
+    PARAM_GROUPS=PARAM_GROUPS.filter(g=>g.code!==code);
+    saveGroups();
+    if(glibCat===code) glibCat='alle';
+    closeConfirm(); renderGlobal();
+    showToast(paramCount>0 ? `Gruppe gelöscht – ${paramCount} Merkmale nach ZZ verschoben` : 'Gruppe gelöscht');
+  };
+  document.getElementById('confirm-btn').onclick=confirmCb;
+  document.getElementById('confirm-ol').classList.add('open');
+}
+
+// ─── IDS EXPORT ──────────────────────────────────────────────────────
+function exportIDS(){
+  if(!pid){showToast('Erst Projekt wählen');return;}
+  const byNode={};
+  Object.entries(assignments[pid]||{}).forEach(([nodeId,asgns])=>{
+    if(asgns.length) byNode[nodeId]=asgns;
+  });
+  const specs=Object.entries(byNode).map(([nodeId,asgns])=>{
+    const ps=asgns.map(a=>{
+      const p=(projParams[pid]||[]).find(x=>x.id===a.paramId);if(!p) return '';
+      return `<ids:property datatype="${esc(p.dtype||'IfcLabel')}"${!a.pflicht?' minOccurs="0"':''}>
+          <ids:propertySet><ids:simpleValue>${esc(p.pset)}</ids:simpleValue></ids:propertySet>
+          <ids:baseName><ids:simpleValue>${esc(p.attr)}</ids:simpleValue></ids:baseName>
+        </ids:property>`;
+    }).join('');
+    // find IFC type from first param
+    const firstP=(projParams[pid]||[]).find(x=>x.id===asgns[0]?.paramId);
+    const ifc=(firstP?.ifcTypes||['IfcBuildingElement'])[0];
+    return `<ids:specification name="${esc(NODE_MAP[nodeId]?.label||nodeId)}" ifcVersion="IFC4">
+      <ids:applicability><ids:entity><ids:name><ids:simpleValue>${esc(ifc)}</ids:simpleValue></ids:name></ids:entity></ids:applicability>
+      <ids:requirements>${ps}</ids:requirements>
+    </ids:specification>`;
+  }).join('\n  ');
+  const xml=`<?xml version="1.0" encoding="utf-8"?>\n<ids:ids xmlns:ids="http://standards.buildingsmart.org/IDS" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/0.9.7/ids.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <ids:info><ids:title>BIM Manager – Merkmalserver</ids:title><ids:date>${new Date().toISOString().slice(0,10)}</ids:date></ids:info>\n  <ids:specifications>\n  ${specs}\n  </ids:specifications>\n</ids:ids>`;
+  const blob=new Blob([xml],{type:'application/xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`merkmalserver-${new Date().toISOString().slice(0,10)}.ids`;a.click();URL.revokeObjectURL(url);
+  showToast('✓ IDS-Datei exportiert');
+}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function exportGlobalCSV(){
+  const rows=[['Name','Beschreibung','IFC PropertySet','IFC Attribut','Datentyp','Gruppe','IFC-Typen','Leistungsphasen']];
+  globalParams.forEach(p=>rows.push([p.name,p.desc||'',p.pset,p.attr,p.dtype,p.grp,(p.ifcTypes||[]).join('; '),(p.phases||[]).join('; ')]));
+  const csv=rows.map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`merkmal-bibliothek-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);showToast('✓ CSV exportiert');
+}
+
+// ─── CONFIRM ─────────────────────────────────────────────────────────
+function closeConfirm(){document.getElementById('confirm-ol').classList.remove('open');confirmCb=null;}
+
+// ─── UTILS ───────────────────────────────────────────────────────────
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function comingSoon(){showToast('Modul wird in Kürze entwickelt');}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeParamModal();closeImport();closeConfirm();closeGrpModal();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='n'){e.preventDefault();mode==='global'?openParamModal(null,'global'):openParamModal(null,'proj');}
+});
+
+init();
+</script>
+</body>
+</html>

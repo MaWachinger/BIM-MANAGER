@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BIM Manager · Modellprüfung</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;--nav-hover:#1a2744;--nav-active:#152238;
+  --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.13);
+  --bg:#f0f3f8;--surface:#fff;--surface2:#f5f7fa;--border:#e2e8f0;
+  --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
+  --ok:#10b981;--ok-bg:#ecfdf5;--warn:#f59e0b;--warn-bg:#fffbeb;
+  --err:#ef4444;--err-bg:#fef2f2;--info:#3b82f6;--info-bg:#eff6ff;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --r:6px;--rl:10px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+.sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
+.logo{padding:20px 18px 18px;border-bottom:1px solid var(--nav-border)}
+.logo-mark{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0f1623;font-family:var(--mono)}
+.logo-name{font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:-0.02em}
+.logo-sub{font-size:10px;color:var(--nav-text);letter-spacing:0.06em;text-transform:uppercase;margin-left:39px;font-family:var(--mono)}
+.nav{padding:8px 0;flex:1}
+.nav-section{padding:14px 18px 5px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3d5473;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--nav-text);font-size:13px;border-left:2px solid transparent;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:#c8d8e8}
+.nav-item.active{background:var(--nav-active);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-icon{width:17px;height:17px;opacity:0.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:#1e2d45;color:var(--nav-text);font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px}
+.nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.proj-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
+.proj-bar label{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.psel{padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none}
+.psel:focus{border-color:var(--accent)}
+.workspace{flex:1;display:flex;min-height:0;overflow:hidden}
+/* TWO-COL */
+.left-panel{width:300px;min-width:300px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)}
+.panel-scroll{flex:1;overflow-y:auto}
+.right-panel{flex:1;overflow-y:auto;padding:22px 26px}
+/* MODEL CARDS */
+.model-card{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;display:flex;gap:10px;align-items:flex-start}
+.model-card:hover{background:var(--surface2)}
+.model-card.active{background:var(--accent-dim)}
+.model-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.model-body{flex:1;min-width:0}
+.model-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-meta{font-size:10px;font-family:var(--mono);color:var(--text3)}
+/* RESULT TABS */
+.res-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:18px}
+.res-tab{padding:8px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.res-tab:hover{color:var(--text2)}
+.res-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.res-badge{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;background:var(--surface2);color:var(--text3)}
+.res-tab.active .res-badge{background:var(--accent-dim);color:var(--accent)}
+/* SUMMARY CARDS */
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px;border-left:4px solid}
+.sum-card.ok{border-left-color:var(--ok)}
+.sum-card.warn{border-left-color:var(--warn)}
+.sum-card.err{border-left-color:var(--err)}
+.sum-card.info{border-left-color:var(--info)}
+.sum-num{font-size:28px;font-weight:600;letter-spacing:-0.03em;line-height:1}
+.sum-label{font-size:11px;color:var(--text3);margin-top:4px}
+.sum-sub{font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px}
+/* SECTION */
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:14px}
+.sc-header{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sc-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
+.sc-body{padding:0}
+/* PRÜF TABLE */
+.ptable{width:100%;border-collapse:collapse;font-size:12px}
+.ptable th{padding:7px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0}
+.ptable td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:#fafbfd}
+.grp-row td{background:var(--surface2);font-size:11px;font-weight:600;font-family:var(--mono);padding:5px 12px;border-bottom:1px solid var(--border)}
+/* STATUS PILLS */
+.sp{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.sp-ok{background:var(--ok-bg);color:var(--ok)}
+.sp-warn{background:var(--warn-bg);color:var(--warn)}
+.sp-err{background:var(--err-bg);color:var(--err)}
+.sp-info{background:var(--info-bg);color:var(--info)}
+.sp-gray{background:var(--surface2);color:var(--text3)}
+/* AMPEL */
+.ampel{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0}
+.ampel-ok{background:var(--ok)}
+.ampel-warn{background:var(--warn)}
+.ampel-err{background:var(--err)}
+.ampel-gray{background:var(--border)}
+/* DELTA PILLS */
+.delta-new{background:#dbeafe;color:#1e40af}
+.delta-changed{background:#fef3c7;color:#92400e}
+.delta-missing{background:var(--err-bg);color:var(--err)}
+.delta-ok{background:var(--ok-bg);color:var(--ok)}
+/* PROGRESS BAR */
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.4s}
+/* DROP ZONE */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--surface2)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone input{display:none}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#0f1623}.btn-primary:hover{background:#00b396}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-secondary:hover{background:var(--surface2)}
+.btn-danger{background:var(--err-bg);color:var(--err);border:1px solid #fca5a5}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-ghost{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:13px;display:inline-flex;align-items:center;transition:all 0.12s}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.tag{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);display:inline-block}
+.tag-gray{background:var(--surface2);color:var(--text2)}
+.info-box{padding:8px 12px;border-radius:var(--r);font-size:11px;line-height:1.6;margin-bottom:12px}
+.info-blue{background:var(--info-bg);border:1px solid #bfdbfe;color:#1d4ed8}
+.info-amber{background:var(--warn-bg);border:1px solid #fde68a;color:#92400e}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--nav-bg);color:#e2e8f0;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:18px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.modal-title{font-size:15px;font-weight:600;color:var(--text)}
+.modal-close{width:26px;height:26px;border:1px solid var(--border);border-radius:var(--r);background:transparent;cursor:pointer;font-size:15px;color:var(--text3);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:18px 22px}
+.modal-footer{padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg label{font-size:11px;font-weight:500;color:var(--text2)}
+.fg input,.fg select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--accent)}
+/* PARSE PROGRESS */
+.parse-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.7);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.parse-overlay.open{opacity:1;pointer-events:all}
+.parse-box{background:var(--surface);border-radius:var(--rl);padding:28px 32px;text-align:center;min-width:280px}
+.parse-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><div class="logo-icon">BIM</div><div class="logo-name">BIM Manager</div></div>
+    <div class="logo-sub">Modellprüfung</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Module</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung<span class="nav-badge" id="nav-badge">0</span></div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
+    <div style="font-size:10px;color:var(--nav-text)">Modellprüfung</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span style="font-size:12px;color:var(--text3)">Modellprüfung</span>
+    <div class="topbar-right" id="topbar-right"></div>
+  </div>
+  <div class="proj-bar" id="proj-bar"></div>
+  <div class="workspace" id="workspace"></div>
+</div>
+
+<!-- ADD MODEL MODAL -->
+<div class="modal-overlay" id="add-ol" onclick="if(event.target===this)closeAdd()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Modell hinzufügen</div>
+      <button class="modal-close" onclick="closeAdd()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box info-blue" style="margin-bottom:14px">IFC 2x3 und IFC 4 werden unterstützt. Die Datei wird lokal im Modellhost des Projekts gespeichert.</div>
+      <div class="fg">
+        <label>Disziplin / Gewerk</label>
+        <select id="add-disc">
+          <option value="">— wählen —</option>
+          <option value="ARK">ARK – Architektur</option>
+          <option value="TW">TW – Tragwerk</option>
+          <option value="TGA">TGA – Technische Gebäudeausrüstung</option>
+          <option value="ELT">ELT – Elektro</option>
+          <option value="SAN">SAN – Sanitär</option>
+          <option value="HZG">HZG – Heizung</option>
+          <option value="LFT">LFT – Lüftung</option>
+          <option value="BRA">BRA – Brandschutz</option>
+          <option value="GEO">GEO – Geotechnik</option>
+          <option value="FRE">FRE – Freianlagen</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Datadrop / Lieferstand</label>
+        <input type="text" id="add-datadrop" placeholder="z. B. DD-01, LP3-20241201">
+      </div>
+      <div class="fg">
+        <label>Anmerkung (optional)</label>
+        <input type="text" id="add-note" placeholder="z. B. Vorabzug zur Koordination">
+      </div>
+      <div class="drop-zone" id="ifc-drop" onclick="document.getElementById('f-ifc').click()"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="event.preventDefault();this.classList.remove('over');handleIFCFile(event.dataTransfer.files[0])">
+        <input type="file" id="f-ifc" accept=".ifc" onchange="handleIFCFile(this.files[0])">
+        <div style="font-size:28px;margin-bottom:8px">📐</div>
+        <div style="font-weight:600;color:var(--text2);margin-bottom:4px" id="ifc-drop-label">IFC-Datei ablegen oder klicken</div>
+        <div style="font-size:11px;color:var(--text3)">.ifc (IFC 2x3 / IFC 4)</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAdd()">Abbrechen</button>
+      <button class="btn btn-primary" id="add-ok" onclick="confirmAdd()" disabled>Modell hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- PARSE PROGRESS -->
+<div class="parse-overlay" id="parse-ol">
+  <div class="parse-box">
+    <div class="parse-spinner"></div>
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px" id="parse-msg">IFC wird analysiert…</div>
+    <div style="font-size:11px;color:var(--text3)" id="parse-sub">Bitte warten</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+// ─── STORAGE ──────────────────────────────────────────────────────────
+const PROJ_KEY    = 'bim_projects_v2';
+const ASSIGN_KEY  = 'bim_obj_assignments_v1';
+const EXCL_KEY    = 'bim_obj_exclusions_v2';
+const PPARAM_KEY  = 'bim_proj_params_v1';
+const GLOBAL_KEY  = 'bim_global_params_v2';
+const GRP_KEY     = 'bim_param_groups_v1';
+const AWF_KEY     = 'bim_awf_v1';
+const MODELS_KEY  = 'bim_models_v1';
+const RESULTS_KEY = 'bim_check_results_v1';
+const SET_KEY     = 'bim_settings_v1';
+
+// ─── OBJECT TREE (mirrored from Merkmalserver) ────────────────────────
+const IFC_ENTITY_MAP = {
+  // Roh- und Ausbau
+  'wand':['IfcWall','IfcWallStandardCase'],
+  'mauerwerkswand':['IfcWall'],
+  'stahlbetonwand':['IfcWall'],
+  'trockenbauwand':['IfcWall'],
+  'decke':['IfcSlab'],
+  'bodenplatte':['IfcSlab'],
+  'flachdach':['IfcRoof','IfcSlab'],
+  'stütze':['IfcColumn'],
+  'unterzug':['IfcBeam'],
+  'treppe':['IfcStair','IfcStairFlight'],
+  'rampe':['IfcRamp'],
+  'tür':['IfcDoor'],
+  'fenster':['IfcWindow'],
+  'fassade':['IfcCurtainWall'],
+  'raum':['IfcSpace'],
+  'zone':['IfcZone'],
+  // TGA
+  'rohrleitung':['IfcPipeSegment','IfcPipeFitting'],
+  'kanal':['IfcDuctSegment','IfcDuctFitting'],
+  'kabel':['IfcCableSegment'],
+  'pumpe':['IfcPump'],
+  'ventil':['IfcValve'],
+  'leuchte':['IfcLightFixture'],
+  'schalter':['IfcSwitchingDevice'],
+  'lüftungsgerät':['IfcAirHandlingUnit'],
+  'heizung':['IfcSpaceHeater'],
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────
+let projects=[], assignments={}, exclusions={}, projParams={}, globalParams=[], awfData={};
+let models={}, results={};
+let pid=null, selModelId=null, activeTab='uebersicht';
+let pendingFile=null, pendingParsed=null;
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+function init(){
+  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};document.getElementById('sb-user').textContent=s.name||'BIM Manager';}catch(e){}
+  try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
+  try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
+  try{exclusions=JSON.parse(localStorage.getItem(EXCL_KEY))||{};}catch(e){exclusions={};}
+  try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
+  try{globalParams=JSON.parse(localStorage.getItem(GLOBAL_KEY))||[];}catch(e){globalParams=[];}
+  try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
+  try{models=JSON.parse(localStorage.getItem(MODELS_KEY))||{};}catch(e){models={};}
+  try{results=JSON.parse(localStorage.getItem(RESULTS_KEY))||{};}catch(e){results={};}
+  render();
+}
+const saveModels=()=>localStorage.setItem(MODELS_KEY,JSON.stringify(models));
+const saveResults=()=>localStorage.setItem(RESULTS_KEY,JSON.stringify(results));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function render(){
+  renderProjBar(); renderTopbar();
+  if(!pid){renderNoProjekt();return;}
+  renderWorkspace();
+}
+function renderProjBar(){
+  document.getElementById('proj-bar').innerHTML=`
+    <label>Projekt:</label>
+    <select class="psel" id="psel" onchange="onProjChange()">
+      <option value="">— Projekt wählen —</option>
+      ${projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('')}
+    </select>
+    ${pid?`<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(models[pid]||[]).length} Modelle im Host</span>`:''}`;
+  if(pid) setTimeout(()=>{const s=document.getElementById('psel');if(s)s.value=pid;},0);
+}
+function renderTopbar(){
+  document.getElementById('topbar-right').innerHTML=pid
+    ?`<button class="btn btn-secondary btn-sm" onclick="exportProtokoll()" ${!selModelId?'disabled':''}>⬇ Protokoll</button>
+      <button class="btn btn-primary btn-sm" onclick="openAdd()">+ Modell</button>`
+    :'';
+  document.getElementById('nav-badge').textContent=Object.values(models).flat().length;
+}
+function renderNoProjekt(){
+  document.getElementById('workspace').innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div class="empty-state"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt ausgewählt</div><div style="font-size:12px;margin-top:6px">Wähle oben ein Projekt</div></div></div>`;
+}
+function renderWorkspace(){
+  const mList=models[pid]||[];
+  const selModel=mList.find(m=>m.id===selModelId);
+  document.getElementById('workspace').innerHTML=`
+  <div style="flex:1;display:flex;overflow:hidden">
+    <div class="left-panel">
+      <div class="panel-header">
+        <span class="panel-title">Modellhost</span>
+        <button class="btn btn-primary btn-sm" onclick="openAdd()">+ IFC</button>
+      </div>
+      <div class="panel-scroll">
+        ${!mList.length ? renderEmptyHost() : mList.map(m=>renderModelCard(m)).join('')}
+      </div>
+    </div>
+    <div class="right-panel" id="right-panel">
+      ${selModel ? renderResultArea(selModel) : renderWelcome()}
+    </div>
+  </div>`;
+}
+function renderEmptyHost(){
+  return `<div class="empty-state" style="padding:28px 14px">
+    <div style="font-size:28px;margin-bottom:8px">📐</div>
+    <div style="font-size:13px;font-weight:500;color:var(--text2)">Noch keine Modelle</div>
+    <div style="font-size:11px;margin-top:4px;margin-bottom:12px">Lade IFC-Dateien in den Modellhost</div>
+    <button class="btn btn-primary btn-sm" onclick="openAdd()">+ IFC hochladen</button>
+  </div>`;
+}
+function renderModelCard(m){
+  const res=results[pid]?.[m.id];
+  const status=res?getOverallStatus(res):'pending';
+  const icons={ARK:'🏛',TW:'🔩',TGA:'⚙️',ELT:'⚡',SAN:'💧',HZG:'🔥',LFT:'💨',BRA:'🚒',GEO:'⛏',FRE:'🌿'};
+  const stColors={ok:'var(--ok)',warn:'var(--warn)',err:'var(--err)',pending:'var(--border)'};
+  return `<div class="model-card ${selModelId===m.id?'active':''}" onclick="selectModel('${m.id}')">
+    <div class="model-icon" style="background:var(--surface2);border:1px solid var(--border)">${icons[m.disc]||'📐'}</div>
+    <div class="model-body">
+      <div class="model-name">${m.name}</div>
+      <div class="model-meta">${m.disc} · ${m.datadrop||'—'} · ${fmtDate(m.uploadedAt)}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+        <div class="ampel" style="background:${stColors[status]}"></div>
+        <span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${res?statusLabel(status):'Nicht geprüft'}</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <button class="btn-ghost" style="font-size:11px" onclick="event.stopPropagation();runCheck('${m.id}')" title="Prüfung starten">▶</button>
+      <button class="btn-ghost" style="font-size:11px;color:var(--err)" onclick="event.stopPropagation();deleteModel('${m.id}')" title="Entfernen">⌫</button>
+    </div>
+  </div>`;
+}
+function renderWelcome(){
+  const mList=models[pid]||[];
+  const unchecked=mList.filter(m=>!results[pid]?.[m.id]).length;
+  return `<div style="max-width:680px;margin:0 auto">
+    <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:6px">Modellprüfung</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">Prüfe IFC-Modelle gegen die Merkmalanforderungen aus dem Merkmalserver.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      <div class="sum-card info" style="cursor:default">
+        <div class="sum-num">${mList.length}</div>
+        <div class="sum-label">Modelle im Host</div>
+      </div>
+      <div class="sum-card warn" style="cursor:default">
+        <div class="sum-num">${unchecked}</div>
+        <div class="sum-label">Nicht geprüft</div>
+      </div>
+      <div class="sum-card ok" style="cursor:default">
+        <div class="sum-num">${Object.keys(assignments[pid]||{}).length}</div>
+        <div class="sum-label">Objekte mit Zuweisungen</div>
+      </div>
+    </div>
+    <div class="info-box info-blue">
+      <strong>Drei Prüfmodule</strong> stehen zur Verfügung:<br>
+      <strong>Strukturprüfung</strong> – IFC-Entitytypen gegen definierten Objektbaum<br>
+      <strong>Merkmalvollständigkeit</strong> – PropertySets im IFC gegen Projektzuweisungen<br>
+      <strong>Datadrop-Delta</strong> – Vergleich mit vorherigem Modellstand (GlobalIds)
+    </div>
+    ${mList.length?`<button class="btn btn-primary" onclick="runAllChecks()">▶ Alle Modelle prüfen</button>`:`<button class="btn btn-primary" onclick="openAdd()">+ Erstes Modell hochladen</button>`}
+  </div>`;
+}
+
+// ─── RESULT AREA ──────────────────────────────────────────────────────
+function renderResultArea(m){
+  const res=results[pid]?.[m.id];
+  const tabs=[
+    {id:'uebersicht',label:'Übersicht'},
+    {id:'struktur',  label:'Strukturprüfung', n:res?.struktur?.issues?.length},
+    {id:'merkmale',  label:'Merkmalvollständigkeit', n:res?.merkmale?.issues?.length},
+    {id:'delta',     label:'Datadrop-Delta', n:res?.delta?.changes?.length},
+  ];
+  return `<div style="max-width:900px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.02em">${m.name}</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:2px">${m.disc} · ${m.datadrop||'kein Datadrop'} · ${m.entities||0} Entities · ${fmtDate(m.uploadedAt)}</div>
+      </div>
+      <button class="btn btn-primary" onclick="runCheck('${m.id}')">▶ Prüfung starten</button>
+    </div>
+    <div class="res-tabs">
+      ${tabs.map(t=>`<div class="res-tab ${activeTab===t.id?'active':''}" onclick="activeTab='${t.id}';document.getElementById('right-panel').innerHTML=renderResultArea(models['${pid}'].find(x=>x.id==='${m.id}'))">${t.label}${t.n!=null?`<span class="res-badge">${t.n}</span>`:''}</div>`).join('')}
+    </div>
+    ${!res?renderNoResults(m):renderTabContent(m,res)}
+  </div>`;
+}
+function renderNoResults(m){
+  return `<div style="text-align:center;padding:40px;color:var(--text3)">
+    <div style="font-size:32px;margin-bottom:10px">⏳</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Noch nicht geprüft</div>
+    <div style="font-size:12px;margin-bottom:16px">Starte die Prüfung um Ergebnisse zu sehen</div>
+    <button class="btn btn-primary" onclick="runCheck('${m.id}')">▶ Jetzt prüfen</button>
+  </div>`;
+}
+function renderTabContent(m,res){
+  if(activeTab==='uebersicht') return renderUebersicht(m,res);
+  if(activeTab==='struktur')   return renderStruktur(res);
+  if(activeTab==='merkmale')   return renderMerkmale(res);
+  if(activeTab==='delta')      return renderDelta(res);
+  return '';
+}
+
+// ÜBERSICHT TAB
+function renderUebersicht(m,res){
+  const st=res.struktur||{}, mk=res.merkmale||{}, dl=res.delta||{};
+  const stStatus=structStatus(st), mkStatus=merkmalStatus(mk);
+  const cards=[
+    {label:'Strukturprüfung',status:stStatus,main:st.matchedTypes||0,sub:`von ${st.totalExpected||0} erwarteten Objekttypen gefunden`,err:st.issues?.length||0,errLabel:'Abweichungen'},
+    {label:'Merkmalvollständigkeit',status:mkStatus,main:mkStatus==='ok'?'100%':(mk.filled||0)+'/'+(mk.total||0),sub:'PropertySets befüllt',err:mk.issues?.length||0,errLabel:'Mängel'},
+    {label:'Datadrop-Delta',status:dl.prev?'info':'gray',main:dl.changes?.length||0,sub:'Änderungen seit letztem Stand',err:dl.missing||0,errLabel:'fehlend'},
+  ];
+  const statusColors={ok:'var(--ok)',warn:'var(--warn)',err:'var(--err)',info:'var(--info)',gray:'var(--border)'};
+  return `<div class="summary-grid">
+    ${cards.map(c=>`<div class="sum-card" style="border-left-color:${statusColors[c.status]}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div class="ampel" style="background:${statusColors[c.status]}"></div>
+        <span style="font-size:11px;font-weight:600;color:var(--text2)">${c.label}</span>
+      </div>
+      <div class="sum-num" style="font-size:24px">${c.main}</div>
+      <div class="sum-sub">${c.sub}</div>
+      ${c.err>0?`<div style="margin-top:8px"><span class="sp sp-err">⚠ ${c.err} ${c.errLabel}</span></div>`:''}
+    </div>`).join('')}
+  </div>
+  <div class="sc">
+    <div class="sc-header"><span class="sc-title">Modellinformationen</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0">
+      ${[
+        ['Schema',m.schema||'—'],
+        ['Entities',m.entities||0],
+        ['Objekte',m.objectCount||0],
+        ['PropertySets',m.psetCount||0],
+        ['GlobalIds',m.guidCount||0],
+        ['Geprüft am',fmtDate(res.checkedAt)],
+      ].map(([l,v])=>`<div style="padding:10px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)"><div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:3px">${l}</div><div style="font-weight:500">${v}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// STRUKTURPRÜFUNG TAB
+function renderStruktur(res){
+  const st=res.struktur||{};
+  if(!st.checks?.length) return `<div class="empty-state">Keine Strukturdaten verfügbar</div>`;
+  return `<div class="sc"><div class="sc-header">
+    <span class="sc-title">Objekttypen-Abgleich</span>
+    <span style="font-size:11px;color:var(--text3)">${st.matchedTypes||0} von ${st.totalExpected||0} Typen gefunden</span>
+  </div>
+  <table class="ptable"><thead><tr>
+    <th>Objekttyp (Merkmalserver)</th><th>IFC-Entities</th><th>Gefunden</th><th>Anzahl im Modell</th><th>Status</th>
+  </tr></thead><tbody>
+  ${st.checks.map(c=>`<tr>
+    <td><span style="font-weight:500">${c.nodeLabel}</span></td>
+    <td><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.expected.join(', ')}</span></td>
+    <td style="font-family:var(--mono);font-size:11px">${c.found.join(', ')||'—'}</td>
+    <td style="font-family:var(--mono)">${c.count||0}</td>
+    <td><span class="sp ${c.count>0?'sp-ok':'sp-err'}">${c.count>0?'✓ Vorhanden':'✗ Nicht gefunden'}</span></td>
+  </tr>`).join('')}
+  </tbody></table></div>
+  ${st.issues?.length?`<div class="sc"><div class="sc-header"><span class="sc-title">Abweichungen (${st.issues.length})</span></div>
+  <table class="ptable"><thead><tr><th>Problem</th><th>Erwartete Entities</th><th>Empfehlung</th></tr></thead><tbody>
+  ${st.issues.map(i=>`<tr><td>${i.node}</td><td style="font-family:var(--mono);font-size:10px">${i.expected}</td><td style="color:var(--text2);font-size:11px">${i.hint}</td></tr>`).join('')}
+  </tbody></table></div>`:''}`;
+}
+
+// MERKMALVOLLSTÄNDIGKEIT TAB
+function renderMerkmale(res){
+  const mk=res.merkmale||{};
+  if(!mk.checks?.length) return `<div class="empty-state"><div style="font-size:13px;margin-bottom:8px">Keine Merkmalzuweisungen für dieses Projekt gefunden</div><div style="font-size:11px">Weise im Merkmalserver Merkmale den Objektknoten zu</div></div>`;
+  const pct=mk.total>0?Math.round(mk.filled/mk.total*100):0;
+  const fillColor=pct>=80?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
+  return `<div class="sc"><div class="sc-header"><span class="sc-title">Vollständigkeit</span>
+    <span style="font-weight:500;font-family:var(--mono);color:${fillColor}">${pct}%</span>
+  </div>
+  <div style="padding:14px">
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-family:var(--mono);color:var(--text3)">
+      <span>${mk.filled||0} gefunden</span><span>${(mk.total||0)-(mk.filled||0)} fehlend</span><span>${mk.total||0} gesamt</span>
+    </div>
+  </div></div>
+  <div class="sc"><div class="sc-header"><span class="sc-title">Details pro Merkmal</span></div>
+  <table class="ptable"><thead><tr>
+    <th>Merkmal</th><th>Property Set · Attribut</th><th>Objekte geprüft</th><th>Status</th>
+  </tr></thead><tbody>
+  ${(mk.checks||[]).map(c=>{
+    const pct2=c.total>0?Math.round(c.found/c.total*100):0;
+    const st2=pct2===100?'sp-ok':pct2>0?'sp-warn':'sp-err';
+    return `<tr>
+      <td><span style="font-weight:500">${c.name}</span></td>
+      <td><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.pset}.${c.attr}</span></td>
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:${pct2}%;background:${pct2===100?'var(--ok)':pct2>0?'var(--warn)':'var(--err)'}"></div></div>
+        <span style="font-family:var(--mono);font-size:10px">${c.found}/${c.total}</span>
+      </div></td>
+      <td><span class="sp ${st2}">${pct2}%</span></td>
+    </tr>`;
+  }).join('')}
+  </tbody></table></div>`;
+}
+
+// DATADROP DELTA TAB
+function renderDelta(res){
+  const dl=res.delta||{};
+  if(!dl.prev){
+    return `<div style="text-align:center;padding:40px;color:var(--text3)">
+      <div style="font-size:28px;margin-bottom:10px">📊</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Kein Vorstand verfügbar</div>
+      <div style="font-size:12px">Für den Datadrop-Vergleich wird ein früherer Modellstand desselben Gewerks benötigt. Lade weitere Modelle hoch.</div>
+    </div>`;
+  }
+  const changes=dl.changes||[];
+  const byType={new:changes.filter(c=>c.type==='new'),changed:changes.filter(c=>c.type==='changed'),missing:changes.filter(c=>c.type==='missing')};
+  return `<div class="summary-grid">
+    ${[['Neu',byType.new.length,'delta-new','delta-new'],['Geändert',byType.changed.length,'delta-changed','delta-changed'],['Fehlend',byType.missing.length,'delta-missing','delta-missing']].map(([l,n,sc])=>`
+    <div class="sum-card" style="border-left-color:var(--${sc.includes('new')?'info':sc.includes('changed')?'warn':'err'})">
+      <div class="sum-num">${n}</div><div class="sum-label">${l}</div>
+    </div>`).join('')}
+  </div>
+  <div class="info-box info-blue">Vergleich mit: <strong>${dl.prevName||dl.prev}</strong> · ${fmtDate(dl.prevDate)}</div>
+  <div class="sc"><div class="sc-header"><span class="sc-title">Änderungen (${changes.length})</span></div>
+  <table class="ptable"><thead><tr><th>GlobalId</th><th>Entitytyp</th><th>Name</th><th>Änderung</th></tr></thead><tbody>
+  ${changes.slice(0,200).map(c=>`<tr>
+    <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.guid}</td>
+    <td><span class="tag tag-gray">${c.entity||'—'}</span></td>
+    <td style="font-size:11px">${c.name||'—'}</td>
+    <td><span class="sp sp-${c.type==='new'?'info':c.type==='missing'?'err':'warn'} ${c.type}">${c.type==='new'?'Neu':c.type==='missing'?'Fehlend':'Geändert'}</span></td>
+  </tr>`).join('')}
+  ${changes.length>200?`<tr><td colspan="4" style="padding:10px;text-align:center;color:var(--text3);font-size:11px">… ${changes.length-200} weitere Änderungen (Export für vollständige Liste)</td></tr>`:''}
+  </tbody></table></div>`;
+}
+
+// ─── IFC PARSER ───────────────────────────────────────────────────────
+function parseIFC(text){
+  const result={schema:'',entities:0,objectCount:0,psetCount:0,guidCount:0,entityTypes:{},propertySets:{},guids:{},guidNames:{}};
+  // Schema
+  const schemaMatch=text.match(/FILE_SCHEMA\s*\(\s*\(\s*'([^']+)'/);
+  if(schemaMatch) result.schema=schemaMatch[1];
+  // Parse entity lines: #N= IFCTYPE(...)
+  const lines=text.split('\n');
+  const entityLine=/^#(\d+)\s*=\s*([A-Z][A-Z0-9_]*)\s*\((.*)$/;
+  // We'll collect data in two passes
+  const rawEntities={};
+  for(const line of lines){
+    const m=entityLine.exec(line.trim());
+    if(!m) continue;
+    result.entities++;
+    const [,id,type,rest]=m;
+    rawEntities[id]={type,rest};
+    result.entityTypes[type]=(result.entityTypes[type]||0)+1;
+  }
+  // Count objects
+  const objectTypes=['IFCWALL','IFCWALLSTANDARDCASE','IFCSLAB','IFCCOLUMN','IFCBEAM','IFCSTAIR','IFCSTAIRS','IFCSTAIRFLIGHT','IFCRAMP','IFCRAMPFLIGHT','IFCDOOR','IFCWINDOW','IFCCURTAINWALL','IFCSPACE','IFCZONE','IFCPIPESEGMENT','IFCPIPEFITTING','IFCDUCTSEGMENT','IFCDUCTFITTING','IFCCABLESEGMENT','IFCPUMP','IFCVALVE','IFCLIGHTFIXTURE','IFCSWITCHINGDEVICE','IFCAIRHANDLINGUNIT','IFCSPACEHEATER','IFCPLATE','IFCMEMBER','IFCFURNISHINGELEMENT','IFCBUILDINGELEMENTPROXY'];
+  result.objectCount=objectTypes.reduce((s,t)=>s+(result.entityTypes[t]||0),0);
+  // PropertySets
+  for(const [id,ent] of Object.entries(rawEntities)){
+    if(ent.type==='IFCPROPERTYSET'){
+      result.psetCount++;
+      const nameMatch=ent.rest.match(/,\s*'([^']+)'/);
+      if(nameMatch){const n=nameMatch[1];result.propertySets[n]=(result.propertySets[n]||0)+1;}
+    }
+    // GlobalIds (IfcRoot subclasses have GUID as first param)
+    if(objectTypes.includes(ent.type)||ent.type==='IFCPROPERTYSET'||ent.type==='IFCBUILDING'||ent.type==='IFCBUILDINGSTOREY'){
+      const guidMatch=ent.rest.match(/^'([A-Za-z0-9_$]{22})'/);
+      if(guidMatch){
+        result.guidCount++;
+        const guid=guidMatch[1];
+        const nameMatch=ent.rest.match(/'[^']*',\s*\$?,\s*'([^']+)'/);
+        result.guids[guid]=ent.type;
+        result.guidNames[guid]=nameMatch?nameMatch[1]:'';
+      }
+    }
+  }
+  return result;
+}
+
+// ─── PRÜF-LOGIK ───────────────────────────────────────────────────────
+function runCheck(modelId){
+  const m=(models[pid]||[]).find(x=>x.id===modelId);
+  if(!m){showToast('Modell nicht gefunden');return;}
+  if(!m.parsed){showToast('Kein IFC-Inhalt gespeichert – Modell neu hochladen');return;}
+  showParse('Prüfung läuft…','Struktur, Merkmale, Datadrop-Delta');
+  setTimeout(()=>{
+    const parsed=m.parsed;
+    const res={checkedAt:new Date().toISOString()};
+    res.struktur=checkStruktur(parsed);
+    res.merkmale=checkMerkmale(parsed);
+    res.delta=checkDelta(modelId,parsed,m);
+    if(!results[pid])results[pid]={};
+    results[pid][modelId]=res;
+    saveResults();
+    hideParse();
+    selModelId=modelId;
+    activeTab='uebersicht';
+    renderWorkspace();
+    showToast('✓ Prüfung abgeschlossen');
+  },400);
+}
+function runAllChecks(){
+  const mList=models[pid]||[];
+  if(!mList.length){showToast('Keine Modelle vorhanden');return;}
+  showParse('Alle Modelle prüfen…',`${mList.length} Modelle`);
+  setTimeout(()=>{
+    mList.forEach(m=>{
+      if(!m.parsed) return;
+      const res={checkedAt:new Date().toISOString()};
+      res.struktur=checkStruktur(m.parsed);
+      res.merkmale=checkMerkmale(m.parsed);
+      res.delta=checkDelta(m.id,m.parsed,m);
+      if(!results[pid])results[pid]={};
+      results[pid][m.id]=res;
+    });
+    saveResults();
+    hideParse();
+    renderWorkspace();
+    showToast(`✓ ${mList.length} Modelle geprüft`);
+  },500);
+}
+
+function checkStruktur(parsed){
+  const assign=assignments[pid]||{};
+  const nodeIds=Object.keys(assign);
+  const checks=[];const issues=[];
+  // Map nodeIds to expected entity types via IFC_ENTITY_MAP
+  const usedNodes=new Set(nodeIds);
+  for(const [nodeKey,entityList] of Object.entries(IFC_ENTITY_MAP)){
+    if(!usedNodes.has(nodeKey)&&!nodeIds.some(n=>n.toLowerCase().includes(nodeKey))) continue;
+    const found=entityList.filter(e=>parsed.entityTypes[e]>0);
+    const count=entityList.reduce((s,e)=>s+(parsed.entityTypes[e]||0),0);
+    const check={nodeLabel:nodeKey,expected:entityList,found,count};
+    checks.push(check);
+    if(found.length===0) issues.push({node:nodeKey,expected:entityList.join(', '),hint:`Keine ${entityList[0]}-Instanzen gefunden. Ist das Gewerk im Modell enthalten?`});
+  }
+  // Also check entity types from assignments directly
+  const assignedNodes=Object.keys(assign);
+  let totalExpected=checks.length;
+  let matchedTypes=checks.filter(c=>c.found.length>0).length;
+  return{checks,issues,totalExpected,matchedTypes};
+}
+
+function checkMerkmale(parsed){
+  const assign=assignments[pid]||{};
+  const pp=projParams[pid]||[];
+  const checks=[];let filled=0,total=0;
+  // Build a set of expected pset.attr combos from project assignments
+  const expected=new Set();
+  Object.values(assign).forEach(list=>list.forEach(a=>{
+    const param=pp.find(p=>p.id===a.paramId)||globalParams.find(p=>p.id===a.globalRef);
+    if(param?.pset&&param?.attr) expected.add(`${param.pset}||${param.attr}||${param.name}`);
+  }));
+  for(const key of expected){
+    const [pset,attr,name]=key.split('||');
+    total++;
+    const inModel=!!parsed.propertySets[pset];
+    if(inModel) filled++;
+    checks.push({name,pset,attr,found:inModel?1:0,total:1});
+  }
+  const issues=checks.filter(c=>c.found===0).map(c=>({param:c.name,pset:c.pset,attr:c.attr,severity:'error'}));
+  return{checks,issues,filled,total};
+}
+
+function checkDelta(modelId,parsed,m){
+  // Find a previous model of same discipline
+  const mList=models[pid]||[];
+  const prev=mList.find(x=>x.id!==modelId&&x.disc===m.disc&&x.parsed&&x.uploadedAt<m.uploadedAt);
+  if(!prev) return{prev:null,changes:[]};
+  const prevGuids=prev.parsed.guids||{};
+  const curGuids=parsed.guids||{};
+  const curNames=parsed.guidNames||{};
+  const prevNames=prev.parsed.guidNames||{};
+  const changes=[];let missing=0;
+  // New in current
+  for(const [guid,entity] of Object.entries(curGuids)){
+    if(!prevGuids[guid]) changes.push({guid,entity,name:curNames[guid]||'',type:'new'});
+  }
+  // Missing in current
+  for(const guid of Object.keys(prevGuids)){
+    if(!curGuids[guid]){changes.push({guid,entity:prevGuids[guid],name:prevNames[guid]||'',type:'missing'});missing++;}
+  }
+  return{prev:prev.id,prevName:prev.name,prevDate:prev.uploadedAt,changes,missing};
+}
+
+// ─── STATUS HELPERS ────────────────────────────────────────────────────
+function getOverallStatus(res){
+  const st=structStatus(res.struktur||{});
+  const mk=merkmalStatus(res.merkmale||{});
+  if(st==='err'||mk==='err') return 'err';
+  if(st==='warn'||mk==='warn') return 'warn';
+  return 'ok';
+}
+function structStatus(st){if(!st.checks?.length) return 'gray';if(st.issues?.length>3)return 'err';if(st.issues?.length>0)return 'warn';return 'ok';}
+function merkmalStatus(mk){if(!mk.total)return 'gray';const pct=mk.filled/mk.total;if(pct<0.5)return 'err';if(pct<1)return 'warn';return 'ok';}
+function statusLabel(s){return{ok:'✓ OK',warn:'⚠ Warnungen',err:'✗ Fehler',pending:'Nicht geprüft',gray:'—'}[s]||s;}
+
+// ─── ADD MODEL ────────────────────────────────────────────────────────
+function openAdd(){document.getElementById('add-ol').classList.add('open');document.getElementById('add-ok').disabled=true;document.getElementById('ifc-drop-label').textContent='IFC-Datei ablegen oder klicken';pendingFile=null;pendingParsed=null;}
+function closeAdd(){document.getElementById('add-ol').classList.remove('open');}
+
+function handleIFCFile(file){
+  if(!file||!file.name.match(/\.ifc$/i)){showToast('Nur .ifc Dateien');return;}
+  document.getElementById('ifc-drop-label').textContent=`⏳ ${file.name} wird gelesen…`;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const text=e.target.result;
+      showParse('IFC wird analysiert…',file.name);
+      setTimeout(()=>{
+        pendingParsed=parseIFC(text);
+        pendingFile={name:file.name,size:file.size};
+        hideParse();
+        document.getElementById('ifc-drop-label').textContent=`✓ ${file.name} (${pendingParsed.entities.toLocaleString()} Entities, ${pendingParsed.objectCount} Objekte)`;
+        document.getElementById('add-ok').disabled=false;
+      },200);
+    }catch(err){hideParse();showToast('Fehler beim Lesen: '+err.message);}
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+function confirmAdd(){
+  if(!pendingParsed||!pid){showToast('IFC-Datei fehlt');return;}
+  const disc=document.getElementById('add-disc').value;
+  const datadrop=document.getElementById('add-datadrop').value.trim();
+  const note=document.getElementById('add-note').value.trim();
+  const m={
+    id:uid(),name:pendingFile.name,size:pendingFile.size,disc,datadrop,note,
+    schema:pendingParsed.schema,entities:pendingParsed.entities,
+    objectCount:pendingParsed.objectCount,psetCount:pendingParsed.psetCount,
+    guidCount:pendingParsed.guidCount,
+    parsed:pendingParsed,uploadedAt:new Date().toISOString()
+  };
+  if(!models[pid])models[pid]=[];
+  models[pid].push(m);
+  saveModels();
+  closeAdd();
+  selModelId=m.id;
+  renderWorkspace();
+  showToast(`✓ Modell hinzugefügt – ${m.entities.toLocaleString()} Entities erkannt`);
+}
+
+function deleteModel(modelId){
+  if(!confirm('Modell aus dem Host entfernen?')) return;
+  models[pid]=(models[pid]||[]).filter(m=>m.id!==modelId);
+  if(results[pid]) delete results[pid][modelId];
+  saveModels();saveResults();
+  if(selModelId===modelId) selModelId=null;
+  renderWorkspace();showToast('Modell entfernt');
+}
+
+function selectModel(modelId){selModelId=modelId;activeTab='uebersicht';renderWorkspace();}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────
+function exportProtokoll(){
+  const m=(models[pid]||[]).find(x=>x.id===selModelId);
+  const res=results[pid]?.[selModelId];
+  if(!m||!res){showToast('Kein Prüfergebnis vorhanden');return;}
+  const proj=projects.find(p=>p.id===pid);
+  const rows=[['BIM Manager – Prüfprotokoll'],['Projekt:',proj?.name||pid],['Modell:',m.name],['Gewerk:',m.disc],['Datadrop:',m.datadrop||'—'],['Geprüft:',fmtDate(res.checkedAt)],[''],
+    ['=== STRUKTURPRÜFUNG ==='],['Objekttyp','Entities erwartet','Gefunden','Anzahl','Status'],
+    ...(res.struktur?.checks||[]).map(c=>[c.nodeLabel,c.expected.join(','),c.found.join(',')||'—',c.count,c.count>0?'OK':'Fehler']),
+    [''],['=== MERKMALVOLLSTÄNDIGKEIT ==='],['Merkmal','PropertySet','Attribut','Status'],
+    ...(res.merkmale?.checks||[]).map(c=>[c.name,c.pset,c.attr,c.found>0?'Gefunden':'Fehlt']),
+    [''],['=== DATADROP-DELTA ==='],['GlobalId','Entity','Name','Änderung'],
+    ...(res.delta?.changes||[]).map(c=>[c.guid,c.entity,c.name,c.type]),
+  ];
+  const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`pruefprotokoll-${m.disc}-${m.datadrop||'ohne'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+  showToast('✓ Prüfprotokoll exportiert');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────
+function onProjChange(){pid=document.getElementById('psel')?.value||null;selModelId=null;activeTab='uebersicht';render();}
+function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return d;}}
+function showParse(msg,sub){const o=document.getElementById('parse-ol');o.classList.add('open');document.getElementById('parse-msg').textContent=msg;document.getElementById('parse-sub').textContent=sub;}
+function hideParse(){document.getElementById('parse-ol').classList.remove('open');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function comingSoon(){showToast('Modul wird in Kürze entwickelt');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeAdd();});
+init();
+</script>
+</body>
+</html>

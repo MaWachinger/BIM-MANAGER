@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM Manager · Anwendungsfälle</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;--nav-hover:#1a2744;--nav-active:#152238;
+  --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.13);
+  --global:#8b5cf6;--global-dim:rgba(139,92,246,0.1);
+  --bg:#f0f3f8;--surface:#fff;--surface2:#f5f7fa;--border:#e2e8f0;
+  --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
+  --ok:#10b981;--ok-bg:#ecfdf5;--warn:#f59e0b;--warn-bg:#fffbeb;
+  --err:#ef4444;--err-bg:#fef2f2;--info:#3b82f6;--info-bg:#eff6ff;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --r:6px;--rl:10px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+.sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
+.logo{padding:20px 18px 18px;border-bottom:1px solid var(--nav-border)}
+.logo-mark{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0f1623;font-family:var(--mono)}
+.logo-name{font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:-0.02em}
+.logo-sub{font-size:10px;color:var(--nav-text);letter-spacing:0.06em;text-transform:uppercase;margin-left:39px;font-family:var(--mono)}
+.nav{padding:8px 0;flex:1}
+.nav-section{padding:14px 18px 5px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3d5473;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--nav-text);font-size:13px;border-left:2px solid transparent;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:#c8d8e8}
+.nav-item.active{background:var(--nav-active);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-icon{width:17px;height:17px;opacity:0.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:#1e2d45;color:var(--nav-text);font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px}
+.nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.mode-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0}
+.mode-tab{padding:10px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.mode-tab:hover{color:var(--text2)}
+.mode-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.mode-tab.g.active{color:var(--global);border-bottom-color:var(--global)}
+.tb{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;background:var(--surface2);color:var(--text3)}
+.mode-tab.active .tb{background:var(--accent-dim);color:var(--accent)}
+.mode-tab.g.active .tb{background:var(--global-dim);color:var(--global)}
+.proj-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.proj-bar label{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.psel{padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none}
+.psel:focus{border-color:var(--accent)}
+.workspace{flex:1;display:flex;min-height:0;overflow:hidden}
+.left-panel{width:290px;min-width:290px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)}
+.panel-scroll{flex:1;overflow-y:auto}
+.right-panel{flex:1;overflow-y:auto;padding:24px 28px}
+.awf-item{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;display:flex;align-items:flex-start;gap:10px}
+.awf-item:hover{background:var(--surface2)}
+.awf-item.active{background:var(--accent-dim)}
+.awf-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.awf-item-body{flex:1;min-width:0}
+.awf-taetig{font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em}
+.awf-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.3}
+.awf-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.awf-actions{display:flex;gap:2px;flex-shrink:0;margin-top:1px}
+.rg-bar{display:flex;gap:2px;margin-top:5px}
+.rg-seg{height:4px;flex:1;border-radius:2px;background:var(--border);transition:background 0.2s}
+.rg-seg.on-1{background:#f59e0b}.rg-seg.on-2{background:#eab308}.rg-seg.on-3{background:#84cc16}
+.rg-seg.on-4{background:#22c55e}.rg-seg.on-5{background:var(--accent)}
+.rg-label{font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:2px}
+.col-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.col-map select{padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:11px;outline:none;width:100%}
+.col-map select:focus{border-color:var(--accent)}
+.col-map label{font-size:10px;font-weight:500;color:var(--text2);margin-bottom:3px;display:block;font-family:var(--mono)}
+.imp-step{display:none}.imp-step.active{display:block}
+.step-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.step-tab{padding:6px 14px;font-size:11px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px}
+.step-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.ai-sug-btn{background:var(--global-dim);border:1px solid #c4b5fd;color:var(--global);padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);cursor:pointer;transition:all 0.12s}
+.ai-sug-btn:hover{background:#ddd6fe}
+.ai-sug-btn:disabled{opacity:0.5;cursor:default}
+.imp-row-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
+.imp-row-card.has-sug{border-color:#c4b5fd;background:var(--global-dim)}
+.sb-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px 24px;margin-bottom:18px}
+.sb-schablone{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.sb-taetig{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.03em}
+.sb-sep{font-size:16px;color:var(--text3);font-style:italic}
+.sb-zweck{font-size:18px;font-weight:400;color:var(--text2);letter-spacing:-0.02em}
+.sb-id{font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:6px}
+.sb-desc{font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:12px}
+.sb-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:14px}
+.sc-header{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sc-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
+.sc-body{padding:14px}
+.raci-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.raci-R{background:#dbeafe;color:#1e40af}.raci-A{background:#ede9fe;color:#5b21b6}
+.raci-C{background:#d1fae5;color:#065f46}.raci-I{background:var(--surface2);color:var(--text2)}
+.qs-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.qs-item:last-child{border-bottom:none}
+.qs-type{flex-shrink:0;font-size:10px;font-family:var(--mono);font-weight:600;padding:2px 7px;border-radius:3px;margin-top:1px;white-space:nowrap}
+.qs-eingang{background:#dbeafe;color:#1e40af}.qs-ergebnis{background:#d1fae5;color:#065f46}.qs-intervall{background:var(--warn-bg);color:#92400e}
+.lp-chip{display:inline-flex;align-items:center;justify-content:center;width:32px;height:20px;border-radius:3px;font-size:10px;font-weight:600;font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text3);transition:all 0.12s;user-select:none}
+.lp-chip.on{background:var(--accent);color:#0f1623;border-color:var(--accent)}
+.disc-chip{padding:4px 9px;border-radius:16px;font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer;border:1px solid;transition:all 0.12s;user-select:none;display:inline-flex;align-items:center;gap:4px}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.pill-entwurf{background:#f1f5f9;color:#64748b}.pill-aktiv{background:var(--ok-bg);color:var(--ok)}
+.pill-freigegeben{background:#dbeafe;color:#1e40af}.pill-archiviert{background:var(--surface2);color:var(--text3)}
+.pill-ag{background:#fef3c7;color:#92400e}.pill-manual{background:#d1fae5;color:#065f46}.pill-template{background:var(--global-dim);color:var(--global)}
+.completion-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px}
+.completion-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s}
+.wf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.wf-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:18px;cursor:pointer;transition:all 0.15s;text-align:center}
+.wf-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(0,201,167,0.12);transform:translateY(-1px)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#0f1623}.btn-primary:hover{background:#00b396}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-secondary:hover{background:var(--surface2)}
+.btn-global{background:var(--global-dim);border:1px solid #c4b5fd;color:var(--global)}
+.btn-danger{background:var(--err-bg);color:var(--err);border:1px solid #fca5a5}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-ghost{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:13px;display:inline-flex;align-items:center;transition:all 0.12s}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-xl{max-width:820px}
+.modal-header{padding:20px 24px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:5;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.modal-close{width:28px;height:28px;border:1px solid var(--border);border-radius:var(--r);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3)}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:20px 24px}
+.modal-section{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.modal-section-title{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:10px}
+.modal-footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.fg label{font-size:11px;font-weight:500;color:var(--text2)}
+.fg input,.fg select,.fg textarea{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%;transition:border-color 0.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.fg textarea{resize:vertical;line-height:1.6}
+.form-hint{font-size:10px;color:var(--text3);margin-top:2px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+.schablone-preview{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:12px}
+.sp-label{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.sp-value{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.raci-builder{display:grid;grid-template-columns:1fr repeat(4,50px);gap:6px;align-items:center;font-size:12px}
+.raci-cb{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;display:block;margin:0 auto}
+.raci-disc-name{font-size:12px;font-family:var(--mono);color:var(--text2);padding:4px 0}
+.io-row{display:grid;grid-template-columns:90px 1fr 90px auto;gap:6px;align-items:start;margin-bottom:6px}
+.io-row input,.io-row select{padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:11px;outline:none}
+.io-row input:focus,.io-row select:focus{border-color:var(--accent)}
+.qs-row{display:grid;grid-template-columns:120px 1fr auto;gap:6px;align-items:start;margin-bottom:6px}
+.qs-row input,.qs-row select{padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:11px;outline:none}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--surface2)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone input{display:none}
+.cswatch{width:22px;height:22px;border-radius:5px;cursor:pointer;border:2px solid transparent;display:inline-block;transition:all 0.13s}
+.cswatch:hover{transform:scale(1.15)}
+.cswatch.sel{border-color:var(--text);box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--text)}
+.confirm-box{background:var(--surface);border-radius:var(--rl);padding:24px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .confirm-box{transform:translateY(0)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--nav-bg);color:#e2e8f0;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.info-box{padding:8px 12px;border-radius:var(--r);font-size:11px;line-height:1.6;margin-bottom:12px}
+.info-blue{background:var(--info-bg);border:1px solid #bfdbfe;color:#1d4ed8}
+.info-amber{background:var(--warn-bg);border:1px solid #fde68a;color:#92400e}
+.info-purple{background:var(--global-dim);border:1px solid #c4b5fd;color:#5b21b6}
+.tag{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);display:inline-block}
+.tag-gray{background:var(--surface2);color:var(--text2)}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><div class="logo-icon">BIM</div><div class="logo-name">BIM Manager</div></div>
+    <div class="logo-sub">Anwendungsfälle</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Module</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle<span class="nav-badge" id="nav-count">0</span></div>
+    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
+    <div style="font-size:10px;color:var(--nav-text)">Anwendungsfälle</div>
+  </div>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <span style="font-size:12px;color:var(--text3)">Anwendungsfälle</span>
+    <div class="topbar-right" id="topbar-right"></div>
+  </div>
+  <div class="mode-tabs">
+    <div class="mode-tab g active" id="tab-stamm" onclick="setMode('stamm')">◈ AWF-Stamm<span class="tb" id="tb-stamm">0</span></div>
+    <div class="mode-tab" id="tab-projekt" onclick="setMode('projekt')">Projekt-AWF<span class="tb" id="tb-projekt">0</span></div>
+  </div>
+  <div id="proj-bar-wrap"></div>
+  <div class="workspace" id="workspace"></div>
+</div>
+
+<!-- QUICK MODAL -->
+<div class="modal-overlay" id="quick-ol" onclick="if(event.target===this)closeQuick()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="quick-title">Neuer Anwendungsfall</div>
+      <button class="modal-close" onclick="closeQuick()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box info-blue" style="margin-bottom:14px">
+        <strong>Nomenklatur-Schablone:</strong> [Tätigkeit: Verb + Substantiv] + [Zweck: für/zur + Substantiv]<br>
+        Beispiele: <em>Mengen ermitteln für Kostenplanung</em> · <em>Modell koordinieren zur Kollisionsprüfung</em> · <em>Daten übergeben für FM-Betrieb</em>
+      </div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Tätigkeit * <span style="color:var(--text3);font-weight:400">(Verb + Substantiv)</span></label>
+          <input type="text" id="q-taetig" placeholder="z. B. Mengen ermitteln" oninput="updateSchablone()">
+          <span class="form-hint">Was wird gemacht? Methodenneutral.</span>
+        </div>
+        <div class="fg">
+          <label>Zweck * <span style="color:var(--text3);font-weight:400">(für/zur + Substantiv)</span></label>
+          <input type="text" id="q-zweck" placeholder="z. B. für Kostenplanung" oninput="updateSchablone()">
+          <span class="form-hint">Wofür? Phasenneutral formulieren.</span>
+        </div>
+      </div>
+      <div class="schablone-preview">
+        <div class="sp-label">Bezeichnung nach Schablone</div>
+        <div class="sp-value" id="schablone-preview">—</div>
+      </div>
+      <div class="form-grid">
+        <div class="fg full">
+          <label>Aufgabenstellung <span style="background:#dbeafe;color:#1e40af;font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono)">AIA</span> <span style="color:var(--text3);font-weight:400">(Was wird gefordert?)</span></label>
+          <textarea id="q-aufgabe" rows="3" oninput="updateSchablone()" placeholder="Was ist der Leistungsinhalt dieses AWF aus Auftraggebersicht? Was wird erwartet / gefordert? Fließtext, methodenneutral. (fließt in AIA)"></textarea>
+          <span class="form-hint" id="word-count-hint">0 Wörter</span>
+        </div>
+        <div class="fg full">
+          <label>Umsetzungskonzept <span style="background:#d1fae5;color:#065f46;font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono)">BAP</span> <span style="color:var(--text3);font-weight:400">(Wie wird es umgesetzt?)</span></label>
+          <textarea id="q-umsetz" rows="3" oninput="updateSchablone()" placeholder="Wie soll dieser AWF im Projekt konkret umgesetzt werden? Welche Methoden, Werkzeuge und Prozessschritte kommen zum Einsatz? (fließt in BAP)"></textarea>
+        </div>
+        <div class="fg"><label>Quelle / Herkunft</label>
+          <select id="q-source">
+            <option value="manual">Eigene Entwicklung (WF 2)</option>
+            <option value="ag">AG-Vorgabe (WF 1)</option>
+            <option value="template">Aus Stamm (WF 3)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Status</label>
+          <select id="q-status">
+            <option value="entwurf">Entwurf</option>
+            <option value="aktiv">Aktiv</option>
+            <option value="freigegeben">Freigegeben</option>
+            <option value="archiviert">Archiviert</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Farbe</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px" id="q-color-grid"></div></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Leistungsphasen</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="q-lp-grid"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Disziplinen</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="q-disc-grid"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeQuick()">Abbrechen</button>
+      <button class="btn btn-primary" id="quick-save-btn" onclick="saveQuick()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- STECKBRIEF MODAL -->
+<div class="modal-overlay" id="sb-ol" onclick="if(event.target===this)closeSbModal()">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="sb-modal-title">Steckbrief</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="sb-modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeSbModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:10px">Beteiligte – RACI</div>
+      <div class="info-box info-blue">
+        <strong>R</strong> = Prozessverantwortlich &nbsp;·&nbsp; <strong>A</strong> = Ergebnisverantwortlich &nbsp;·&nbsp; <strong>C</strong> = Aktiv beteiligt &nbsp;·&nbsp; <strong>I</strong> = Informiert
+      </div>
+      <div id="raci-builder-wrap"></div>
+      <div class="modal-section">
+        <div class="modal-section-title">Bedingungen – Input · Data Drop · Output</div>
+        <div class="info-box info-blue"><strong>Input</strong>: Vorleistungen &nbsp;·&nbsp; <strong>Data Drop</strong>: Informationslieferpunkte &nbsp;·&nbsp; <strong>Output</strong>: Ergebnisse mit Format</div>
+        <div id="io-builder-wrap"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-secondary btn-sm" onclick="addIoRow('input')">+ Input</button>
+          <button class="btn btn-secondary btn-sm" onclick="addIoRow('datadrop')">+ Data Drop</button>
+          <button class="btn btn-secondary btn-sm" onclick="addIoRow('output')">+ Output</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Qualitätssicherungsmaßnahmen</div>
+        <div class="info-box info-blue">Jeder AWF beginnt mit einer <strong>Eingangsprüfung</strong> und endet mit einer <strong>Ergebnisprüfung</strong>. Intervall-Lieferungen sichern die Annäherung ans Leistungssoll.</div>
+        <div id="qs-builder-wrap"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-secondary btn-sm" onclick="addQsRow('eingang')">+ Eingangsprüfung</button>
+          <button class="btn btn-secondary btn-sm" onclick="addQsRow('ergebnis')">+ Ergebnisprüfung</button>
+          <button class="btn btn-secondary btn-sm" onclick="addQsRow('intervall')">+ Intervall</button>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Referenzprozess</div>
+        <div class="fg"><label>Prozessbeschreibung</label><textarea id="sb-prozess" rows="3" placeholder="Verbindung der Tätigkeiten und verantwortlichen Beteiligten. Kann durch BPMN ergänzt werden."></textarea></div>
+        <div class="fg"><label>Link zu Prozessdiagramm</label><input type="text" id="sb-prozess-link" placeholder="https://…"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Aufgabenstellung <span style="background:#dbeafe;color:#1e40af;font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono);margin-left:4px">AIA</span></div>
+        <div class="fg"><textarea id="sb-aufgabe" rows="3" placeholder="Was wird gefordert? Leistungsinhalt aus AG-Sicht. Methodenneutral formulieren. (fließt in AIA ein)"></textarea></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Umsetzungskonzept <span style="background:#d1fae5;color:#065f46;font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono);margin-left:4px">BAP</span></div>
+        <div class="fg"><textarea id="sb-umsetz" rows="3" placeholder="Wie wird der AWF im Projekt umgesetzt? Methoden, Werkzeuge, Prozessschritte. (fließt in BAP ein)"></textarea></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Abgrenzung – Was ist NICHT Teil dieses AWF?</div>
+        <div class="fg"><textarea id="sb-abgrenzung" rows="2" placeholder="Verweis auf andere AWF wenn relevant."></textarea></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Querbeziehungen</div>
+        <div class="fg"><textarea id="sb-quer" rows="2" placeholder="Welche AWF sind Voraussetzung? Welche bauen auf diesem auf?"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSbModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveSbModal()">Steckbrief speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL – 3-Schritt-Wizard -->
+<div class="modal-overlay" id="import-ol" onclick="if(event.target===this)closeImport()">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">AG-Import – Workflow 1</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="imp-step-label">Schritt 1: Datei hochladen</div>
+      </div>
+      <button class="modal-close" onclick="closeImport()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="step-tabs">
+        <div class="step-tab active" id="stab-1">1 · Datei</div>
+        <div class="step-tab" id="stab-2">2 · Spalten zuordnen</div>
+        <div class="step-tab" id="stab-3">3 · Vorschau & KI</div>
+      </div>
+
+      <!-- STEP 1: Upload -->
+      <div class="imp-step active" id="imp-s1">
+        <div class="info-box info-amber" style="margin-bottom:12px">
+          Lade eine CSV- oder Excel-Datei des AG hoch. Welche Spalten vorhanden sind, legst du im nächsten Schritt fest.
+        </div>
+        <div class="drop-zone" onclick="document.getElementById('f-imp').click()"
+          ondragover="event.preventDefault();this.classList.add('over')"
+          ondragleave="this.classList.remove('over')"
+          ondrop="event.preventDefault();this.classList.remove('over');handleImportFile(event.dataTransfer.files[0])">
+          <input type="file" id="f-imp" accept=".csv,.xlsx,.xls,.txt" onchange="handleImportFile(this.files[0])">
+          <div style="font-size:26px;margin-bottom:8px">📥</div>
+          <div style="font-weight:600;color:var(--text2);margin-bottom:4px">CSV oder Excel ablegen oder klicken</div>
+          <div style="font-size:11px;color:var(--text3)">.csv · .xlsx · .xls</div>
+        </div>
+        <div id="imp-s1-info"></div>
+      </div>
+
+      <!-- STEP 2: Column Mapping -->
+      <div class="imp-step" id="imp-s2">
+        <div class="info-box info-blue" style="margin-bottom:14px">
+          Ordne die Spalten aus deiner Datei den AWF-Feldern zu. Nicht belegte Felder bleiben leer und können in der Nachbereitung ausgefüllt werden.
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px">Struktur der AG-Datei</label>
+          <div style="display:flex;gap:10px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
+              <input type="radio" name="imp-format" value="structured" checked onchange="setImpFormat('structured')">
+              Tätigkeit und Zweck <strong>getrennt</strong>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
+              <input type="radio" name="imp-format" value="unstructured" onchange="setImpFormat('unstructured')">
+              Einzelner Name / Bezeichnung (unstrukturiert)
+            </label>
+          </div>
+        </div>
+        <div id="col-map-grid"></div>
+      </div>
+
+      <!-- STEP 3: Preview + AI -->
+      <div class="imp-step" id="imp-s3">
+        <div id="imp-prev-rows"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeImport()">Abbrechen</button>
+      <button class="btn btn-secondary" id="imp-back" onclick="impBack()" style="display:none">← Zurück</button>
+      <button class="btn btn-primary" id="imp-next" onclick="impNext()" disabled>Weiter →</button>
+      <button class="btn btn-primary" id="import-ok" onclick="doImport()" style="display:none">Importieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE PICKER -->
+<div class="modal-overlay" id="tpick-ol" onclick="if(event.target===this)closeTpick()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Aus AWF-Stamm übernehmen (WF 3)</div>
+      <button class="modal-close" onclick="closeTpick()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box info-purple">Das Projekt erhält eigene Kopien. Änderungen wirken sich nicht auf den Stamm aus.</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.tpick').forEach(c=>c.checked=true)">Alle</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.tpick').forEach(c=>c.checked=false)">Keine</button>
+      </div>
+      <div id="tpick-list" style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;max-height:380px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTpick()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="applyTpick()">Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="modal-overlay" id="confirm-ol" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px" id="confirm-title">Löschen?</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6" id="confirm-body"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Abbrechen</button>
+      <button class="btn btn-danger" id="confirm-btn">Ja, löschen</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const PROJ_KEY='bim_projects_v2',AWF_KEY='bim_awf_v1',STAMM_KEY='bim_awf_stamm_v1',SET_KEY='bim_settings_v1';
+const LP_LIST=['LP1','LP2','LP3','LP4','LP5','LP6','LP7','LP8','LP9'];
+const AWF_COLORS=['#3b82f6','#00c9a7','#8b5cf6','#f59e0b','#ef4444','#10b981','#ec4899','#f97316','#0ea5e9','#6366f1'];
+const DISCIPLINES=[{code:'ARK',name:'Architektur',color:'#3b82f6'},{code:'TW',name:'Tragwerk',color:'#8b5cf6'},{code:'TGA',name:'TGA',color:'#f97316'},{code:'ELT',name:'Elektro',color:'#f59e0b'},{code:'SAN',name:'Sanitär',color:'#06b6d4'},{code:'HZG',name:'Heizung',color:'#ef4444'},{code:'LFT',name:'Lüftung',color:'#10b981'},{code:'BRA',name:'Brandschutz',color:'#dc2626'},{code:'BAP',name:'Bauphysik',color:'#7c3aed'},{code:'GEO',name:'Geotechnik',color:'#92400e'},{code:'FRE',name:'Freianlagen',color:'#65a30d'},{code:'FM',name:'FM',color:'#0ea5e9'},{code:'AG',name:'Auftraggeber',color:'#1e2d45'},{code:'BIM',name:'BIM-Koordination',color:'#00c9a7'}];
+const DISC_MAP=Object.fromEntries(DISCIPLINES.map(d=>[d.code,d]));
+const STATUS_L={entwurf:'Entwurf',aktiv:'Aktiv',freigegeben:'Freigegeben',archiviert:'Archiviert'};
+const STATUS_C={entwurf:'pill-entwurf',aktiv:'pill-aktiv',freigegeben:'pill-freigegeben',archiviert:'pill-archiviert'};
+const SOURCE_L={manual:'Eigene Entw.',ag:'AG-Vorgabe',template:'Aus Stamm'};
+const SOURCE_C={manual:'pill-manual',ag:'pill-ag',template:'pill-template'};
+const IO_TYPES={input:'Input',datadrop:'Data Drop',output:'Output'};
+const IO_COLORS={input:'var(--info)',datadrop:'var(--warn)',output:'var(--ok)'};
+const QS_TYPES={eingang:'Eingangsprüfung',ergebnis:'Ergebnisprüfung',intervall:'Intervall-Lieferung'};
+
+let projects=[],awfData={},stammData=[];
+let mode='stamm',pid=null,selId=null,editId=null,editScope=null,sbEditId=null,sbEditScope=null;
+let qColor=AWF_COLORS[0],qLp=[],qDisc=[],ioRows=[],qsRows=[],importRows=[],confirmCb=null;
+
+function init(){
+  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};document.getElementById('sb-user').textContent=s.name||'BIM Manager';}catch(e){}
+  try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
+  try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
+  try{stammData=JSON.parse(localStorage.getItem(STAMM_KEY))||[];}catch(e){stammData=[];}
+  if(!stammData.length){stammData=sampleStamm();saveStamm();}
+  buildColorGrid('q-color-grid',qColor);buildLpGrid();buildDiscGrid();render();
+}
+const saveAwf=()=>localStorage.setItem(AWF_KEY,JSON.stringify(awfData));
+const saveStamm=()=>localStorage.setItem(STAMM_KEY,JSON.stringify(stammData));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const wordCount=s=>s.trim().split(/\s+/).filter(Boolean).length;
+
+function sampleStamm(){
+  const mk=(t,z,color,phases,discs,raci,io,qs,auf,ums)=>({id:uid(),taetig:t,zweck:z,name:`${t} ${z}`,desc:'',aufgabenstellung:auf||'',umsetzungskonzept:ums||'',color,status:'aktiv',source:'manual',phases,disciplines:discs,raci:raci||{},io:io||[],qs:qs||[],prozess:'',prozessLink:'',abgrenzung:'',querbeziehungen:'',created:new Date().toISOString()});
+  return [
+    mk('Fachmodelle koordinieren','zur Kollisionsprüfung','#3b82f6',['LP3','LP4','LP5'],['ARK','TW','TGA','BIM'],{ARK:'C',TW:'C',TGA:'C',BIM:'R'},
+      [{type:'input',content:'Fachmodelle je Disziplin',format:'IFC 4'},{type:'datadrop',content:'Koordinationsmodell je Datadrop',format:'BCF/IFC'},{type:'output',content:'Konfliktliste + Prüfprotokoll',format:'BCF/PDF'}],
+      [{type:'eingang',text:'Vollständigkeit und Modellierungsstand der Fachmodelle prüfen'},{type:'ergebnis',text:'Kollisionsfreies Koordinationsmodell mit Dokumentation aller behobenen Konflikte'},{type:'intervall',text:'Koordinationsmodell je Datadrop aktualisiert bereitstellen'}],
+      'Die Projektbeteiligten sind verpflichtet, ihre Fachmodelle gemäß vereinbartem Datadrop-Rhythmus in einem Koordinationsmodell zusammenzuführen und auf geometrische sowie inhaltliche Konflikte zu prüfen. Der Anwendungsfall definiert Mindestanforderungen an Modellqualität, Prüfumfang sowie Dokumentation und Nachverfolgung aller Konflikte bis zur nachgewiesenen Behebung.',
+      'Die Koordination erfolgt mit einem BIM-Koordinationswerkzeug auf Basis der IFC-Exports aller Fachmodelle. Der BIM-Koordinator führt den Prozess, erstellt das Koordinationsmodell, dokumentiert Konflikte als BCF-Aufgaben und verfolgt deren Behebung nach. Ergebnisse werden je Datadrop als Prüfprotokoll kommuniziert.'),
+    mk('Mengen ermitteln','für Kostenplanung','#f59e0b',['LP2','LP3','LP4'],['ARK','TW','BIM'],{ARK:'C',TW:'C',BIM:'R'},
+      [{type:'input',content:'Fachmodelle mit Attributierung',format:'IFC 4'},{type:'output',content:'Mengengerüst nach DIN 276',format:'XLSX/CSV'}],
+      [{type:'eingang',text:'Modellierungsstand auf Ausreichendheit für Mengenermittlung prüfen'},{type:'ergebnis',text:'Vollständiges Mengengerüst mit Quellennachweis je Position'}],
+      'Auf Basis des BIM-Modells sind strukturierte und bauteilbezogene Mengen zu ermitteln und Kostenschätzungen/-berechnungen nach DIN 276 aufzustellen. Die Mengenermittlung dient als verbindliche Grundlage für die Kostenplanung und ist je Leistungsphase mit dem jeweils gültigen Planungsstand abzustimmen.',
+      'Mengen werden modellbasiert mit einem Auswertungswerkzeug (z. B. Solibri, Desite) aus dem IFC-Modell abgeleitet. Der BIM-Koordinator koordiniert die Attributierungstiefe der Modelle, der Kostenplaner übernimmt die Auswertung und überführt die Mengen in die Kostenberechnung nach DIN 276.'),
+    mk('Räume erfassen','für Raumprogramm','#00c9a7',['LP2','LP3'],['ARK','AG','BIM'],{ARK:'R',AG:'A',BIM:'C'},
+      [{type:'input',content:'AG-Raumprogramm (aktuell freigegeben)',format:'PDF/XLSX'},{type:'output',content:'Raumbuch mit Flächennachweis DIN 277',format:'IFC/XLSX'}],
+      [{type:'eingang',text:'Vollständigkeit und Freigabestatus des AG-Raumprogramms sicherstellen'},{type:'ergebnis',text:'Raumbuch stimmt mit Raumprogramm überein oder Abweichungen sind freigegeben'}],
+      'Alle Räume sind vollständig mit Nutzungsart, Flächen nach DIN 277 und Ausstattungsanforderungen im BIM-Modell zu erfassen. Das Raumprogramm des Auftraggebers bildet die Vorgabe; Abweichungen sind zu dokumentieren und freizugeben. Das Raumbuch ist Grundlage für alle raumbezogenen Anwendungsfälle.',
+      'Räume werden als IFC-IfcSpace im Architekturmodell modelliert und mit den erforderlichen Attributen belegt. Der BIM-Koordinator stellt die vollständige Attributierung sicher. Das Raumbuch wird aus dem Modell abgeleitet und dem AG zur Freigabe vorgelegt.'),
+    mk('Daten übergeben','für FM-Betrieb','#10b981',['LP8','LP9'],['TGA','ELT','FM','BIM'],{TGA:'C',ELT:'C',FM:'A',BIM:'R'},
+      [{type:'input',content:'As-built-Modelle je Gewerk',format:'IFC 4'},{type:'datadrop',content:'FM-Datenpaket n',format:'IFC/XLSX'},{type:'output',content:'Vollständiges FM-Datenpaket',format:'IFC/XLSX/PDF'}],
+      [{type:'eingang',text:'FM-Anforderungen vollständig spezifiziert und mit Betreiber abgestimmt'},{type:'ergebnis',text:'Alle geforderten Attribute befüllt – Vollständigkeitsprüfung dokumentiert'},{type:'intervall',text:'Zwischenlieferungen zur Frühkontrolle der Datenqualität'}],
+      'Die betriebsrelevanten Daten aller Gewerke sind aus den As-built-Modellen zu extrahieren und strukturiert an das Facility Management zu übergeben. Der Datenumfang richtet sich nach den AIA des Betreibers. Die Übergabe erfolgt in einem vereinbarten Dateiformat und ist auf Vollständigkeit zu prüfen.',
+      'Der BIM-Koordinator koordiniert die Attributierungstiefe mit den Fachplanern und stellt das FM-Datenpaket zusammen. Zwischenlieferungen je Datadrop ermöglichen dem FM eine frühzeitige Qualitätskontrolle. Die finale Übergabe erfolgt mit einem Vollständigkeitsbericht.'),
+    mk('Termine visualisieren','zur Bauablaufsimulation','#8b5cf6',['LP4','LP5','LP6'],['ARK','TW','BIM'],{ARK:'C',TW:'C',BIM:'R'},
+      [{type:'input',content:'Fachmodelle + freigegebener Bauzeitenplan',format:'IFC/MSProject'},{type:'output',content:'4D-Simulation + Terminbericht',format:'MP4/PDF'}],
+      [{type:'eingang',text:'Bauzeitenplan freigegeben und Modelle ausreichend strukturiert'},{type:'ergebnis',text:'4D-Simulation ohne Konflikte – kritischer Pfad identifiziert'}],
+      'Modellelemente sind mit Vorgängen des Bauzeitenplans zu verknüpfen und als 4D-Simulation darzustellen. Die Simulation dient der Plausibilisierung der Bauabläufe, der Identifikation von Terminrisiken und der Kommunikation des Baufortschritts.',
+      'Die 4D-Verknüpfung erfolgt in einem geeigneten Werkzeug (z. B. Navisworks, Synchro). Der BIM-Koordinator übernimmt die Verknüpfung; die Terminplaner liefern den freigegebenen Ablaufplan. Simulationsvideos und Terminberichte werden als Projektdokumentation bereitgestellt.'),
+  ];
+}
+function calcComp(a){let s=0,t=7;if(a.taetig&&a.zweck)s++;if((a.aufgabenstellung||'').length>30)s++;if((a.umsetzungskonzept||'').length>30)s++;if(a.raci&&Object.keys(a.raci).length>0)s++;if(a.io&&a.io.length>0)s++;if(a.qs&&a.qs.length>0)s++;if(a.prozess)s++;return Math.round(s/t*100);}
+function calcRG(a){
+  if(a.status==='freigegeben')return 5;
+  if(a.prozess&&(a.abgrenzung||a.querbeziehungen))return 4;
+  if(a.raci&&Object.keys(a.raci||{}).length>0&&a.io&&a.io.length>0&&a.qs&&a.qs.length>0)return 3;
+  if((a.aufgabenstellung||'').length>30||(a.umsetzungskonzept||'').length>30)return 2;
+  if((a.taetig&&a.zweck)||a.name)return 1;
+  return 0;
+}
+const RG_LABELS=['—','Erfasst','Beschrieben','Ausgearbeitet','Dokumentiert','Freigegeben'];
+const RG_COLORS=['#e2e8f0','#f59e0b','#eab308','#84cc16','#22c55e','#00c9a7'];
+function rgBadge(a){const rg=calcRG(a);return`<span style="font-size:9px;font-family:var(--mono);font-weight:600;padding:2px 7px;border-radius:3px;background:${RG_COLORS[rg]}22;color:${RG_COLORS[rg]};border:1px solid ${RG_COLORS[rg]}44">R${rg} ${RG_LABELS[rg]}</span>`;}
+function rgBar(a){const rg=calcRG(a);return`<div class="rg-bar">${[1,2,3,4,5].map(i=>`<div class="rg-seg ${i<=rg?'on-'+rg:''}" title="R${i}: ${RG_LABELS[i]}"></div>`).join('')}</div><div class="rg-label">R${rg} · ${RG_LABELS[rg]}</div>`;}
+
+function render(){updateBadges();renderTopbar();mode==='stamm'?renderStamm():renderProjekt();}
+function updateBadges(){document.getElementById('tb-stamm').textContent=stammData.length;document.getElementById('nav-count').textContent=stammData.length;document.getElementById('tb-projekt').textContent=pid?(awfData[pid]||[]).length:0;}
+function setMode(m){mode=m;document.getElementById('tab-stamm').classList.toggle('active',m==='stamm');document.getElementById('tab-projekt').classList.toggle('active',m==='projekt');render();}
+function renderTopbar(){const el=document.getElementById('topbar-right');if(mode==='stamm'){el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="exportCSV('stamm')">⬇ Export</button><button class="btn btn-primary btn-sm" onclick="openQuick(null,'stamm')">+ AWF</button>`;}else{el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport()" ${!pid?'disabled':''}>⬆ AG-Import</button><button class="btn btn-secondary btn-sm" onclick="exportCSV('projekt')" ${!pid?'disabled':''}>⬇ Export</button><button class="btn btn-primary btn-sm" onclick="openQuick(null,'projekt')" ${!pid?'disabled':''}>+ AWF</button>`;}}
+
+function renderStamm(){document.getElementById('proj-bar-wrap').innerHTML='';const sel=stammData.find(a=>a.id===selId);document.getElementById('workspace').innerHTML=`<div style="flex:1;display:flex;overflow:hidden"><div class="left-panel"><div class="panel-header"><span class="panel-title">◈ AWF-Stamm</span><button class="btn btn-primary btn-sm" onclick="openQuick(null,'stamm')">+</button></div><div class="panel-scroll">${renderList(stammData,'stamm')}</div></div><div class="right-panel">${sel?renderSB(sel,'stamm'):renderStammIntro()}</div></div>`;}
+
+function renderStammIntro(){return`<div style="max-width:700px;margin:0 auto"><div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:6px">AWF-Stammbibliothek</div><div style="font-size:13px;color:var(--text3);margin-bottom:20px">Projektübergreifende Vorlagen nach der Schablone Tätigkeit + Zweck.</div><div class="info-box info-purple"><strong>Schablone:</strong> [Tätigkeit: Verb + Substantiv] + [Zweck: für/zur + Substantiv]<br>Methodenneutral · softwareunabhängig · phasenneutral.<br><strong>QS ist kein separater AWF</strong> – Eingangs- und Ergebnisprüfung sind struktureller Bestandteil jedes Steckbriefs.</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px">${stammData.map(a=>{const c=calcComp(a);return`<div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid ${a.color};border-radius:var(--r);padding:12px 14px;cursor:pointer" onclick="selId='${a.id}';renderStamm()"><div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:2px">${a.taetig}</div><div style="font-weight:500;font-size:13px;margin-bottom:6px">${a.zweck}</div><div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px">${(a.phases||[]).map(p=>`<span style="font-size:10px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 3px;border-radius:2px">${p}</span>`).join('')}</div><div class="completion-bar"><div class="completion-fill" style="width:${c}%"></div></div><div style="font-size:10px;color:var(--text3);margin-top:3px">${c}% Steckbrief</div></div>`;}).join('')}</div></div>`;}
+
+function renderProjekt(){const awfs=pid?(awfData[pid]||[]):[];document.getElementById('proj-bar-wrap').innerHTML=`<div class="proj-bar"><label>Projekt:</label><select class="psel" id="psel" onchange="onProjChange()"><option value="">— Projekt wählen —</option>${projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('')}</select>${pid?`<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${awfs.length} AWF</span>`:''}</div>`;if(pid)setTimeout(()=>{const s=document.getElementById('psel');if(s)s.value=pid;},0);if(!pid){document.getElementById('workspace').innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt ausgewählt</div></div></div>`;return;}const sel=awfs.find(a=>a.id===selId);document.getElementById('workspace').innerHTML=`<div style="flex:1;display:flex;overflow:hidden"><div class="left-panel"><div class="panel-header"><span class="panel-title">Projekt-AWF</span><button class="btn btn-primary btn-sm" onclick="openQuick(null,'projekt')">+</button></div><div class="panel-scroll">${!awfs.length?`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Noch keine AWF</div>`:renderList(awfs,'projekt')}</div></div><div class="right-panel">${sel?renderSB(sel,'projekt'):renderWorkflows()}</div></div>`;}
+
+function renderWorkflows(){return`<div style="max-width:680px;margin:0 auto"><div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.02em;margin-bottom:6px">AWF erfassen</div><div style="font-size:12px;color:var(--text3);margin-bottom:20px">Drei Wege – kombinierbar. Alle münden in denselben Steckbrief nach Nomenklatur-Schablone.</div><div class="wf-grid"><div class="wf-card" onclick="openQuick(null,'projekt')"><div style="font-size:26px;margin-bottom:8px">✍️</div><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">Workflow 2<br>Selbst entwickeln</div><div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:12px">Mit Projektbeteiligten erarbeiten. Schablone führt durch Tätigkeit + Zweck.</div><span class="btn btn-primary btn-sm">+ Neuer AWF</span></div><div class="wf-card" onclick="openTpick()"><div style="font-size:26px;margin-bottom:8px">◈</div><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">Workflow 3<br>Aus Stamm</div><div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:12px">Bewährte AWF aus Stammbibliothek übernehmen und projektspezifisch anpassen.</div><span class="btn btn-global btn-sm">Vorlagen wählen</span></div><div class="wf-card" onclick="openImport()"><div style="font-size:26px;margin-bottom:8px">📥</div><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">Workflow 1<br>AG-Vorgabe</div><div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:12px">AG-Anforderungen importieren – CSV oder Excel. Steckbrief wird automatisch angelegt.</div><span class="btn btn-sm" style="background:var(--warn-bg);border:1px solid #fde68a;color:#92400e">⬆ Importieren</span></div></div></div>`;}
+
+function renderList(list,scope){if(!list.length)return`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Keine AWF.</div>`;return list.map(a=>{const c=calcComp(a);return`<div class="awf-item ${selId===a.id?'active':''}" onclick="selId='${a.id}';${scope==='stamm'?'renderStamm()':'renderProjekt()'}"><div class="awf-dot" style="background:${a.color}"></div><div class="awf-item-body"><div class="awf-taetig">${a.taetig||''}</div><div class="awf-name">${a.zweck||a.name}</div><div class="awf-meta">${rgBadge(a)}${(a.phases||[]).slice(0,2).map(p=>`<span style="font-size:10px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 3px;border-radius:2px">${p}</span>`).join('')}</div>${rgBar(a)}</div><div class="awf-actions"><button class="btn-ghost" style="font-size:11px" onclick="event.stopPropagation();openQuick('${a.id}','${scope}')">✎</button><button class="btn-ghost" style="font-size:11px;color:var(--err)" onclick="event.stopPropagation();confirmDel('${a.id}','${scope}')">⌫</button></div></div>`;}).join('');}
+
+function renderSB(a,scope){const comp=calcComp(a);return`<div style="max-width:800px;margin:0 auto"><div class="sb-header"><div class="sb-id">AWF-Steckbrief · ${scope==='stamm'?'Stamm':'Projekt'}</div><div class="sb-schablone"><span class="sb-taetig">${a.taetig||'–'}</span>${a.zweck?`<span class="sb-sep">·</span><span class="sb-zweck">${a.zweck}</span>`:''}</div>${a.aufgabenstellung?`<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;font-family:var(--mono);font-weight:600;color:var(--text3);text-transform:uppercase">Aufgabenstellung</span><span style="background:#dbeafe;color:#1e40af;font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono)">AIA</span></div><div class="sb-desc">${a.aufgabenstellung}</div></div>`:''}${a.umsetzungskonzept?`<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;font-family:var(--mono);font-weight:600;color:var(--text3);text-transform:uppercase">Umsetzungskonzept</span><span style="background:#d1fae5;color:#065f46;font-size:9px;padding:1px 5px;border-radius:3px;font-family:var(--mono)">BAP</span></div><div class="sb-desc">${a.umsetzungskonzept}</div></div>`:''}${!a.aufgabenstellung&&!a.umsetzungskonzept?'<div class="sb-desc" style="font-style:italic">Noch keine Beschreibung.</div>':''}<div class="sb-tags"><span class="pill ${STATUS_C[a.status]||'pill-entwurf'}">● ${STATUS_L[a.status]||'Entwurf'}</span><span class="pill ${SOURCE_C[a.source]||'pill-manual'}">${SOURCE_L[a.source]||a.source}</span>${(a.disciplines||[]).map(d=>`<span class="disc-chip" style="background:${DISC_MAP[d]?.color||'#8899b0'}22;border-color:${DISC_MAP[d]?.color||'#8899b0'}44;color:${DISC_MAP[d]?.color||'#8899b0'}">${d}</span>`).join('')}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:10px">${LP_LIST.map(lp=>`<span class="lp-chip ${(a.phases||[]).includes(lp)?'on':''}" style="${!(a.phases||[]).includes(lp)?'opacity:0.3':''}">${lp}</span>`).join('')}</div><div style="margin-top:12px;display:flex;align-items:center;gap:10px"><div class="completion-bar" style="flex:1"><div class="completion-fill" style="width:${comp}%"></div></div><span style="font-size:11px;font-family:var(--mono);color:var(--text3);flex-shrink:0">${comp}% vollständig</span><button class="btn btn-primary btn-sm" onclick="openSbModal('${a.id}','${scope}')">✏ Steckbrief ausfüllen</button>${scope==='projekt'?`<button class="btn btn-global btn-sm" onclick="copyToStamm('${a.id}')">→ Stamm</button>`:`<button class="btn btn-primary btn-sm" onclick="copyToProjekt('${a.id}')" ${!pid?'disabled':''}>→ Projekt</button>`}</div></div>
+<div class="sc"><div class="sc-header"><span class="sc-title">Beteiligte – RACI</span>${!a.raci||!Object.keys(a.raci).length?`<span style="font-size:10px;color:var(--warn)">⚠ Noch nicht ausgefüllt</span>`:''}</div><div class="sc-body">${renderRaciView(a)}</div></div>
+<div class="sc"><div class="sc-header"><span class="sc-title">Input · Data Drop · Output</span>${!a.io||!a.io.length?`<span style="font-size:10px;color:var(--warn)">⚠ Noch nicht ausgefüllt</span>`:''}</div><div class="sc-body">${renderIoView(a)}</div></div>
+<div class="sc"><div class="sc-header"><span class="sc-title">Qualitätssicherungsmaßnahmen</span>${!a.qs||!a.qs.length?`<span style="font-size:10px;color:var(--warn)">⚠ Noch nicht ausgefüllt</span>`:''}</div><div class="sc-body">${renderQsView(a)}</div></div>
+${a.prozess||a.abgrenzung||a.querbeziehungen?`<div class="sc"><div class="sc-header"><span class="sc-title">Referenzprozess & Abgrenzung</span></div><div class="sc-body">${a.prozess?`<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">${a.prozess}</div>`:''}${a.prozessLink?`<div style="font-size:11px;font-family:var(--mono);margin-bottom:10px"><a href="${a.prozessLink}" target="_blank" style="color:var(--accent)">→ Prozessdiagramm</a></div>`:''}${a.abgrenzung?`<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">Abgrenzung</div><div style="font-size:12px;color:var(--text2);line-height:1.7">${a.abgrenzung}</div></div>`:''}${a.querbeziehungen?`<div><div style="font-size:10px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">Querbeziehungen</div><div style="font-size:12px;color:var(--text2);line-height:1.7">${a.querbeziehungen}</div></div>`:''}</div></div>`:''}</div>`;}
+
+function renderRaciView(a){const raci=a.raci||{};if(!Object.keys(raci).length)return`<div style="font-size:12px;color:var(--text3);font-style:italic">Noch nicht ausgefüllt. Klicke „Steckbrief ausfüllen".</div>`;const rl={R:'Prozessverantwortlich',A:'Ergebnisverantwortlich',C:'Aktiv beteiligt',I:'Informiert'};const byR={R:[],A:[],C:[],I:[]};Object.entries(raci).forEach(([d,r])=>{if(byR[r])byR[r].push(d);});return`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">${['R','A','C','I'].map(r=>`<div style="padding:10px;border:1px solid var(--border);border-radius:var(--r)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span class="raci-badge raci-${r}">${r}</span><span style="font-size:11px;font-weight:500;color:var(--text2)">${rl[r]}</span></div><div style="display:flex;gap:5px;flex-wrap:wrap">${byR[r].length?byR[r].map(d=>`<span class="disc-chip" style="background:${DISC_MAP[d]?.color||'#8899b0'}22;border-color:${DISC_MAP[d]?.color||'#8899b0'}44;color:${DISC_MAP[d]?.color||'#8899b0'}">${d}</span>`).join(''):`<span style="font-size:11px;color:var(--text3)">—</span>`}</div></div>`).join('')}</div>`;}
+
+function renderIoView(a){const io=a.io||[];if(!io.length)return`<div style="font-size:12px;color:var(--text3);font-style:italic">Noch nicht ausgefüllt.</div>`;return['input','datadrop','output'].map(type=>{const items=io.filter(r=>r.type===type);if(!items.length)return'';const col=IO_COLORS[type];return`<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;font-family:var(--mono);text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${col};display:inline-block"></span>${IO_TYPES[type]}</div>${items.map(item=>`<div class="qs-item" style="border-left:3px solid ${col};padding-left:10px"><div style="flex:1"><div style="font-size:12px;color:var(--text)">${item.content}</div>${item.format?`<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">${item.format}</div>`:''}</div></div>`).join('')}</div>`;}).join('');}
+
+function renderQsView(a){const qs=a.qs||[];if(!qs.length)return`<div style="font-size:12px;color:var(--text3);font-style:italic">Noch nicht ausgefüllt. Mindestens eine Eingangs- und eine Ergebnisprüfung erforderlich.</div>`;return qs.map(item=>`<div class="qs-item"><span class="qs-type qs-${item.type}">${QS_TYPES[item.type]||item.type}</span><div style="font-size:12px;color:var(--text);flex:1;padding-top:2px">${item.text}</div></div>`).join('');}
+
+// QUICK MODAL
+function buildColorGrid(id,sel){document.getElementById(id).innerHTML=AWF_COLORS.map(c=>`<div class="cswatch ${c===sel?'sel':''}" style="background:${c}" data-c="${c}" onclick="qColor='${c}';document.querySelectorAll('#${id} .cswatch').forEach(s=>s.classList.toggle('sel',s.dataset.c==='${c}'))"></div>`).join('');}
+function buildLpGrid(){document.getElementById('q-lp-grid').innerHTML=LP_LIST.map(lp=>`<div class="lp-chip ${qLp.includes(lp)?'on':''}" id="qlp-${lp}" onclick="toggleLp('${lp}')">${lp}</div>`).join('');}
+function toggleLp(lp){qLp.includes(lp)?qLp=qLp.filter(x=>x!==lp):qLp.push(lp);LP_LIST.forEach(p=>document.getElementById('qlp-'+p)?.classList.toggle('on',qLp.includes(p)));}
+function syncLp(){LP_LIST.forEach(lp=>document.getElementById('qlp-'+lp)?.classList.toggle('on',qLp.includes(lp)));}
+function buildDiscGrid(){document.getElementById('q-disc-grid').innerHTML=DISCIPLINES.map(d=>`<div class="disc-chip ${qDisc.includes(d.code)?'on':''}" id="qdisc-${d.code}" style="${qDisc.includes(d.code)?`background:${d.color};border-color:${d.color};color:white`:`border-color:${d.color};color:${d.color}`}" onclick="toggleDisc('${d.code}','${d.color}')">${d.code}</div>`).join('');}
+function toggleDisc(code,color){if(qDisc.includes(code)){qDisc=qDisc.filter(x=>x!==code);const el=document.getElementById('qdisc-'+code);if(el){el.classList.remove('on');el.style.background='';el.style.borderColor=color;el.style.color=color;}}else{qDisc.push(code);const el=document.getElementById('qdisc-'+code);if(el){el.classList.add('on');el.style.background=color;el.style.borderColor=color;el.style.color='white';}}}
+function syncDisc(){DISCIPLINES.forEach(d=>{const el=document.getElementById('qdisc-'+d.code);if(!el)return;const on=qDisc.includes(d.code);el.classList.toggle('on',on);el.style.background=on?d.color:'';el.style.borderColor=d.color;el.style.color=on?'white':d.color;});}
+function updateSchablone(){const t=document.getElementById('q-taetig')?.value.trim()||'';const z=document.getElementById('q-zweck')?.value.trim()||'';document.getElementById('schablone-preview').textContent=(t&&z)?`${t} ${z}`:(t||z||'—');const desc=(document.getElementById('q-aufgabe')?.value||'')+(document.getElementById('q-umsetz')?.value||'');const wc=wordCount(desc);const hint=document.getElementById('word-count-hint');if(hint){hint.textContent=`${wc} Wörter gesamt (Aufgabe + Konzept)`;hint.style.color=wc>=100?'var(--ok)':wc>0?'var(--warn)':'var(--text3)';}}
+
+function openQuick(id=null,scope='stamm'){if(scope==='projekt'&&!pid){showToast('Erst Projekt wählen');return;}editId=id;editScope=scope;document.getElementById('quick-title').textContent=id?'AWF bearbeiten':'Neuer Anwendungsfall';document.getElementById('quick-save-btn').textContent=id?'Speichern':'Speichern';const list=scope==='stamm'?stammData:(awfData[pid]||[]);const src=id?list.find(a=>a.id===id):null;if(src){document.getElementById('q-taetig').value=src.taetig||'';document.getElementById('q-zweck').value=src.zweck||'';document.getElementById('q-aufgabe').value=src.aufgabenstellung||'';document.getElementById('q-umsetz').value=src.umsetzungskonzept||'';document.getElementById('q-status').value=src.status||'entwurf';document.getElementById('q-source').value=src.source||'manual';qColor=src.color||AWF_COLORS[0];qLp=[...(src.phases||[])];qDisc=[...(src.disciplines||[])];}else{['q-taetig','q-zweck','q-aufgabe','q-umsetz'].forEach(i=>document.getElementById(i).value='');document.getElementById('q-status').value='entwurf';document.getElementById('q-source').value='manual';qColor=AWF_COLORS[((scope==='stamm'?stammData:awfData[pid]||[]).length)%AWF_COLORS.length];qLp=[];qDisc=[];}buildColorGrid('q-color-grid',qColor);syncLp();syncDisc();updateSchablone();document.getElementById('quick-ol').classList.add('open');setTimeout(()=>document.getElementById('q-taetig').focus(),200);}
+function closeQuick(){document.getElementById('quick-ol').classList.remove('open');editId=null;}
+function saveQuick(){const taetig=document.getElementById('q-taetig').value.trim();const zweck=document.getElementById('q-zweck').value.trim();if(!taetig||!zweck){showToast('Tätigkeit und Zweck sind Pflichtfelder');return;}const existing=editId?((editScope==='stamm'?stammData:awfData[pid]||[]).find(a=>a.id===editId)):null;const aufgabe=document.getElementById('q-aufgabe').value.trim();const umsetz=document.getElementById('q-umsetz').value.trim();const data={id:editId||uid(),taetig,zweck,name:`${taetig} ${zweck}`,desc:aufgabe||umsetz?'':existing?.desc||'',aufgabenstellung:aufgabe,umsetzungskonzept:umsetz,color:qColor,status:document.getElementById('q-status').value,source:document.getElementById('q-source').value,phases:[...qLp],disciplines:[...qDisc],raci:existing?.raci||{},io:existing?.io||[],qs:existing?.qs||[],prozess:existing?.prozess||'',prozessLink:existing?.prozessLink||'',abgrenzung:existing?.abgrenzung||'',querbeziehungen:existing?.querbeziehungen||'',updated:new Date().toISOString()};const scope=editScope||'stamm';if(scope==='stamm'){if(editId){const i=stammData.findIndex(a=>a.id===editId);if(i>-1)stammData[i]=data;showToast('✓ AWF aktualisiert');}else{stammData.push(data);selId=data.id;showToast('✓ AWF angelegt – Steckbrief bitte ausfüllen');}saveStamm();}else{if(!awfData[pid])awfData[pid]=[];if(editId){const i=awfData[pid].findIndex(a=>a.id===editId);if(i>-1)awfData[pid][i]={...data,templateRef:awfData[pid][i]?.templateRef};}else{awfData[pid].push(data);selId=data.id;showToast('✓ AWF angelegt – Steckbrief bitte ausfüllen');}saveAwf();}closeQuick();render();}
+
+// STECKBRIEF MODAL
+function openSbModal(id,scope){sbEditId=id;sbEditScope=scope;const list=scope==='stamm'?stammData:(awfData[pid]||[]);const a=list.find(x=>x.id===id);if(!a)return;document.getElementById('sb-modal-title').textContent=`${a.taetig} ${a.zweck}`;document.getElementById('sb-modal-sub').textContent=`${STATUS_L[a.status]||''} · ${SOURCE_L[a.source]||''}`;buildRaciBuilder(a);ioRows=[...(a.io||[]).map(r=>({...r}))];renderIoBuilder();qsRows=[...(a.qs||[]).map(r=>({...r}))];renderQsBuilder();document.getElementById('sb-aufgabe').value=a.aufgabenstellung||'';document.getElementById('sb-umsetz').value=a.umsetzungskonzept||'';document.getElementById('sb-prozess').value=a.prozess||'';document.getElementById('sb-prozess-link').value=a.prozessLink||'';document.getElementById('sb-abgrenzung').value=a.abgrenzung||'';document.getElementById('sb-quer').value=a.querbeziehungen||'';document.getElementById('sb-ol').classList.add('open');}
+function closeSbModal(){document.getElementById('sb-ol').classList.remove('open');sbEditId=null;}
+function buildRaciBuilder(a){const raci=a.raci||{};const disc=a.disciplines&&a.disciplines.length?a.disciplines:DISCIPLINES.map(d=>d.code);document.getElementById('raci-builder-wrap').innerHTML=`<div class="raci-builder"><div style="font-size:10px;font-family:var(--mono);color:var(--text2)">Disziplin</div>${['R','A','C','I'].map(r=>`<div style="text-align:center"><span class="raci-badge raci-${r}">${r}</span></div>`).join('')}${disc.map(code=>{const d=DISC_MAP[code];if(!d)return'';return`<div class="raci-disc-name" style="color:${d.color}">${code}</div>${['R','A','C','I'].map(r=>`<div><input type="radio" class="raci-cb" name="raci-${code}" value="${r}" ${raci[code]===r?'checked':''}></div>`).join('')}`;}).join('')}</div>`;}
+function addIoRow(type){ioRows.push({type,content:'',format:''});renderIoBuilder();}
+function removeIoRow(i){ioRows.splice(i,1);renderIoBuilder();}
+function renderIoBuilder(){document.getElementById('io-builder-wrap').innerHTML=ioRows.length?ioRows.map((r,i)=>`<div class="io-row"><select onchange="ioRows[${i}].type=this.value;renderIoBuilder()">${Object.entries(IO_TYPES).map(([v,l])=>`<option value="${v}" ${r.type===v?'selected':''}>${l}</option>`).join('')}</select><input type="text" placeholder="Inhalt / Beschreibung" value="${r.content||''}" oninput="ioRows[${i}].content=this.value"><input type="text" placeholder="Format" value="${r.format||''}" oninput="ioRows[${i}].format=this.value"><button class="btn-ghost" style="color:var(--err)" onclick="removeIoRow(${i})">×</button></div>`).join(''):`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Noch keine Einträge.</div>`;}
+function addQsRow(type){qsRows.push({type,text:''});renderQsBuilder();}
+function removeQsRow(i){qsRows.splice(i,1);renderQsBuilder();}
+function renderQsBuilder(){document.getElementById('qs-builder-wrap').innerHTML=qsRows.length?qsRows.map((r,i)=>`<div class="qs-row"><select onchange="qsRows[${i}].type=this.value;renderQsBuilder()">${Object.entries(QS_TYPES).map(([v,l])=>`<option value="${v}" ${r.type===v?'selected':''}>${l}</option>`).join('')}</select><input type="text" placeholder="Maßnahme / Prüfkriterium" value="${r.text||''}" oninput="qsRows[${i}].text=this.value"><button class="btn-ghost" style="color:var(--err)" onclick="removeQsRow(${i})">×</button></div>`).join(''):`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Noch keine QS-Maßnahmen.</div>`;}
+function saveSbModal(){const list=sbEditScope==='stamm'?stammData:(awfData[pid]||[]);const a=list.find(x=>x.id===sbEditId);if(!a)return;const raci={};document.querySelectorAll('[name^="raci-"]:checked').forEach(el=>{raci[el.name.replace('raci-','')]=el.value;});Object.assign(a,{raci,io:[...ioRows],qs:[...qsRows],aufgabenstellung:document.getElementById('sb-aufgabe').value.trim(),umsetzungskonzept:document.getElementById('sb-umsetz').value.trim(),prozess:document.getElementById('sb-prozess').value.trim(),prozessLink:document.getElementById('sb-prozess-link').value.trim(),abgrenzung:document.getElementById('sb-abgrenzung').value.trim(),querbeziehungen:document.getElementById('sb-quer').value.trim(),updated:new Date().toISOString()});if(sbEditScope==='stamm')saveStamm();else saveAwf();closeSbModal();render();showToast(`✓ Steckbrief gespeichert – ${calcComp(a)}% vollständig`);}
+
+// COPY
+function copyToStamm(projId){const src=(awfData[pid]||[]).find(a=>a.id===projId);if(!src)return;if(stammData.find(a=>a.taetig===src.taetig&&a.zweck===src.zweck)){showToast('Identischer AWF bereits im Stamm');return;}stammData.push({...src,id:uid(),source:'manual',templateRef:undefined});saveStamm();showToast(`✓ In Stamm übernommen`);}
+function copyToProjekt(stammId){if(!pid){showToast('Erst Projekt wählen');return;}const src=stammData.find(a=>a.id===stammId);if(!src)return;if(!awfData[pid])awfData[pid]=[];if(awfData[pid].find(a=>a.templateRef===stammId)){showToast('Bereits im Projekt');return;}awfData[pid].push({...src,id:uid(),templateRef:stammId,source:'template'});saveAwf();setMode('projekt');showToast(`✓ In Projekt übernommen`);}
+
+// TEMPLATE PICKER
+function openTpick(){if(!pid){showToast('Erst Projekt wählen');return;}const existing=(awfData[pid]||[]).map(a=>a.templateRef);const avail=stammData.filter(a=>!existing.includes(a.id));document.getElementById('tpick-list').innerHTML=!avail.length?`<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Alle Vorlagen bereits im Projekt.</div>`:avail.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)"><input type="checkbox" class="tpick" value="${a.id}" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;cursor:pointer" checked><div style="width:8px;height:8px;border-radius:50%;background:${a.color};flex-shrink:0"></div><div style="flex:1"><div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${a.taetig}</div><div style="font-weight:500;font-size:12px">${a.zweck}</div><div style="font-size:10px;color:var(--text3)">${(a.phases||[]).join(' · ')}</div></div><span style="font-size:10px;font-family:var(--mono);background:var(--surface2);padding:2px 6px;border-radius:3px">${calcComp(a)}%</span></div>`).join('');document.getElementById('tpick-ol').classList.add('open');}
+function closeTpick(){document.getElementById('tpick-ol').classList.remove('open');}
+function applyTpick(){const ids=[...document.querySelectorAll('.tpick:checked')].map(c=>c.value);if(!ids.length){showToast('Nichts ausgewählt');return;}if(!awfData[pid])awfData[pid]=[];let n=0;ids.forEach(sid=>{const src=stammData.find(a=>a.id===sid);if(!src)return;awfData[pid].push({...src,id:uid(),templateRef:sid,source:'template'});n++;});saveAwf();closeTpick();render();showToast(`✓ ${n} AWF übernommen`);}
+
+// ─── IMPORT – 3-step wizard ──────────────────────────────────────────
+let impStep=1, impCols=[], impRawRows=[], impFormat='structured', impMapping={};
+const IMP_FIELDS=[
+  {key:'taetig',   label:'Tätigkeit',       hint:'Verb + Substantiv'},
+  {key:'zweck',    label:'Zweck',            hint:'für/zur + Substantiv'},
+  {key:'name',     label:'Name (unstrukturiert)', hint:'Einzelner Bezeichner'},
+  {key:'aufgabenstellung', label:'Aufgabenstellung', hint:'AIA-Inhalt'},
+  {key:'umsetzungskonzept',label:'Umsetzungskonzept',hint:'BAP-Inhalt'},
+  {key:'phase',    label:'Leistungsphase(n)',hint:'LP1,LP3…'},
+  {key:'discs',    label:'Disziplinen',      hint:'ARK,TGA,BIM…'},
+  {key:'status',   label:'Status',           hint:'entwurf/aktiv…'},
+];
+function openImport(){if(!pid){showToast('Erst Projekt wählen');return;}impStep=1;impCols=[];impRawRows=[];impFormat='structured';impMapping={};document.getElementById('import-ol').classList.add('open');goImpStep(1);}
+function closeImport(){document.getElementById('import-ol').classList.remove('open');}
+function setImpFormat(f){impFormat=f;renderColMap();}
+function goImpStep(s){impStep=s;[1,2,3].forEach(i=>{document.getElementById('imp-s'+i).classList.toggle('active',i===s);document.getElementById('stab-'+i).classList.toggle('active',i===s);});document.getElementById('imp-step-label').textContent=['','Schritt 1: Datei hochladen','Schritt 2: Spalten zuordnen','Schritt 3: Vorschau & KI-Vorschläge'][s];document.getElementById('imp-back').style.display=s>1?'':'none';document.getElementById('imp-next').style.display=s<3?'':'none';document.getElementById('import-ok').style.display=s===3?'':'none';document.getElementById('import-ok').disabled=importRows.length===0;}
+function impNext(){if(impStep===1&&!impCols.length){showToast('Bitte zuerst eine Datei hochladen');return;}if(impStep===2){buildImportRows();if(!importRows.length){showToast('Keine Zeilen erkannt – Spalte für Name oder Tätigkeit zuordnen');return;}goImpStep(3);renderImpPreview();}else if(impStep===1){renderColMap();goImpStep(2);}}
+function impBack(){goImpStep(impStep-1);}
+function handleImportFile(file){if(!file)return;const reader=new FileReader();const isXl=file.name.match(/\.(xlsx|xls)$/i);reader.onload=e=>{try{isXl?parseXlRaw(e.target.result):parseCsvRaw(e.target.result);}catch(err){showToast('Fehler: '+err.message);}};isXl?reader.readAsArrayBuffer(file):reader.readAsText(file,'utf-8');}
+function parseCsvRaw(txt){const lines=txt.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return;const sep=lines[0].includes(';')?';':',';impCols=lines[0].split(sep).map(h=>h.replace(/^"|"$/g,'').trim());impRawRows=lines.slice(1).map(l=>{const r={};l.split(sep).map(c=>c.replace(/^"|"$/g,'').trim()).forEach((v,i)=>r[impCols[i]]=v);return r;});document.getElementById('imp-s1-info').innerHTML=`<div style="margin-top:10px;padding:8px 12px;background:var(--ok-bg);border:1px solid #a7f3d0;border-radius:var(--r);font-size:12px">✓ <strong>${impRawRows.length} Zeilen</strong> · Spalten: ${impCols.map(c=>`<code>${c}</code>`).join(', ')}</div>`;document.getElementById('imp-next').disabled=false;}
+function parseXlRaw(buf){if(typeof XLSX==='undefined'){showToast('Excel nicht geladen');return;}const ws=XLSX.read(buf,{type:'array'}).Sheets;const data=XLSX.utils.sheet_to_json(Object.values(ws)[0],{header:1,defval:''});if(!data.length)return;impCols=data[0].map(h=>String(h).trim());impRawRows=data.slice(1).map(row=>{const r={};impCols.forEach((c,i)=>r[c]=String(row[i]||'').trim());return r;});document.getElementById('imp-s1-info').innerHTML=`<div style="margin-top:10px;padding:8px 12px;background:var(--ok-bg);border:1px solid #a7f3d0;border-radius:var(--r);font-size:12px">✓ <strong>${impRawRows.length} Zeilen</strong> · Spalten: ${impCols.map(c=>`<code>${c}</code>`).join(', ')}</div>`;document.getElementById('imp-next').disabled=false;}
+function renderColMap(){
+  const fieldsToShow=impFormat==='structured'
+    ? IMP_FIELDS.filter(f=>f.key!=='name')
+    : IMP_FIELDS.filter(f=>f.key!=='taetig'&&f.key!=='zweck');
+  const opts=`<option value="">— nicht zuordnen —</option>`+impCols.map(c=>`<option value="${c}">${c}</option>`).join('');
+  // Auto-detect mapping
+  const auto={taetig:'',zweck:'',name:'',aufgabenstellung:'',umsetzungskonzept:'',phase:'',discs:'',status:''};
+  impCols.forEach(c=>{const l=c.toLowerCase();
+    if(/tätig|taetig|verb|aktivit/.test(l))auto.taetig=c;
+    if(/zweck|purpose|für|ziel/.test(l))auto.zweck=c;
+    if(/^name$|bezeichn|titel|awf/.test(l))auto.name=c;
+    if(/aufgabe|aufforder|aia/.test(l))auto.aufgabenstellung=c;
+    if(/umsetz|konzept|bap/.test(l))auto.umsetzungskonzept=c;
+    if(/phase|lp/.test(l))auto.phase=c;
+    if(/disziplin|gewerk|fach/.test(l))auto.discs=c;
+    if(/status/.test(l))auto.status=c;
+  });
+  document.getElementById('col-map-grid').innerHTML=`<div class="col-map">`+fieldsToShow.map(f=>`<div><label>${f.label} <span style="color:var(--text3);font-weight:400">(${f.hint})</span></label><select id="cm-${f.key}" onchange="impMapping['${f.key}']=this.value">${opts.replace(`value="${auto[f.key]||''}"`,`value="${auto[f.key]||''}" selected`)}</select></div>`).join('')+`</div>`;
+  fieldsToShow.forEach(f=>{impMapping[f.key]=auto[f.key]||'';const s=document.getElementById('cm-'+f.key);if(s&&auto[f.key])s.value=auto[f.key];});
+}
+function getCol(row,key){const col=impMapping[key];return col&&row[col]?row[col].trim():'';}
+function buildImportRows(){
+  importRows=impRawRows.map((row,i)=>{
+    const g=k=>getCol(row,k);
+    let taetig=g('taetig'), zweck=g('zweck'), name=g('name')||`${taetig} ${zweck}`.trim();
+    if(impFormat==='unstructured'&&!taetig&&!zweck&&name){taetig='';zweck='';}
+    const phases=g('phase').split(/[;,\s]+/).map(x=>x.trim()).filter(x=>LP_LIST.includes(x));
+    const discs=g('discs').split(/[;,\s]+/).map(x=>x.trim().toUpperCase()).filter(x=>DISC_MAP[x]);
+    return{id:uid(),taetig,zweck,name:name||taetig+' '+zweck,
+      aufgabenstellung:g('aufgabenstellung'),umsetzungskonzept:g('umsetzungskonzept'),
+      desc:'',color:AWF_COLORS[i%AWF_COLORS.length],
+      status:g('status')||'entwurf',source:'ag',phases,disciplines:discs,
+      raci:{},io:[],qs:[],prozess:'',prozessLink:'',abgrenzung:'',querbeziehungen:'',
+      aiSuggested:false,created:new Date().toISOString()};
+  }).filter(r=>r.name||r.taetig||r.zweck);
+}
+function renderImpPreview(){
+  const el=document.getElementById('imp-prev-rows');if(!el)return;
+  document.getElementById('import-ok').disabled=importRows.length===0;
+  const needsAI=impFormat==='unstructured';
+  el.innerHTML=`<div style="font-size:11px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+    <span><strong>${importRows.length} AWF</strong> erkannt und zugeordnet</span>
+    ${needsAI?`<button class="btn btn-sm btn-global" onclick="suggestAllAI()">✨ KI-Vorschläge für alle</button>`:''}
+  </div>`
+  +importRows.map((r,i)=>`<div class="imp-row-card ${r.aiSuggested?'has-sug':''}" id="irc-${i}">
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${r.color};flex-shrink:0;margin-top:4px"></div>
+      <div style="flex:1;min-width:0">
+        ${r.taetig||r.zweck?`<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:2px">${r.taetig||'—'}</div><div style="font-weight:600;font-size:13px;margin-bottom:4px">${r.zweck||r.name}</div>`:`<div style="font-weight:600;font-size:13px;margin-bottom:4px">${r.name}</div>`}
+        ${r.aiSuggested?`<div style="font-size:11px;background:var(--global-dim);border:1px solid #c4b5fd;border-radius:4px;padding:5px 8px;margin-bottom:4px"><span style="color:var(--global);font-weight:600">✨ KI-Vorschlag:</span> <em>${r.taetig} · ${r.zweck}</em></div>`:''}
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${r.phases.map(p=>`<span style="font-size:10px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 3px;border-radius:2px">${p}</span>`).join('')}
+          ${r.disciplines.map(d=>`<span class="tag tag-gray">${d}</span>`).join('')}
+          <span class="pill pill-ag">AG</span>
+        </div>
+      </div>
+      ${needsAI&&!r.taetig?`<button class="ai-sug-btn" id="aisug-${i}" onclick="suggestOneAI(${i})">✨ KI</button>`:''}
+    </div>
+  </div>`).join('');
+}
+async function suggestOneAI(idx){
+  const r=importRows[idx]; if(!r) return;
+  const btn=document.getElementById('aisug-'+idx); if(btn){btn.disabled=true;btn.textContent='⏳';}
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:'Du bist ein BIM-Experte. Antworte NUR mit JSON: {"taetig":"Verb Substantiv","zweck":"für/zur Substantiv"}. Keine Erklärungen.',messages:[{role:'user',content:`Zerlege diesen BIM-Anwendungsfall-Namen nach der Schablone Tätigkeit (Verb+Substantiv) + Zweck (für/zur+Substantiv): "${r.name}". Methodenneutral, phasenneutral.`}]})});
+    const data=await resp.json();
+    const txt=data.content?.find(c=>c.type==='text')?.text||'';
+    const clean=txt.replace(/```json?|```/g,'').trim();
+    const sug=JSON.parse(clean);
+    importRows[idx].taetig=sug.taetig||r.taetig;
+    importRows[idx].zweck=sug.zweck||r.zweck;
+    importRows[idx].aiSuggested=true;
+  }catch(e){showToast('KI-Vorschlag fehlgeschlagen');}
+  renderImpPreview();
+}
+async function suggestAllAI(){
+  const toProcess=importRows.filter(r=>!r.taetig&&r.name);
+  if(!toProcess.length){showToast('Alle Einträge haben bereits Tätigkeit/Zweck');return;}
+  showToast(`✨ Erstelle KI-Vorschläge für ${toProcess.length} AWF…`);
+  for(let i=0;i<importRows.length;i++){if(!importRows[i].taetig&&importRows[i].name)await suggestOneAI(i);}
+  showToast('✓ KI-Vorschläge fertig');
+}
+function doImport(){if(!importRows.length||!pid)return;if(!awfData[pid])awfData[pid]=[];importRows.forEach(r=>{delete r.aiSuggested;awfData[pid].push(r);});saveAwf();closeImport();render();showToast(`✓ ${importRows.length} AWF importiert – Steckbriefe in Nachbereitung vervollständigen`);}
+
+// DELETE & CONFIRM
+function confirmDel(id,scope){const list=scope==='stamm'?stammData:(awfData[pid]||[]);const a=list.find(x=>x.id===id);if(!a)return;document.getElementById('confirm-title').textContent=scope==='stamm'?'Stamm-AWF löschen?':'Projekt-AWF löschen?';document.getElementById('confirm-body').innerHTML=scope==='stamm'?`<div style="background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;padding:10px;font-size:12px;color:var(--err);margin-bottom:10px">⚠ Stamm-AWF werden dauerhaft gelöscht.</div><strong>${a.taetig} ${a.zweck}</strong>`:`<strong>${a.taetig||a.name} ${a.zweck||''}</strong> wird aus dem Projekt entfernt.`;confirmCb=()=>{if(scope==='stamm'){stammData=stammData.filter(x=>x.id!==id);saveStamm();}else{awfData[pid]=(awfData[pid]||[]).filter(x=>x.id!==id);saveAwf();}if(selId===id)selId=null;closeConfirm();render();showToast('AWF gelöscht');};document.getElementById('confirm-btn').onclick=confirmCb;document.getElementById('confirm-ol').classList.add('open');}
+function closeConfirm(){document.getElementById('confirm-ol').classList.remove('open');confirmCb=null;}
+
+// EXPORT
+function exportCSV(scope){const list=scope==='stamm'?stammData:(awfData[pid]||[]);const rows=[['Tätigkeit','Zweck','Beschreibung','Status','Quelle','Leistungsphasen','Disziplinen','Steckbrief %']];list.forEach(a=>rows.push([a.taetig,a.zweck,a.desc||'',STATUS_L[a.status]||'',SOURCE_L[a.source]||'',(a.phases||[]).join('; '),(a.disciplines||[]).join('; '),calcComp(a)+'%']));const csv=rows.map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`awf-${scope}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);showToast('✓ CSV exportiert');}
+
+function onProjChange(){pid=document.getElementById('psel')?.value||null;selId=null;render();}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function comingSoon(){showToast('Modul wird in Kürze entwickelt');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeQuick();closeSbModal();closeImport();closeTpick();closeConfirm();}});
+init();
+</script>
+</body>
+</html>

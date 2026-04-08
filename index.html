@@ -169,6 +169,7 @@ textarea { resize:vertical; min-height:72px; line-height:1.6; }
 .sw-chip-remove:hover { opacity:1; }
 @media (max-width:1200px) { .projects-grid { grid-template-columns:repeat(2,1fr); } .stats-row { grid-template-columns:repeat(2,1fr); } }
 </style>
+<script src="bim_sync.js"></script>
 </head>
 <body>
 
@@ -187,23 +188,23 @@ textarea { resize:vertical; min-height:72px; line-height:1.6; }
       Projektverwaltung
       <span class="nav-badge" id="nav-count">0</span>
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('05_modellpruefung.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>
       Modellprüfung
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('02_meilensteinplanung.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/><circle cx="16" cy="15" r="2"/></svg>
       Meilensteinplanung
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>
       Merkmalserver
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/><path d="M8 10h4M8 14h2M8 6h4"/></svg>
       Berichtsgenerator
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M8 7l1.5 1.5-1.5 1.5M12 7l-1.5 1.5 1.5 1.5M7 14h6"/></svg>
       Protokollierung
     </div>
@@ -220,9 +221,11 @@ textarea { resize:vertical; min-height:72px; line-height:1.6; }
 </aside>
 
 <main class="main">
-  <div class="topbar">
+  <div class="topbar" id="main-topbar">
     <span style="font-size:13px;color:var(--text3)">Projektverwaltung</span>
+    <span id="active-proj-bar" style="font-size:11px;font-family:var(--mono);color:var(--accent);background:var(--accent-dim);padding:3px 10px;border-radius:10px;display:none"></span>
     <div class="topbar-right">
+      <span id="active-proj-badge" style="font-size:11px;font-family:var(--mono);padding:3px 10px;border-radius:10px;cursor:default">Kein aktives Projekt</span>
       <button class="btn btn-secondary" onclick="exportData()">⬇ CSV-Export</button>
       <button class="btn btn-primary" onclick="openModal()">+ Neues Projekt</button>
     </div>
@@ -464,10 +467,29 @@ const LP_COL = {lp1:'#3b82f6',lp2:'#3b82f6',lp3:'#00c9a7',lp4:'#f59e0b',lp5:'#f5
 let projects=[], settings={name:'',org:''}, editingId=null, deleteId=null, currentView='grid', currentFilter='alle';
 
 function init() {
+  // Seed test data on first launch
+  const _existing = JSON.parse(localStorage.getItem('bim_projects_v2') || '[]');
+  if (!_existing.length) { seedBIMManagerTestdata(); }
   loadSettings(); loadData();
   buildPhaseCheckboxes(); buildBeteiligteForm();
   rebuildSoftwareSelect();
   renderProjects(); applySettings();
+  updateActiveProjBar();
+}
+function updateActiveProjBar() {
+  const pid = getCurrentProject();
+  const el = document.getElementById('active-proj-badge');
+  if (!el) return;
+  const proj = (window.projects||[]).find(p => p.id === pid) || (window.data||[]).find(p => p.id === pid);
+  if (proj) { el.textContent = '● ' + proj.name; el.style.background='var(--accent-dim)'; el.style.color='var(--accent)'; }
+  else { el.textContent='Kein aktives Projekt'; el.style.background='var(--surface2)'; el.style.color='var(--text3)'; }
+}
+function activateProject(pid) {
+  setCurrentProject(pid);
+  renderProjects();
+  updateActiveProjBar();
+  const proj = (window.projects||window.data||[]).find(p => p.id === pid);
+  if (proj) showToast('✓ ' + proj.name + ' ist jetzt aktiv für alle Module');
 }
 
 function loadSettings() { try { settings=JSON.parse(localStorage.getItem(SETTINGS_KEY))||{name:'',org:''}; } catch(e){} }
@@ -658,6 +680,10 @@ function renderProjects(){
           <div class="project-meta">
             <span style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>${p.bimManager||'—'}</span>
             <span style="margin-left:auto">${statusBadge(p.status)}</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:11px" onclick="event.stopPropagation();activateProject('${p.id}')">▶ Öffnen</button>
+            ${getCurrentProject()===p.id?'<span style=\'font-size:10px;font-family:var(--mono);padding:3px 8px;background:var(--accent-dim);color:var(--accent);border-radius:4px;display:flex;align-items:center\'>● Aktiv</span>':''}
           </div>
         </div>
       </div>`;
@@ -857,9 +883,288 @@ function exportData(){
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 function comingSoon(){ showToast('Modul wird in Kürze entwickelt'); }
 
+// BIM Manager – Testdaten
+// Einmalig aufrufen um alle Module mit realistischen Testdaten zu befüllen
+function seedBIMManagerTestdata() {
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  
+  // ─── SETTINGS ────────────────────────────────────────────────────
+  localStorage.setItem('bim_settings_v1', JSON.stringify({
+    name: 'Thomas Müller',
+    role: 'BIM Manager',
+    firma: 'TMM Group',
+    initials: 'TM'
+  }));
+
+  // ─── IDS ─────────────────────────────────────────────────────────
+  const PID1 = 'prj_nvg_nord';
+  const PID2 = 'prj_wohnquartier';
+
+  // ─── PROJEKTE ────────────────────────────────────────────────────
+  const projects = [
+    {
+      id: PID1, number: 'PRJ-2024-001', name: 'Neubau Verwaltungsgebäude Nord',
+      client: 'Stadtwerke München', location: 'München, Bayern',
+      lp: 'LP3', status: 'aktiv', budget: '18.500.000',
+      start: '2024-01-15', end: '2026-12-31',
+      bimLevel: 'BIM Level 2', ifc: 'IFC 4',
+      description: 'Neubau eines 6-geschossigen Verwaltungsgebäudes mit 8.400 m² BGF.',
+      participants: [
+        { role: 'Auftraggeber', name: 'Stadtwerke München', contact: 'Dr. K. Hofmann' },
+        { role: 'Architekt', name: 'Architektur Schneider GmbH', contact: 'M. Schneider' },
+        { role: 'Tragwerksplanung', name: 'Ing. Bauer & Partner', contact: 'P. Bauer' },
+        { role: 'TGA', name: 'Haustechnik Müller GmbH', contact: 'S. Müller' },
+        { role: 'BIM Manager', name: 'TMM Group', contact: 'T. Müller' }
+      ],
+      phases: { LP1: true, LP2: true, LP3: true, LP4: false, LP5: false }
+    },
+    {
+      id: PID2, number: 'PRJ-2024-002', name: 'Wohnquartier Westpark – Bauabschnitt 2',
+      client: 'WBG Bayern', location: 'Augsburg, Bayern',
+      lp: 'LP2', status: 'aktiv', budget: '24.200.000',
+      start: '2024-03-01', end: '2027-06-30',
+      bimLevel: 'BIM Level 2', ifc: 'IFC 4',
+      description: 'Wohnquartier mit 4 Gebäuden, 156 Wohneinheiten und Tiefgarage.',
+      participants: [
+        { role: 'Auftraggeber', name: 'WBG Bayern', contact: 'H. Wagner' },
+        { role: 'Architekt', name: 'Studio Roth Architekten', contact: 'A. Roth' },
+        { role: 'BIM Manager', name: 'TMM Group', contact: 'T. Müller' }
+      ],
+      phases: { LP1: true, LP2: true, LP3: false, LP4: false, LP5: false }
+    }
+  ];
+  localStorage.setItem('bim_projects_v2', JSON.stringify(projects));
+
+  // ─── AKTIVES PROJEKT ──────────────────────────────────────────────
+  localStorage.setItem('bim_current_project', PID1);
+
+  // ─── MEILENSTEINE ─────────────────────────────────────────────────
+  const milestones = {};
+  milestones[PID1] = [
+    { id: uid(), type: 'Datadrop', name: 'DD-01 LP2 Vorentwurf', date: '2024-03-15', disciplines: ['ARK','TW'], status: 'done', desc: 'Alle Fachmodelle LP2' },
+    { id: uid(), type: 'Meilenstein', name: 'Entwurfsfreigabe LP3', date: '2024-05-30', disciplines: ['ARK','TW','TGA'], status: 'done', desc: 'Freigabe durch AG' },
+    { id: uid(), type: 'Datadrop', name: 'DD-02 LP3 Entwurf', date: '2024-07-01', disciplines: ['ARK','TW','TGA','ELT','SAN'], status: 'active', desc: 'Koordinationsmodell LP3' },
+    { id: uid(), type: 'Meilenstein', name: 'Genehmigungsplanung', date: '2024-09-15', disciplines: ['ARK'], status: 'future', desc: 'Einreichung Bauantrag' },
+    { id: uid(), type: 'Datadrop', name: 'DD-03 LP4 Genehmigung', date: '2024-10-01', disciplines: ['ARK','TW'], status: 'future', desc: 'Genehmigungsmodell' },
+    { id: uid(), type: 'Meilenstein', name: 'Ausführungsplanung Start', date: '2025-01-15', disciplines: ['ARK','TW','TGA','ELT','SAN','HZG','LFT'], status: 'future', desc: 'LP5 Beginn' },
+  ];
+  milestones[PID2] = [
+    { id: uid(), type: 'Datadrop', name: 'DD-01 Bestandsaufnahme', date: '2024-04-01', disciplines: ['ARK'], status: 'done', desc: 'Bestandsmodell' },
+    { id: uid(), type: 'Meilenstein', name: 'Vorentwurf Freigabe', date: '2024-06-15', disciplines: ['ARK'], status: 'future', desc: 'AG-Freigabe LP2' },
+  ];
+  localStorage.setItem('bim_milestones_v1', JSON.stringify(milestones));
+
+  // ─── GLOBALE PARAMETER ────────────────────────────────────────────
+  const globalParams = [
+    { id: 'gp001', name: 'Feuerwiderstandsklasse', pset: 'Pset_WallCommon', attr: 'FireRating', dtype: 'IfcLabel', grp: '010', ifcTypes: ['IfcWall'], phases: ['LP3','LP4'], desc: 'Brandschutzklassifizierung nach DIN EN 13501', validation: { type: 'enum', values: ['EI30','EI60','EI90','EI120','REI30','REI60','REI90','REI120'] }, updated: '2024-01-15T10:00:00.000Z' },
+    { id: 'gp002', name: 'Tragendes Bauteil', pset: 'Pset_WallCommon', attr: 'LoadBearing', dtype: 'IfcBoolean', grp: '010', ifcTypes: ['IfcWall'], phases: ['LP3'], validation: { type: 'notempty' }, updated: '2024-01-15T10:00:00.000Z' },
+    { id: 'gp003', name: 'Raumbezeichnung', pset: 'Pset_SpaceCommon', attr: 'RoomTag', dtype: 'IfcLabel', grp: '011', ifcTypes: ['IfcSpace'], phases: ['LP2','LP3'], validation: { type: 'regex', pattern: '^[A-Z]{2}\\d{3}$', example: 'BU001' }, updated: '2024-01-15T10:00:00.000Z' },
+    { id: 'gp004', name: 'Nutzungsart nach DIN 277', pset: 'Pset_SpaceCommon', attr: 'OccupancyType', dtype: 'IfcLabel', grp: '011', ifcTypes: ['IfcSpace'], phases: ['LP2','LP3'], validation: { type: 'enum', values: ['Büro','Besprechung','Erschließung','Sanitär','Technik','Lager'] }, updated: '2024-01-15T10:00:00.000Z' },
+    { id: 'gp005', name: 'AKS-Nummer', pset: 'Pset_MechanicalFanCommon', attr: 'AKSNumber', dtype: 'IfcIdentifier', grp: '031', ifcTypes: ['IfcDuctSegment','IfcPipeSegment'], phases: ['LP4','LP5'], validation: { type: 'regex', pattern: '^\\d{2}-\\d{2}-\\d{4}$', example: '01-02-0001' }, updated: '2024-01-15T10:00:00.000Z' },
+    { id: 'gp006', name: 'Druckfestigkeitsklasse', pset: 'Pset_ConcreteElementGeneral', attr: 'ConcreteStrength', dtype: 'IfcLabel', grp: 'AA-Beton', ifcTypes: ['IfcColumn','IfcBeam'], phases: ['LP3','LP4'], validation: { type: 'enum', values: ['C20/25','C25/30','C30/37','C35/45'] }, updated: '2024-01-15T10:00:00.000Z' },
+    { id: 'gp007', name: 'Systembezeichnung', pset: 'Pset_DistributionSystemCommon', attr: 'SystemName', dtype: 'IfcLabel', grp: '030', ifcTypes: ['IfcPipeSegment','IfcDuctSegment'], phases: ['LP3','LP4'], validation: null, updated: '2024-01-15T10:00:00.000Z' },
+    { id: 'gp008', name: 'Geschossbezeichnung', pset: 'Pset_BuildingStoreyCommon', attr: 'StoreyName', dtype: 'IfcLabel', grp: '001', ifcTypes: ['IfcBuildingStorey'], phases: ['LP2'], validation: { type: 'enum', values: ['UG','EG','1.OG','2.OG','3.OG','4.OG','5.OG','DG'] }, updated: '2024-01-15T10:00:00.000Z' },
+  ];
+  localStorage.setItem('bim_global_params_v2', JSON.stringify(globalParams));
+
+  // ─── PROJEKTPARAMETER ─────────────────────────────────────────────
+  const projParams = {};
+  projParams[PID1] = globalParams.map(p => ({ ...p, id: 'pp_' + p.id, globalRef: p.id, addedAt: '2024-02-01T10:00:00.000Z' }));
+  localStorage.setItem('bim_proj_params_v1', JSON.stringify(projParams));
+
+  // ─── FACHMODELLE ──────────────────────────────────────────────────
+  const fmData = {};
+  const FM_ARK = 'fm_ark_' + PID1;
+  const FM_TW  = 'fm_tw_'  + PID1;
+  const FM_TGA = 'fm_tga_' + PID1;
+  const FM_ELT = 'fm_elt_' + PID1;
+  fmData[PID1] = [
+    { id: FM_ARK, name: 'Architektur', disc: 'ARK', note: 'Hauptgebäude' },
+    { id: FM_TW,  name: 'Tragwerk',    disc: 'TW',  note: 'Stahlbeton' },
+    { id: FM_TGA, name: 'TGA Gesamt',  disc: 'TGA', note: 'Heizung, Lüftung, Sanitär' },
+    { id: FM_ELT, name: 'Elektro',     disc: 'ELT', note: 'ELT und Schwachstrom' },
+  ];
+  fmData[PID2] = [
+    { id: 'fm_ark_' + PID2, name: 'Architektur', disc: 'ARK', note: '' },
+  ];
+  localStorage.setItem('bim_fachmodelle_v1', JSON.stringify(fmData));
+
+  // ─── KOORDINATIONSMODELLE ─────────────────────────────────────────
+  const kmData = {};
+  kmData[PID1] = [
+    { id: 'km_gesamt_' + PID1, name: 'KM-Gesamt',    desc: 'Alle Fachmodelle', fmIds: [FM_ARK, FM_TW, FM_TGA, FM_ELT] },
+    { id: 'km_tga_'   + PID1, name: 'KM-TGA',       desc: 'Technische Gebäudeausrüstung', fmIds: [FM_TGA] },
+    { id: 'km_roh_'   + PID1, name: 'KM-Rohbau',    desc: 'Architektur + Tragwerk', fmIds: [FM_ARK, FM_TW] },
+  ];
+  localStorage.setItem('bim_koordination_v1', JSON.stringify(kmData));
+
+  // ─── TEILMODELLE (mit simulierten IFC-Daten) ──────────────────────
+  const tmData = {};
+  const makeIFC = (disc, entities) => ({
+    schema: 'IFC4', entities: entities,
+    objectCount: Math.floor(entities * 0.15),
+    psetCount: Math.floor(entities * 0.08),
+    guidCount: Math.floor(entities * 0.12),
+    entityTypes: disc === 'ARK'
+      ? { IfcWall: 142, IfcWallStandardCase: 38, IfcSlab: 48, IfcDoor: 67, IfcWindow: 89, IfcSpace: 124, IfcColumn: 12, IfcStair: 6, IfcCurtainWall: 8 }
+      : disc === 'TW'
+      ? { IfcColumn: 48, IfcBeam: 126, IfcSlab: 52, IfcFooting: 24, IfcMember: 36 }
+      : disc === 'TGA'
+      ? { IfcPipeSegment: 287, IfcPipeFitting: 143, IfcDuctSegment: 234, IfcDuctFitting: 118, IfcAirTerminal: 89, IfcAirHandlingUnit: 4, IfcPump: 8, IfcValve: 67 }
+      : { IfcCableSegment: 342, IfcCableFitting: 87, IfcLightFixture: 156, IfcSwitchingDevice: 48 },
+    propertySets: disc === 'ARK'
+      ? { Pset_WallCommon: 180, Pset_SpaceCommon: 124, Pset_DoorCommon: 67, Pset_WindowCommon: 89, Pset_BuildingStoreyCommon: 6 }
+      : disc === 'TW'
+      ? { Pset_ConcreteElementGeneral: 110, Pset_StructuralLoadGroup: 48 }
+      : { Pset_DistributionSystemCommon: 234, Pset_MechanicalFanCommon: 89 },
+    guids: {},
+    guidNames: {}
+  });
+
+  tmData[PID1] = [
+    { id: 'tm_ark_dd01_' + PID1, name: 'ARK_NVG_Nordgebäude_LP3_v2.4.ifc', fmId: FM_ARK, fmIds: [FM_ARK], datadrop: 'DD-02', note: 'LP3 Stand 01.07.2024', parsed: makeIFC('ARK', 4820), uploadedAt: '2024-07-01T08:30:00.000Z' },
+    { id: 'tm_tw_dd01_'  + PID1, name: 'TW_NVG_Nordgebäude_LP3_v1.8.ifc',  fmId: FM_TW,  fmIds: [FM_TW],  datadrop: 'DD-02', note: '', parsed: makeIFC('TW', 1240), uploadedAt: '2024-07-01T09:15:00.000Z' },
+    { id: 'tm_tga_dd01_' + PID1, name: 'TGA_NVG_Gesamt_LP3_v1.2.ifc',      fmId: FM_TGA, fmIds: [FM_TGA], datadrop: 'DD-02', note: 'HLSK kombiniert', parsed: makeIFC('TGA', 2890), uploadedAt: '2024-07-02T10:00:00.000Z' },
+    { id: 'tm_elt_dd01_' + PID1, name: 'ELT_NVG_Nordgebäude_LP3_v1.0.ifc', fmId: FM_ELT, fmIds: [FM_ELT], datadrop: 'DD-02', note: 'Vorabzug', parsed: makeIFC('ELT', 1680), uploadedAt: '2024-07-03T14:00:00.000Z' },
+  ];
+  localStorage.setItem('bim_teilmodelle_v1', JSON.stringify(tmData));
+
+  // ─── AWF ──────────────────────────────────────────────────────────
+  const awfData = {};
+  awfData[PID1] = [
+    { id: 'awf1_' + PID1, taetig: 'Fachmodelle koordinieren', zweck: 'zur Kollisionsprüfung', name: 'Fachmodelle koordinieren zur Kollisionsprüfung', desc: 'Regelmäßiges Zusammenführen der Fachmodelle in ein Koordinationsmodell.', aufgabenstellung: 'Die Projektbeteiligten sind verpflichtet ihre Fachmodelle gemäß Datadrop-Rhythmus zu liefern.', umsetzungskonzept: 'Koordination in Solibri/Navisworks, BCF für Konfliktmanagement.', color: '#3b82f6', status: 'aktiv', source: 'template', phases: ['LP3','LP4','LP5'], disciplines: ['ARK','TW','TGA','BIM'], raci: { ARK:'C', TW:'C', TGA:'C', BIM:'R' }, io: [{type:'input',content:'Fachmodelle je Disziplin',format:'IFC 4'},{type:'output',content:'Konfliktbericht',format:'BCF'}], qs: [{type:'eingang',text:'Modellvollständigkeit prüfen'},{type:'ergebnis',text:'Kollisionsfreies Koordinationsmodell'}], created: '2024-02-01T10:00:00.000Z' },
+    { id: 'awf2_' + PID1, taetig: 'Mengen ermitteln', zweck: 'für Kostenplanung', name: 'Mengen ermitteln für Kostenplanung', desc: 'Modellbasierte Mengenermittlung nach DIN 276.', aufgabenstellung: 'Mengen aus Modell für Kostenberechnung LP3.', umsetzungskonzept: 'Auswertung mit Solibri/Desite.', color: '#f59e0b', status: 'aktiv', source: 'template', phases: ['LP3','LP4'], disciplines: ['ARK','TW','BIM'], raci: { ARK:'C', TW:'C', BIM:'R' }, io: [{type:'input',content:'Fachmodelle mit Attributierung',format:'IFC 4'},{type:'output',content:'Mengengerüst DIN 276',format:'XLSX'}], qs: [{type:'eingang',text:'Attributierungstiefe prüfen'},{type:'ergebnis',text:'Vollständiges Mengengerüst'}], created: '2024-02-01T10:00:00.000Z' },
+    { id: 'awf3_' + PID1, taetig: 'Räume erfassen', zweck: 'für Raumprogramm', name: 'Räume erfassen für Raumprogramm', desc: 'Vollständige Raumerfassung mit DIN 277 Flächen.', aufgabenstellung: 'Raumbuch aus Modell ableiten.', umsetzungskonzept: 'IfcSpace-Auswertung.', color: '#00c9a7', status: 'aktiv', source: 'template', phases: ['LP2','LP3'], disciplines: ['ARK','AG','BIM'], raci: { ARK:'R', AG:'A', BIM:'C' }, io: [], qs: [], created: '2024-02-01T10:00:00.000Z' },
+  ];
+  localStorage.setItem('bim_awf_v1', JSON.stringify(awfData));
+
+  // ─── MERKMALSERVER ZUWEISUNGEN ─────────────────────────────────────
+  const assignments = {};
+  assignments[PID1] = {
+    'wand': [
+      { id: 'a001', paramId: 'pp_gp001', globalRef: 'gp001', pflicht: true, awfIds: ['awf1_'+PID1] },
+      { id: 'a002', paramId: 'pp_gp002', globalRef: 'gp002', pflicht: true, awfIds: [] },
+    ],
+    'raum': [
+      { id: 'a003', paramId: 'pp_gp003', globalRef: 'gp003', pflicht: true, awfIds: ['awf3_'+PID1] },
+      { id: 'a004', paramId: 'pp_gp004', globalRef: 'gp004', pflicht: true, awfIds: ['awf3_'+PID1] },
+    ],
+    'stütze': [
+      { id: 'a005', paramId: 'pp_gp006', globalRef: 'gp006', pflicht: true, awfIds: [] },
+    ],
+    'rohrleitung': [
+      { id: 'a006', paramId: 'pp_gp005', globalRef: 'gp005', pflicht: true, awfIds: ['awf1_'+PID1] },
+      { id: 'a007', paramId: 'pp_gp007', globalRef: 'gp007', pflicht: true, awfIds: [] },
+    ],
+  };
+  localStorage.setItem('bim_obj_assignments_v1', JSON.stringify(assignments));
+
+  // ─── PRÜF-CHECKSET & ERGEBNISSE ───────────────────────────────────
+  const checksets = {};
+  checksets[PID1] = ['r_s1','r_s2','r_s3','r_g1','r_g2','r_f1','r_f2','r_f3'];
+
+  // Minimal Prüf-Stamm if not exists
+  const existingStamm = JSON.parse(localStorage.getItem('bim_pruef_stamm_v1') || '[]');
+  if (!existingStamm.length) {
+    localStorage.setItem('bim_pruef_stamm_v1', JSON.stringify([
+      { id: 'r_s1', name: 'Objekte vorhanden', cat: 'S', type: 'S1_objects', sev: 'error', desc: '', earliest: 'lp2', disciplines: ['*'], params: {}, created: '2024-01-01T00:00:00.000Z' },
+      { id: 'r_s2', name: 'PropertySets angelegt', cat: 'S', type: 'S2_psets', sev: 'error', desc: '', earliest: 'lp3', disciplines: ['*'], params: {}, created: '2024-01-01T00:00:00.000Z' },
+      { id: 'r_s3', name: 'Properties befüllt', cat: 'S', type: 'S3_filled', sev: 'error', desc: '', earliest: 'lp3', disciplines: ['*'], params: {}, created: '2024-01-01T00:00:00.000Z' },
+      { id: 'r_g1', name: 'Kollisionsprüfung TGA↔ARK', cat: 'G', type: 'G1_collision', sev: 'warning', desc: '', earliest: 'lp3', disciplines: ['TGA','ARK'], params: { discA:'TGA', discB:'ARK' }, created: '2024-01-01T00:00:00.000Z' },
+      { id: 'r_g2', name: 'Koordinatenursprung', cat: 'G', type: 'G2_origin', sev: 'error', desc: '', earliest: 'lp2', disciplines: ['*'], params: {}, created: '2024-01-01T00:00:00.000Z' },
+      { id: 'r_f1', name: 'IFC-Schema-Konformität', cat: 'F', type: 'F1_conformity', sev: 'error', desc: '', earliest: 'lp1', disciplines: ['*'], params: {}, created: '2024-01-01T00:00:00.000Z' },
+      { id: 'r_f2', name: 'Georeferenzierung', cat: 'F', type: 'F2_georef', sev: 'warning', desc: '', earliest: 'lp2', disciplines: ['*'], params: {}, created: '2024-01-01T00:00:00.000Z' },
+      { id: 'r_f3', name: 'Geschossbezeichnungen', cat: 'F', type: 'F3_storeynames', sev: 'warning', desc: '', earliest: 'lp2', disciplines: ['*'], params: {}, created: '2024-01-01T00:00:00.000Z' },
+    ]));
+  }
+  localStorage.setItem('bim_checkset_v1', JSON.stringify(checksets));
+
+  // Simulate check results
+  const pruefResults = {};
+  pruefResults[PID1] = {};
+  const tmIds = ['tm_ark_dd01_'+PID1, 'tm_tw_dd01_'+PID1, 'tm_tga_dd01_'+PID1, 'tm_elt_dd01_'+PID1];
+  tmIds.forEach(tmId => {
+    pruefResults[PID1][tmId] = {
+      r_s1: { status:'pass', passed:5, total:5, objects:[], checkedAt:'2024-07-05T09:00:00.000Z' },
+      r_s2: { status: tmId.includes('ark') ? 'warn' : 'pass', passed: tmId.includes('ark') ? 3 : 2, total: tmId.includes('ark') ? 4 : 2, objects: tmId.includes('ark') ? [{guid:'3Hk7_ARK001',entity:'IfcPropertySet',name:'Pset_WallCommon',status:'fail',message:'Fehlt in 14 Elementen'}] : [], checkedAt:'2024-07-05T09:00:00.000Z' },
+      r_s3: { status: tmId.includes('tga') ? 'fail' : 'pass', passed: tmId.includes('tga') ? 1 : 2, total: 2, objects: tmId.includes('tga') ? [{guid:'7Lm2_TGA034',entity:'Pset_DistributionSystemCommon',name:'SystemName',status:'fail',message:'34 Elemente ohne Systembezeichnung'}] : [], checkedAt:'2024-07-05T09:00:00.000Z' },
+      r_g1: { status: tmId.includes('ark')||tmId.includes('tga') ? 'warn' : 'pass', passed: 0, total: 1, objects: [{guid:'',entity:'TGA',name:'TGA→ARK',status:'warn',message:'23 potentielle Kollisionen (BB-Näherung)'}], checkedAt:'2024-07-05T09:00:00.000Z' },
+      r_g2: { status:'pass', passed:1, total:1, objects:[], checkedAt:'2024-07-05T09:00:00.000Z' },
+      r_f1: { status:'pass', passed:2, total:2, objects:[], checkedAt:'2024-07-05T09:00:00.000Z' },
+      r_f2: { status: tmId.includes('elt') ? 'warn' : 'pass', passed: tmId.includes('elt') ? 0 : 1, total:1, objects:[{guid:'',entity:'Georef',name:'Georeferenzierung',status: tmId.includes('elt') ? 'warn' : 'pass',message: tmId.includes('elt') ? 'Nur IfcSite – kein IfcMapConversion' : 'IfcMapConversion OK'}], checkedAt:'2024-07-05T09:00:00.000Z' },
+      r_f3: { status:'pass', passed:1, total:1, objects:[], checkedAt:'2024-07-05T09:00:00.000Z' },
+    };
+  });
+  localStorage.setItem('bim_pruef_results_v1', JSON.stringify(pruefResults));
+
+  // ─── PROTOKOLLE ───────────────────────────────────────────────────
+  const protokolle = [
+    { id: 'prot001', pid: PID1, title: 'Koordinationsbesprechung LP3 – 3. Sitzung', type: 'besprechung', date: '2024-07-03', location: 'Microsoft Teams', participants: 'T. Müller (BIM, TMM), M. Schneider (ARK), P. Bauer (TW), S. Müller (TGA)', content: 'TOP 1: Stand DD-02 Koordinationsmodell\nTOP 2: Offene Kollisionen TGA vs. Architektur\nTOP 3: Fehlende PropertySets ARK-Modell\nTOP 4: Georeferenzierung ELT-Modell', actions: 'MA-01: ARK liefert korrigiertes Modell mit Pset_WallCommon bis 10.07.2024 (M. Schneider)\nMA-02: TGA ergänzt Systembezeichnungen bis 12.07.2024 (S. Müller)\nMA-03: ELT ergänzt IfcMapConversion in nächster Lieferung (ELT-Planer)\nMA-04: BIM Manager erstellt Kollisionsbericht bis 08.07.2024 (T. Müller)', next: '2024-07-17', created: '2024-07-03T16:00:00.000Z', updated: '2024-07-03T16:00:00.000Z' },
+    { id: 'prot002', pid: PID1, title: 'Datadrop DD-02 – Übergabeprotokoll', type: 'datadrop', date: '2024-07-01', location: 'SharePoint', participants: 'T. Müller (BIM)', content: 'Datadrop DD-02 LP3 Entwurf empfangen.\nEnthalten: ARK v2.4, TW v1.8, TGA v1.2, ELT v1.0 (Vorabzug)', actions: 'Prüfprotokoll erstellt und an Projektbeteiligte verteilt.\nMängelliste an jeweilige Planer übermittelt.', next: '', created: '2024-07-01T17:00:00.000Z', updated: '2024-07-01T17:00:00.000Z' },
+    { id: 'prot003', pid: PID1, title: 'Projekttagesbuch – Juli 2024', type: 'tagebuch', date: '2024-07-05', location: '', participants: 'T. Müller', content: '01.07: DD-02 empfangen, Prüfung gestartet\n03.07: Koordinationsbesprechung #3, Mängelprotokoll erstellt\n05.07: Prüfergebnisse dokumentiert, 3 kritische Fehler identifiziert', actions: '', next: '', created: '2024-07-05T18:00:00.000Z', updated: '2024-07-05T18:00:00.000Z' },
+  ];
+  localStorage.setItem('bim_protokolle_v1', JSON.stringify(protokolle));
+
+  console.log('✓ BIM Manager Testdaten geladen');
+  return true;
+}
+
+
+// ─── AKTIVES PROJEKT (shared state) ──────────────────────────────────
+function setActiveProject(pid) {
+  localStorage.setItem('bim_current_project', pid);
+  // Update topbar if exists
+  const el = document.getElementById('active-proj-bar');
+  if (el) {
+    const proj = data.find(p => p.id === pid);
+    el.textContent = proj ? '● ' + proj.name : '';
+    el.style.display = proj ? '' : 'none';
+  }
+}
+function getActiveProject() {
+  return localStorage.getItem('bim_current_project') || '';
+}
+function goTo(module) {
+  // Save current active project before navigating
+  window.location.href = module;
+}
+
+// ─── FIRST LAUNCH SEED ────────────────────────────────────────────────
+function seedIfEmpty() {
+  const existing = JSON.parse(localStorage.getItem('bim_projects_v2') || '[]');
+  if (!existing.length) {
+    seedBIMManagerTestdata();
+    loadData();
+    renderProjects();
+    showToast('✓ Testdaten geladen – Willkommen beim BIM Manager!');
+  }
+}
+
+
+function activateProject(pid) {
+  setActiveProject(pid);
+  // Refresh to show highlight
+  renderProjects();
+  const proj = data.find(p => p.id === pid);
+  showToast('✓ ' + (proj?.name || 'Projekt') + ' ist jetzt aktiv für alle Module');
+}
+function highlightActiveProject(pid) {
+  // Called after render to highlight active
+  document.querySelectorAll('.pcard').forEach(el => {
+    el.style.borderColor = el.dataset.pid === pid ? 'var(--accent)' : '';
+    el.style.boxShadow = el.dataset.pid === pid ? '0 0 0 2px var(--accent-dim)' : '';
+  });
+}
+
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal(); closeConfirm(); closeSettings(); } if((e.metaKey||e.ctrlKey)&&e.key==='n'){ e.preventDefault(); openModal(); } });
 
 init();
+
+// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
 </script>
 </body>
 </html>

@@ -10,6 +10,7 @@
 :root{
   --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;--nav-hover:#1a2744;--nav-active:#152238;
   --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.13);
+  --global:#8b5cf6;--global-dim:rgba(139,92,246,0.1);
   --bg:#f0f3f8;--surface:#fff;--surface2:#f5f7fa;--border:#e2e8f0;
   --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
   --ok:#10b981;--ok-bg:#ecfdf5;--warn:#f59e0b;--warn-bg:#fffbeb;
@@ -18,6 +19,7 @@
   --r:6px;--rl:10px;
 }
 body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+/* SIDEBAR */
 .sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
 .logo{padding:20px 18px 18px;border-bottom:1px solid var(--nav-border)}
 .logo-mark{display:flex;align-items:center;gap:9px;margin-bottom:4px}
@@ -34,6 +36,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .nav-badge{margin-left:auto;background:#1e2d45;color:var(--nav-text);font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px}
 .nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
 .sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
+/* MAIN */
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
@@ -41,21 +44,44 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .proj-bar label{font-size:11px;color:var(--text3);font-family:var(--mono)}
 .psel{padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none}
 .psel:focus{border-color:var(--accent)}
+/* WORKSPACE 3 COLUMNS */
 .workspace{flex:1;display:flex;min-height:0;overflow:hidden}
-/* TWO-COL */
-.left-panel{width:300px;min-width:300px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.panel-header{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)}
-.panel-scroll{flex:1;overflow-y:auto}
+/* HOST CONFIG BAR */
+.host-bar{background:var(--nav-bg);border-bottom:1px solid var(--nav-border);padding:6px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.host-path{font-size:11px;font-family:var(--mono);color:#90b8e0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.host-status{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:3px;flex-shrink:0}
+.host-ok{background:rgba(16,185,129,0.2);color:var(--ok)}
+.host-warn{background:rgba(245,158,11,0.2);color:var(--warn)}
+.host-none{background:#1e2d45;color:var(--nav-text)}
+/* MODEL TREE (left panel) */
+.tree-panel{width:300px;min-width:300px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:9px 12px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
+.tree-scroll{flex:1;overflow-y:auto}
+/* TREE NODES */
+.tree-km{border-bottom:1px solid var(--border)}
+.tree-km-header{display:flex;align-items:center;gap:7px;padding:9px 12px;cursor:pointer;user-select:none;transition:background 0.12s;background:var(--surface2)}
+.tree-km-header:hover{background:var(--border)}
+.tree-km-header.sel{background:var(--accent-dim)}
+.tree-km-toggle{font-size:9px;color:var(--text3);width:12px;flex-shrink:0;transition:transform 0.15s}
+.tree-km-toggle.open{transform:rotate(90deg)}
+.tree-km-icon{font-size:14px;flex-shrink:0}
+.tree-km-name{font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-km-badge{font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:3px;background:var(--surface);color:var(--text3);flex-shrink:0}
+.tree-fm{border-bottom:1px solid var(--border)}
+.tree-fm-header{display:flex;align-items:center;gap:7px;padding:7px 12px 7px 26px;cursor:pointer;user-select:none;transition:background 0.12s}
+.tree-fm-header:hover{background:var(--surface2)}
+.tree-fm-header.sel{background:var(--accent-dim)}
+.tree-fm-disc{font-size:10px;font-family:var(--mono);font-weight:600;padding:1px 5px;border-radius:3px;flex-shrink:0}
+.tree-fm-name{font-size:12px;font-weight:500;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-tm{display:flex;align-items:center;gap:7px;padding:6px 12px 6px 42px;cursor:pointer;user-select:none;transition:background 0.12s;border-bottom:1px solid var(--border)}
+.tree-tm:hover{background:var(--surface2)}
+.tree-tm.sel{background:var(--accent-dim)}
+.tree-tm-icon{font-size:11px;color:var(--text3);flex-shrink:0}
+.tree-tm-name{font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-tm-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* RIGHT DETAIL PANEL */
 .right-panel{flex:1;overflow-y:auto;padding:22px 26px}
-/* MODEL CARDS */
-.model-card{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;display:flex;gap:10px;align-items:flex-start}
-.model-card:hover{background:var(--surface2)}
-.model-card.active{background:var(--accent-dim)}
-.model-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.model-body{flex:1;min-width:0}
-.model-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.model-meta{font-size:10px;font-family:var(--mono);color:var(--text3)}
 /* RESULT TABS */
 .res-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:18px}
 .res-tab{padding:8px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:6px}
@@ -63,51 +89,33 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .res-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .res-badge{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;background:var(--surface2);color:var(--text3)}
 .res-tab.active .res-badge{background:var(--accent-dim);color:var(--accent)}
-/* SUMMARY CARDS */
-.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px;border-left:4px solid}
-.sum-card.ok{border-left-color:var(--ok)}
-.sum-card.warn{border-left-color:var(--warn)}
-.sum-card.err{border-left-color:var(--err)}
-.sum-card.info{border-left-color:var(--info)}
-.sum-num{font-size:28px;font-weight:600;letter-spacing:-0.03em;line-height:1}
-.sum-label{font-size:11px;color:var(--text3);margin-top:4px}
-.sum-sub{font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px}
-/* SECTION */
-.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:14px}
-.sc-header{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.sc-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
-.sc-body{padding:0}
-/* PRÜF TABLE */
-.ptable{width:100%;border-collapse:collapse;font-size:12px}
-.ptable th{padding:7px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0}
-.ptable td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
-.ptable tr:last-child td{border-bottom:none}
-.ptable tr:hover td{background:#fafbfd}
-.grp-row td{background:var(--surface2);font-size:11px;font-weight:600;font-family:var(--mono);padding:5px 12px;border-bottom:1px solid var(--border)}
-/* STATUS PILLS */
+/* STATUS */
 .sp{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:var(--mono)}
 .sp-ok{background:var(--ok-bg);color:var(--ok)}
 .sp-warn{background:var(--warn-bg);color:var(--warn)}
 .sp-err{background:var(--err-bg);color:var(--err)}
 .sp-info{background:var(--info-bg);color:var(--info)}
 .sp-gray{background:var(--surface2);color:var(--text3)}
-/* AMPEL */
-.ampel{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0}
-.ampel-ok{background:var(--ok)}
-.ampel-warn{background:var(--warn)}
-.ampel-err{background:var(--err)}
-.ampel-gray{background:var(--border)}
-/* DELTA PILLS */
-.delta-new{background:#dbeafe;color:#1e40af}
-.delta-changed{background:#fef3c7;color:#92400e}
-.delta-missing{background:var(--err-bg);color:var(--err)}
-.delta-ok{background:var(--ok-bg);color:var(--ok)}
-/* PROGRESS BAR */
-.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
+.ampel{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+/* CARDS */
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:14px}
+.sc-header{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sc-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px;border-left:4px solid}
+.sum-num{font-size:22px;font-weight:600;letter-spacing:-0.03em}
+.sum-label{font-size:10px;color:var(--text3);margin-top:3px}
+/* TABLE */
+.ptable{width:100%;border-collapse:collapse;font-size:12px}
+.ptable th{padding:7px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);background:var(--surface2);border-bottom:1px solid var(--border)}
+.ptable td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:#fafbfd}
+/* PROG */
+.prog-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:3px}
 .prog-fill{height:100%;border-radius:3px;transition:width 0.4s}
-/* DROP ZONE */
-.drop-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--surface2)}
+/* DROP */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:22px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--surface2)}
 .drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-dim)}
 .drop-zone input{display:none}
 /* BUTTONS */
@@ -115,39 +123,98 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .btn-primary{background:var(--accent);color:#0f1623}.btn-primary:hover{background:#00b396}
 .btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-secondary:hover{background:var(--surface2)}
 .btn-danger{background:var(--err-bg);color:var(--err);border:1px solid #fca5a5}
+.btn-global{background:var(--global-dim);border:1px solid #c4b5fd;color:var(--global)}
 .btn-sm{padding:4px 9px;font-size:11px}
+.btn-xs{padding:2px 6px;font-size:10px}
 .btn-ghost{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:13px;display:inline-flex;align-items:center;transition:all 0.12s}
 .btn-ghost:hover{background:var(--surface2);color:var(--text)}
 .tag{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);display:inline-block}
 .tag-gray{background:var(--surface2);color:var(--text2)}
-.info-box{padding:8px 12px;border-radius:var(--r);font-size:11px;line-height:1.6;margin-bottom:12px}
-.info-blue{background:var(--info-bg);border:1px solid #bfdbfe;color:#1d4ed8}
-.info-amber{background:var(--warn-bg);border:1px solid #fde68a;color:#92400e}
-.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
-.toast{position:fixed;bottom:20px;right:20px;background:var(--nav-bg);color:#e2e8f0;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
-.toast.show{opacity:1;transform:translateY(0)}
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .modal-overlay.open{opacity:1;pointer-events:all}
-.modal{background:var(--surface);border-radius:14px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
 .modal-overlay.open .modal{transform:translateY(0)}
-.modal-header{padding:18px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.modal-lg{max-width:700px}
+.modal-header{padding:18px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:5}
 .modal-title{font-size:15px;font-weight:600;color:var(--text)}
 .modal-close{width:26px;height:26px;border:1px solid var(--border);border-radius:var(--r);background:transparent;cursor:pointer;font-size:15px;color:var(--text3);display:flex;align-items:center;justify-content:center}
 .modal-close:hover{background:var(--surface2)}
 .modal-body{padding:18px 22px}
 .modal-footer{padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0}
-.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:11px}
 .fg label{font-size:11px;font-weight:500;color:var(--text2)}
-.fg input,.fg select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%}
-.fg input:focus,.fg select:focus{border-color:var(--accent)}
-/* PARSE PROGRESS */
+.fg input,.fg select,.fg textarea{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent)}
+.fg textarea{resize:vertical;min-height:50px;line-height:1.5}
+.form-hint{font-size:10px;color:var(--text3);margin-top:2px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+/* CHECKBOX LIST */
+.check-list{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;max-height:220px;overflow-y:auto}
+.check-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+.check-item:last-child{border-bottom:none}
+.check-item:hover{background:var(--surface2)}
+.check-item input{width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+/* CDE CARD */
+.cde-card{border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.cde-logo{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+/* PARSE SPINNER */
 .parse-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.7);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .parse-overlay.open{opacity:1;pointer-events:all}
 .parse-box{background:var(--surface);border-radius:var(--rl);padding:28px 32px;text-align:center;min-width:280px}
 .parse-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.info-box{padding:8px 12px;border-radius:var(--r);font-size:11px;line-height:1.6;margin-bottom:12px}
+.info-blue{background:var(--info-bg);border:1px solid #bfdbfe;color:#1d4ed8}
+.info-amber{background:var(--warn-bg);border:1px solid #fde68a;color:#92400e}
+.info-purple{background:var(--global-dim);border:1px solid #c4b5fd;color:#5b21b6}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--nav-bg);color:#e2e8f0;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── MAIN MODULE TABS ────────────────────────────────────────────────── */
+.main-tabs{display:flex;background:var(--nav-bg);border-bottom:1px solid var(--nav-border);padding:0 18px;flex-shrink:0}
+.main-tab{padding:10px 16px;font-size:12px;font-weight:500;color:var(--nav-text);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.main-tab:hover{color:#c8d8e8}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.main-tab-badge{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;background:#1e2d45;color:var(--nav-text)}
+.main-tab.active .main-tab-badge{background:var(--accent-dim);color:var(--accent)}
+
+/* ── GRAPH EDITOR ──────────────────────────────────────────────────── */
+.graph-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--surface2)}
+.graph-toolbar{padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.graph-canvas-wrap{flex:1;position:relative;overflow:hidden}
+#graph-svg{width:100%;height:100%;cursor:default}
+.graph-cols{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr 1fr;pointer-events:none}
+.graph-col-header{display:flex;align-items:flex-start;justify-content:center;padding-top:14px;pointer-events:none}
+.graph-col-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--mono);padding:3px 10px;border-radius:3px}
+.col-tm{background:rgba(245,158,11,0.15);color:var(--warn)}
+.col-fm{background:rgba(139,92,246,0.15);color:var(--global)}
+.col-km{background:rgba(0,201,167,0.15);color:var(--accent)}
+
+/* ── VIEWER ────────────────────────────────────────────────────────── */
+.viewer-wrap{flex:1;display:flex;overflow:hidden}
+.viewer-sidebar{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.viewer-canvas{flex:1;position:relative;background:#0f1623}
+#three-canvas{width:100%;height:100%;display:block}
+.viewer-hud{position:absolute;top:12px;left:12px;background:rgba(15,22,35,0.8);border:1px solid var(--nav-border);border-radius:var(--r);padding:10px 14px;font-size:11px;font-family:var(--mono);color:#90b8e0;min-width:180px;pointer-events:none}
+.viewer-legend{position:absolute;bottom:12px;right:12px;background:rgba(15,22,35,0.85);border:1px solid var(--nav-border);border-radius:var(--r);padding:8px 12px;pointer-events:none}
+.legend-item{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:10px;font-family:var(--mono);color:#90b8e0}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.viewer-controls{position:absolute;bottom:12px;left:12px;display:flex;gap:5px}
+.vc-btn{background:rgba(15,22,35,0.8);border:1px solid var(--nav-border);border-radius:var(--r);color:#90b8e0;font-size:12px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.13s}
+.vc-btn:hover{background:#1e2d45;color:var(--accent)}
+.viewer-no-model{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--nav-text);text-align:center;pointer-events:none}
+
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
+</script>
+<script src="bim_sync.js"></script>
 </head>
 <body>
 <aside class="sidebar">
@@ -157,12 +224,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
   </div>
   <nav class="nav">
     <div class="nav-section">Module</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
+    <div class="nav-item" onclick="goTo('index.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="goTo('02_meilensteinplanung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
+    <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
+    <div class="nav-item" onclick="goTo('04_anwendungsfaelle.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
     <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung<span class="nav-badge" id="nav-badge">0</span></div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
   </nav>
   <div class="sidebar-footer">
     <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
@@ -176,41 +243,115 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
     <div class="topbar-right" id="topbar-right"></div>
   </div>
   <div class="proj-bar" id="proj-bar"></div>
-  <div class="workspace" id="workspace"></div>
+  <div class="host-bar" id="host-bar" style="display:none">
+    <span style="font-size:10px;color:var(--nav-text);font-family:var(--mono);flex-shrink:0">📁 Modellhost:</span>
+    <span class="host-path" id="host-path-label">Nicht konfiguriert</span>
+    <span class="host-status" id="host-status-badge" style="display:none"></span>
+    <button class="btn-ghost" style="color:var(--nav-text);font-size:11px" onclick="openHostConfig()">⚙</button>
+  </div>
+  <div class="main-tabs" id="main-tabs" style="display:none">
+  <div class="main-tab active" id="mtab-konfig" onclick="setMainTab('konfig')">
+    Konfiguration <span class="main-tab-badge" id="mtb-konfig">—</span>
+  </div>
+  <div class="main-tab" id="mtab-pruefung" onclick="setMainTab('pruefung')">
+    Prüfung <span class="main-tab-badge" id="mtb-pruefung">—</span>
+  </div>
+  <div class="main-tab" id="mtab-viewer" onclick="setMainTab('viewer')">
+    Viewer <span class="main-tab-badge" id="mtb-viewer">—</span>
+  </div>
+</div>
+<div id="main-content" style="flex:1;display:flex;min-height:0;overflow:hidden"></div>
 </div>
 
-<!-- ADD MODEL MODAL -->
-<div class="modal-overlay" id="add-ol" onclick="if(event.target===this)closeAdd()">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Modell hinzufügen</div>
-      <button class="modal-close" onclick="closeAdd()">×</button>
-    </div>
+<!-- ══════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════ -->
+
+<!-- MODELLHOST CONFIG -->
+<div class="modal-overlay" id="host-ol" onclick="if(event.target===this)closeModal('host-ol')">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div class="modal-title">Modellhost konfigurieren</div><button class="modal-close" onclick="closeModal('host-ol')">×</button></div>
     <div class="modal-body">
-      <div class="info-box info-blue" style="margin-bottom:14px">IFC 2x3 und IFC 4 werden unterstützt. Die Datei wird lokal im Modellhost des Projekts gespeichert.</div>
-      <div class="fg">
-        <label>Disziplin / Gewerk</label>
-        <select id="add-disc">
-          <option value="">— wählen —</option>
-          <option value="ARK">ARK – Architektur</option>
-          <option value="TW">TW – Tragwerk</option>
-          <option value="TGA">TGA – Technische Gebäudeausrüstung</option>
-          <option value="ELT">ELT – Elektro</option>
-          <option value="SAN">SAN – Sanitär</option>
-          <option value="HZG">HZG – Heizung</option>
-          <option value="LFT">LFT – Lüftung</option>
-          <option value="BRA">BRA – Brandschutz</option>
-          <option value="GEO">GEO – Geotechnik</option>
-          <option value="FRE">FRE – Freianlagen</option>
-        </select>
+      <div class="fg full">
+        <label>SharePoint-Pfad / Lokaler Ordnerpfad</label>
+        <input type="text" id="host-path-input" placeholder="z. B. https://firma.sharepoint.com/sites/Projekt-X/Modelle">
+        <span class="form-hint">Definiert wo Modelle abgelegt werden. Wird als Referenz gespeichert.</span>
       </div>
-      <div class="fg">
-        <label>Datadrop / Lieferstand</label>
-        <input type="text" id="add-datadrop" placeholder="z. B. DD-01, LP3-20241201">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);margin-bottom:10px">CDE-Verbindungen (Variante 2)</div>
+      <div class="info-box info-purple">Eine direkte CDE-Schnittstelle erfordert serverseitige Authentifizierung und wird in einer späteren Ausbaustufe implementiert. Die Verbindungen können bereits jetzt konfiguriert werden.</div>
+      <div id="cde-list"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addCDESlot()" style="margin-top:6px">+ CDE hinzufügen</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('host-ol')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveHostConfig()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- KOORDINATIONSMODELL ANLEGEN -->
+<div class="modal-overlay" id="km-ol" onclick="if(event.target===this)closeModal('km-ol')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="km-title">Koordinationsmodell anlegen</div><button class="modal-close" onclick="closeModal('km-ol')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Name *</label><input type="text" id="km-name" placeholder="z. B. KM-TGA, KM-Gesamt, KM-Koordination-LP3"></div>
+      <div class="fg"><label>Beschreibung</label><textarea id="km-desc" rows="2" placeholder="Zweck dieses Koordinationsmodells"></textarea></div>
+      <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:8px">Fachmodelle einbeziehen</div>
+      <div class="check-list" id="km-fm-list"><div style="padding:12px;color:var(--text3);font-size:12px">Noch keine Fachmodelle vorhanden</div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('km-ol')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveKM()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- FACHMODELL ANLEGEN -->
+<div class="modal-overlay" id="fm-ol" onclick="if(event.target===this)closeModal('fm-ol')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="fm-title">Fachmodell anlegen</div><button class="modal-close" onclick="closeModal('fm-ol')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg"><label>Name *</label><input type="text" id="fm-name" placeholder="z. B. Lüftung, Heizung, Architektur"></div>
+        <div class="fg"><label>Disziplin / Gewerk</label>
+          <select id="fm-disc">
+            <option value="">— wählen —</option>
+            <option value="ARK">ARK – Architektur</option>
+            <option value="TW">TW – Tragwerk</option>
+            <option value="TGA">TGA – Technische Gebäudeausrüstung</option>
+            <option value="ELT">ELT – Elektro</option>
+            <option value="SAN">SAN – Sanitär</option>
+            <option value="HZG">HZG – Heizung</option>
+            <option value="LFT">LFT – Lüftung</option>
+            <option value="BRA">BRA – Brandschutz</option>
+            <option value="GEO">GEO – Geotechnik</option>
+            <option value="FRE">FRE – Freianlagen</option>
+            <option value="VER">VER – Vermessung</option>
+            <option value="BIM">BIM – BIM-Koordination</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Anmerkung</label><input type="text" id="fm-note" placeholder="optional"></div>
       </div>
-      <div class="fg">
-        <label>Anmerkung (optional)</label>
-        <input type="text" id="add-note" placeholder="z. B. Vorabzug zur Koordination">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('fm-ol')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveFM()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEILMODELL / IFC UPLOAD -->
+<div class="modal-overlay" id="tm-ol" onclick="if(event.target===this)closeModal('tm-ol')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Teilmodell hinzufügen</div><button class="modal-close" onclick="closeModal('tm-ol')">×</button></div>
+    <div class="modal-body">
+      <div class="info-box info-blue">Teilmodelle sind IFC-Dateien. Mehrere Teilmodelle bilden zusammen ein Fachmodell (z. B. getrennt nach Bauabschnitt, Geschoss oder Ausbaustufe).</div>
+      <div class="form-grid">
+        <div class="fg"><label>Fachmodell *</label>
+          <select id="tm-fm-sel"></select>
+        </div>
+        <div class="fg"><label>Datadrop / Lieferstand</label><input type="text" id="tm-datadrop" placeholder="z. B. DD-01, LP3-V1"></div>
+        <div class="fg full"><label>Anmerkung</label><input type="text" id="tm-note" placeholder="z. B. Bauabschnitt 1, Vorabzug"></div>
       </div>
       <div class="drop-zone" id="ifc-drop" onclick="document.getElementById('f-ifc').click()"
         ondragover="event.preventDefault();this.classList.add('over')"
@@ -219,610 +360,1328 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
         <input type="file" id="f-ifc" accept=".ifc" onchange="handleIFCFile(this.files[0])">
         <div style="font-size:28px;margin-bottom:8px">📐</div>
         <div style="font-weight:600;color:var(--text2);margin-bottom:4px" id="ifc-drop-label">IFC-Datei ablegen oder klicken</div>
-        <div style="font-size:11px;color:var(--text3)">.ifc (IFC 2x3 / IFC 4)</div>
+        <div style="font-size:11px;color:var(--text3)">.ifc – IFC 2x3 / IFC 4</div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeAdd()">Abbrechen</button>
-      <button class="btn btn-primary" id="add-ok" onclick="confirmAdd()" disabled>Modell hinzufügen</button>
+      <button class="btn btn-secondary" onclick="closeModal('tm-ol')">Abbrechen</button>
+      <button class="btn btn-primary" id="tm-ok" onclick="saveTM()" disabled>Hinzufügen</button>
     </div>
   </div>
 </div>
 
-<!-- PARSE PROGRESS -->
+<!-- PARSE OVERLAY -->
 <div class="parse-overlay" id="parse-ol">
   <div class="parse-box">
     <div class="parse-spinner"></div>
-    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px" id="parse-msg">IFC wird analysiert…</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px" id="parse-msg">Wird verarbeitet…</div>
     <div style="font-size:11px;color:var(--text3)" id="parse-sub">Bitte warten</div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 <script>
-// ─── STORAGE ──────────────────────────────────────────────────────────
-const PROJ_KEY    = 'bim_projects_v2';
-const ASSIGN_KEY  = 'bim_obj_assignments_v1';
-const EXCL_KEY    = 'bim_obj_exclusions_v2';
-const PPARAM_KEY  = 'bim_proj_params_v1';
-const GLOBAL_KEY  = 'bim_global_params_v2';
-const GRP_KEY     = 'bim_param_groups_v1';
-const AWF_KEY     = 'bim_awf_v1';
-const MODELS_KEY  = 'bim_models_v1';
-const RESULTS_KEY = 'bim_check_results_v1';
-const SET_KEY     = 'bim_settings_v1';
+// ─── STORAGE KEYS ─────────────────────────────────────────────────────
+const PROJ_KEY='bim_projects_v2', ASSIGN_KEY='bim_obj_assignments_v1';
+const PPARAM_KEY='bim_proj_params_v1', GLOBAL_KEY='bim_global_params_v2';
+const EXCL_KEY='bim_obj_exclusions_v2', AWF_KEY='bim_awf_v1';
+const HOST_KEY='bim_modellhost_v1';    // {pid: {path, cdes:[]}}
+const KM_KEY='bim_koordination_v1';    // {pid: [{id,name,desc,fmIds:[]}]}
+const FM_KEY='bim_fachmodelle_v1';     // {pid: [{id,name,disc,note}]}
+const TM_KEY='bim_teilmodelle_v1';     // {pid: [{id,name,fmId,datadrop,note,parsed,uploadedAt}]}
+const RESULTS_KEY='bim_check_results_v2';
+const SET_KEY='bim_settings_v1';
 
-// ─── OBJECT TREE (mirrored from Merkmalserver) ────────────────────────
-const IFC_ENTITY_MAP = {
-  // Roh- und Ausbau
-  'wand':['IfcWall','IfcWallStandardCase'],
-  'mauerwerkswand':['IfcWall'],
-  'stahlbetonwand':['IfcWall'],
-  'trockenbauwand':['IfcWall'],
-  'decke':['IfcSlab'],
-  'bodenplatte':['IfcSlab'],
-  'flachdach':['IfcRoof','IfcSlab'],
-  'stütze':['IfcColumn'],
-  'unterzug':['IfcBeam'],
-  'treppe':['IfcStair','IfcStairFlight'],
-  'rampe':['IfcRamp'],
-  'tür':['IfcDoor'],
-  'fenster':['IfcWindow'],
-  'fassade':['IfcCurtainWall'],
-  'raum':['IfcSpace'],
-  'zone':['IfcZone'],
-  // TGA
-  'rohrleitung':['IfcPipeSegment','IfcPipeFitting'],
-  'kanal':['IfcDuctSegment','IfcDuctFitting'],
-  'kabel':['IfcCableSegment'],
-  'pumpe':['IfcPump'],
-  'ventil':['IfcValve'],
-  'leuchte':['IfcLightFixture'],
-  'schalter':['IfcSwitchingDevice'],
-  'lüftungsgerät':['IfcAirHandlingUnit'],
-  'heizung':['IfcSpaceHeater'],
-};
+// ─── DISC COLORS ──────────────────────────────────────────────────────
+const DISC_COLORS={ARK:'#3b82f6',TW:'#8b5cf6',TGA:'#f97316',ELT:'#f59e0b',SAN:'#06b6d4',HZG:'#ef4444',LFT:'#10b981',BRA:'#dc2626',GEO:'#92400e',FRE:'#65a30d',VER:'#0ea5e9',BIM:'#00c9a7'};
+const IFC_ENTITY_MAP={ARK:['IfcWall','IfcWallStandardCase','IfcSlab','IfcRoof','IfcStair','IfcDoor','IfcWindow','IfcCurtainWall','IfcColumn','IfcBeam','IfcSpace'],TW:['IfcColumn','IfcBeam','IfcSlab','IfcFooting','IfcWall','IfcMember','IfcPlate'],TGA:['IfcPipeSegment','IfcDuctSegment','IfcFlowTerminal','IfcFlowFitting','IfcFlowMovingDevice','IfcEnergyConversionDevice'],ELT:['IfcCableSegment','IfcCableFitting','IfcSwitchingDevice','IfcLightFixture','IfcDistributionControlElement'],SAN:['IfcPipeSegment','IfcPipeFitting','IfcSanitaryTerminal','IfcValve'],HZG:['IfcSpaceHeater','IfcBoiler','IfcPipeSegment','IfcValve'],LFT:['IfcDuctSegment','IfcDuctFitting','IfcAirTerminal','IfcAirHandlingUnit','IfcDamper'],BRA:['IfcDoor','IfcWall','IfcSlab']};
 
 // ─── STATE ────────────────────────────────────────────────────────────
-let projects=[], assignments={}, exclusions={}, projParams={}, globalParams=[], awfData={};
-let models={}, results={};
-let pid=null, selModelId=null, activeTab='uebersicht';
-let pendingFile=null, pendingParsed=null;
+let projects=[], assignments={}, projParams={}, globalParams=[];
+let hostConfig={}, kmData={}, fmData={}, tmData={}, results={};
+let pid=null, selNode=null, activeTab='uebersicht';
+let editKMId=null, editFMId=null, pendingParsed=null, pendingFile=null;
+let expandedKMs=new Set(), expandedFMs=new Set();
+let cdeSlots=[];
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 function init(){
   try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};document.getElementById('sb-user').textContent=s.name||'BIM Manager';}catch(e){}
   try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
   try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
-  try{exclusions=JSON.parse(localStorage.getItem(EXCL_KEY))||{};}catch(e){exclusions={};}
   try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
   try{globalParams=JSON.parse(localStorage.getItem(GLOBAL_KEY))||[];}catch(e){globalParams=[];}
-  try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
-  try{models=JSON.parse(localStorage.getItem(MODELS_KEY))||{};}catch(e){models={};}
+  try{hostConfig=JSON.parse(localStorage.getItem(HOST_KEY))||{};}catch(e){hostConfig={};}
+  try{kmData=JSON.parse(localStorage.getItem(KM_KEY))||{};}catch(e){kmData={};}
+  try{fmData=JSON.parse(localStorage.getItem(FM_KEY))||{};}catch(e){fmData={};}
+  try{tmData=JSON.parse(localStorage.getItem(TM_KEY))||{};}catch(e){tmData={};}
   try{results=JSON.parse(localStorage.getItem(RESULTS_KEY))||{};}catch(e){results={};}
   render();
 }
-const saveModels=()=>localStorage.setItem(MODELS_KEY,JSON.stringify(models));
-const saveResults=()=>localStorage.setItem(RESULTS_KEY,JSON.stringify(results));
+const save=()=>{localStorage.setItem(KM_KEY,JSON.stringify(kmData));localStorage.setItem(FM_KEY,JSON.stringify(fmData));localStorage.setItem(TM_KEY,JSON.stringify(tmData));};
+const saveR=()=>localStorage.setItem(RESULTS_KEY,JSON.stringify(results));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
 // ─── RENDER ───────────────────────────────────────────────────────────
 function render(){
-  renderProjBar(); renderTopbar();
-  if(!pid){renderNoProjekt();return;}
-  renderWorkspace();
+  renderProjBar(); renderTopbar(); renderHostBar();
+  const tabs = document.getElementById('main-tabs');
+  const mc = document.getElementById('main-content');
+  if(!pid){
+    if(tabs) tabs.style.display='none';
+    if(mc) mc.innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt gewählt</div></div></div>`;
+    return;
+  }
+  if(tabs) tabs.style.display='flex';
+  updateMainBadges();
+  renderMainContent();
 }
 function renderProjBar(){
+  const fms=fmData[pid]||[], tms=tmData[pid]||[], kms=kmData[pid]||[];
   document.getElementById('proj-bar').innerHTML=`
     <label>Projekt:</label>
     <select class="psel" id="psel" onchange="onProjChange()">
       <option value="">— Projekt wählen —</option>
       ${projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('')}
     </select>
-    ${pid?`<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(models[pid]||[]).length} Modelle im Host</span>`:''}`;
-  if(pid) setTimeout(()=>{const s=document.getElementById('psel');if(s)s.value=pid;},0);
+    ${pid?`<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${kms.length} KM · ${fms.length} FM · ${tms.length} TM</span>`:''}`;
+  if(pid) setTimeout(()=>{const s=document.getElementById('psel');if(s)s.value=pid;updateMainBadges();},0);
 }
 function renderTopbar(){
-  document.getElementById('topbar-right').innerHTML=pid
-    ?`<button class="btn btn-secondary btn-sm" onclick="exportProtokoll()" ${!selModelId?'disabled':''}>⬇ Protokoll</button>
-      <button class="btn btn-primary btn-sm" onclick="openAdd()">+ Modell</button>`
-    :'';
-  document.getElementById('nav-badge').textContent=Object.values(models).flat().length;
+  document.getElementById('topbar-right').innerHTML=pid?`
+    <button class="btn btn-secondary btn-sm" onclick="openHostConfig()">⚙ Modellhost</button>
+    <button class="btn btn-secondary btn-sm" onclick="openTM()">+ Teilmodell</button>
+    <button class="btn btn-secondary btn-sm" onclick="openFM()">+ Fachmodell</button>
+    <button class="btn btn-primary btn-sm" onclick="openKM()">+ Koordinationsmodell</button>`:'';
+  document.getElementById('nav-badge').textContent=(tmData[pid]||[]).length;
 }
-function renderNoProjekt(){
-  document.getElementById('workspace').innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div class="empty-state"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt ausgewählt</div><div style="font-size:12px;margin-top:6px">Wähle oben ein Projekt</div></div></div>`;
+function renderHostBar(){
+  const bar=document.getElementById('host-bar');
+  if(!pid){bar.style.display='none';return;}
+  bar.style.display='flex';
+  const hc=hostConfig[pid];
+  document.getElementById('host-path-label').textContent=hc?.path||'Kein Modellhost konfiguriert – ⚙ klicken';
+  const badge=document.getElementById('host-status-badge');
+  if(hc?.cdes?.length){badge.style.display='';badge.className='host-status host-ok';badge.textContent=`${hc.cdes.length} CDE konfiguriert`;}
+  else{badge.style.display='none';}
 }
+
 function renderWorkspace(){
-  const mList=models[pid]||[];
-  const selModel=mList.find(m=>m.id===selModelId);
-  document.getElementById('workspace').innerHTML=`
+  document.getElementById('main-content').innerHTML=`
   <div style="flex:1;display:flex;overflow:hidden">
-    <div class="left-panel">
+    <div class="tree-panel">
       <div class="panel-header">
-        <span class="panel-title">Modellhost</span>
-        <button class="btn btn-primary btn-sm" onclick="openAdd()">+ IFC</button>
+        <span class="panel-title">Modellstruktur</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn-ghost" style="font-size:10px" onclick="openFM()" title="Fachmodell">+FM</button>
+          <button class="btn-ghost" style="font-size:10px" onclick="openKM()" title="Koordinationsmodell">+KM</button>
+        </div>
       </div>
-      <div class="panel-scroll">
-        ${!mList.length ? renderEmptyHost() : mList.map(m=>renderModelCard(m)).join('')}
-      </div>
+      <div class="tree-scroll" id="tree-scroll">${renderTree()}</div>
     </div>
-    <div class="right-panel" id="right-panel">
-      ${selModel ? renderResultArea(selModel) : renderWelcome()}
-    </div>
+    <div class="right-panel" id="right-panel">${renderDetailPanel()}</div>
   </div>`;
 }
-function renderEmptyHost(){
-  return `<div class="empty-state" style="padding:28px 14px">
-    <div style="font-size:28px;margin-bottom:8px">📐</div>
-    <div style="font-size:13px;font-weight:500;color:var(--text2)">Noch keine Modelle</div>
-    <div style="font-size:11px;margin-top:4px;margin-bottom:12px">Lade IFC-Dateien in den Modellhost</div>
-    <button class="btn btn-primary btn-sm" onclick="openAdd()">+ IFC hochladen</button>
+function refreshTree(){document.getElementById('tree-scroll').innerHTML=renderTree();}
+function refreshDetail(){document.getElementById('right-panel').innerHTML=renderDetailPanel();}
+
+// ─── TREE ─────────────────────────────────────────────────────────────
+function renderTree(){
+  const kms=kmData[pid]||[], fms=fmData[pid]||[], tms=tmData[pid]||[];
+  if(!fms.length&&!kms.length) return renderEmptyTree();
+  let html='';
+  // Koordinationsmodelle
+  kms.forEach(km=>{
+    const open=expandedKMs.has(km.id);
+    const sel=selNode?.type==='km'&&selNode.id===km.id;
+    const kmFms=(km.fmIds||[]).map(fid=>fms.find(f=>f.id===fid)).filter(Boolean);
+    html+=`<div class="tree-km">
+      <div class="tree-km-header ${sel?'sel':''}" onclick="selNode={type:'km',id:'${km.id}'};toggleKM('${km.id}');refreshTree();refreshDetail()">
+        <span class="tree-km-toggle ${open?'open':''}">▶</span>
+        <span class="tree-km-icon">🗂</span>
+        <span class="tree-km-name">${km.name}</span>
+        <span class="tree-km-badge">${kmFms.length} FM</span>
+        <button class="btn-ghost" style="font-size:11px;padding:1px 3px" onclick="event.stopPropagation();runKMCheck('${km.id}')" title="Prüfung starten">▶</button>
+      </div>
+      ${open?kmFms.map(fm=>renderFMNode(fm,tms,true)).join(''):''}
+    </div>`;
+  });
+  // Freie Fachmodelle (nicht in einem KM)
+  const usedFmIds=new Set(kms.flatMap(k=>k.fmIds||[]));
+  const freeFms=fms.filter(f=>!usedFmIds.has(f.id));
+  if(freeFms.length){
+    html+=`<div style="padding:5px 12px;font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;background:var(--surface2);border-bottom:1px solid var(--border)">Nicht zugeordnete Fachmodelle</div>`;
+    freeFms.forEach(fm=>html+=renderFMNode(fm,tms,false));
+  }
+  if(!kms.length&&!fms.length) return renderEmptyTree();
+  return html;
+}
+function renderFMNode(fm,tms,indent){
+  const open=expandedFMs.has(fm.id);
+  const sel=selNode?.type==='fm'&&selNode.id===fm.id;
+  const fmTMs=tms.filter(t=>t.fmId===fm.id);
+  const col=DISC_COLORS[fm.disc]||'#8899b0';
+  return `<div class="tree-fm">
+    <div class="tree-fm-header ${sel?'sel':''}" onclick="selNode={type:'fm',id:'${fm.id}'};toggleFM('${fm.id}');refreshTree();refreshDetail()">
+      <span class="tree-km-toggle ${open?'open':''}" style="margin-left:${indent?0:0}px">▶</span>
+      <span class="tree-fm-disc" style="background:${col}22;color:${col};border:1px solid ${col}44">${fm.disc||'—'}</span>
+      <span class="tree-fm-name">${fm.name}</span>
+      <span class="tree-km-badge">${fmTMs.length} TM</span>
+      <button class="btn-ghost" style="font-size:11px;padding:1px 3px" onclick="event.stopPropagation();openTMFor('${fm.id}')" title="Teilmodell hinzufügen">+</button>
+    </div>
+    ${open?fmTMs.map(tm=>renderTMNode(tm)).join(''):''}
   </div>`;
 }
-function renderModelCard(m){
-  const res=results[pid]?.[m.id];
-  const status=res?getOverallStatus(res):'pending';
-  const icons={ARK:'🏛',TW:'🔩',TGA:'⚙️',ELT:'⚡',SAN:'💧',HZG:'🔥',LFT:'💨',BRA:'🚒',GEO:'⛏',FRE:'🌿'};
-  const stColors={ok:'var(--ok)',warn:'var(--warn)',err:'var(--err)',pending:'var(--border)'};
-  return `<div class="model-card ${selModelId===m.id?'active':''}" onclick="selectModel('${m.id}')">
-    <div class="model-icon" style="background:var(--surface2);border:1px solid var(--border)">${icons[m.disc]||'📐'}</div>
-    <div class="model-body">
-      <div class="model-name">${m.name}</div>
-      <div class="model-meta">${m.disc} · ${m.datadrop||'—'} · ${fmtDate(m.uploadedAt)}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-        <div class="ampel" style="background:${stColors[status]}"></div>
-        <span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${res?statusLabel(status):'Nicht geprüft'}</span>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:2px">
-      <button class="btn-ghost" style="font-size:11px" onclick="event.stopPropagation();runCheck('${m.id}')" title="Prüfung starten">▶</button>
-      <button class="btn-ghost" style="font-size:11px;color:var(--err)" onclick="event.stopPropagation();deleteModel('${m.id}')" title="Entfernen">⌫</button>
-    </div>
+function renderTMNode(tm){
+  const sel=selNode?.type==='tm'&&selNode.id===tm.id;
+  const res=results[pid]?.[tm.id];
+  const stCol=res?{ok:'var(--ok)',warn:'var(--warn)',err:'var(--err)'}[getOverallStatus(res)]||'var(--border)':'var(--border)';
+  return `<div class="tree-tm ${sel?'sel':''}" onclick="selNode={type:'tm',id:'${tm.id}'};activeTab='uebersicht';refreshTree();refreshDetail()">
+    <span class="tree-tm-icon">📄</span>
+    <span class="tree-tm-name">${tm.name}</span>
+    ${tm.datadrop?`<span style="font-size:9px;font-family:var(--mono);color:var(--text3)">${tm.datadrop}</span>`:''}
+    <div class="tree-tm-status" style="background:${stCol}" title="${res?'Geprüft':'Nicht geprüft'}"></div>
   </div>`;
+}
+function renderEmptyTree(){
+  return `<div style="padding:20px;text-align:center;color:var(--text3)">
+    <div style="font-size:24px;margin-bottom:8px">🗂</div>
+    <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">Keine Modelle</div>
+    <div style="font-size:11px;margin-bottom:12px">Lege Fachmodelle und Koordinationsmodelle an</div>
+    <button class="btn btn-primary btn-sm" onclick="openFM()">+ Fachmodell</button>
+  </div>`;
+}
+function toggleKM(id){expandedKMs.has(id)?expandedKMs.delete(id):expandedKMs.add(id);}
+function toggleFM(id){expandedFMs.has(id)?expandedFMs.delete(id):expandedFMs.add(id);}
+
+// ─── DETAIL PANEL ─────────────────────────────────────────────────────
+function renderDetailPanel(){
+  if(!selNode) return renderWelcome();
+  if(selNode.type==='km') return renderKMDetail();
+  if(selNode.type==='fm') return renderFMDetail();
+  if(selNode.type==='tm') return renderTMDetail();
+  return renderWelcome();
 }
 function renderWelcome(){
-  const mList=models[pid]||[];
-  const unchecked=mList.filter(m=>!results[pid]?.[m.id]).length;
+  const tms=tmData[pid]||[], kms=kmData[pid]||[], fms=fmData[pid]||[];
+  const unchecked=tms.filter(t=>!results[pid]?.[t.id]).length;
   return `<div style="max-width:680px;margin:0 auto">
-    <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:6px">Modellprüfung</div>
-    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">Prüfe IFC-Modelle gegen die Merkmalanforderungen aus dem Merkmalserver.</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-      <div class="sum-card info" style="cursor:default">
-        <div class="sum-num">${mList.length}</div>
-        <div class="sum-label">Modelle im Host</div>
-      </div>
-      <div class="sum-card warn" style="cursor:default">
-        <div class="sum-num">${unchecked}</div>
-        <div class="sum-label">Nicht geprüft</div>
-      </div>
-      <div class="sum-card ok" style="cursor:default">
-        <div class="sum-num">${Object.keys(assignments[pid]||{}).length}</div>
-        <div class="sum-label">Objekte mit Zuweisungen</div>
-      </div>
+    <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:6px">Modellverwaltung & Prüfung</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">IFC-Modelle in Teilmodelle → Fachmodelle → Koordinationsmodelle strukturieren und prüfen.</div>
+    <div class="sum-grid">
+      <div class="sum-card" style="border-left-color:var(--info)"><div class="sum-num">${kms.length}</div><div class="sum-label">Koordinationsmodelle</div></div>
+      <div class="sum-card" style="border-left-color:var(--global)"><div class="sum-num">${fms.length}</div><div class="sum-label">Fachmodelle</div></div>
+      <div class="sum-card" style="border-left-color:var(--accent)"><div class="sum-num">${tms.length}</div><div class="sum-label">Teilmodelle</div></div>
+      <div class="sum-card" style="border-left-color:var(--warn)"><div class="sum-num">${unchecked}</div><div class="sum-label">Nicht geprüft</div></div>
     </div>
     <div class="info-box info-blue">
-      <strong>Drei Prüfmodule</strong> stehen zur Verfügung:<br>
-      <strong>Strukturprüfung</strong> – IFC-Entitytypen gegen definierten Objektbaum<br>
-      <strong>Merkmalvollständigkeit</strong> – PropertySets im IFC gegen Projektzuweisungen<br>
-      <strong>Datadrop-Delta</strong> – Vergleich mit vorherigem Modellstand (GlobalIds)
+      <strong>Hierarchie:</strong> Koordinationsmodell → Fachmodell → Teilmodell (IFC-Datei)<br>
+      Ein Fachmodell ohne Unterteilung hat genau ein Teilmodell. Mehrere Teilmodelle entstehen z. B. bei Aufteilung nach Bauabschnitt oder Geschoss.
     </div>
-    ${mList.length?`<button class="btn btn-primary" onclick="runAllChecks()">▶ Alle Modelle prüfen</button>`:`<button class="btn btn-primary" onclick="openAdd()">+ Erstes Modell hochladen</button>`}
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="openFM()">+ Fachmodell</button>
+      <button class="btn btn-secondary" onclick="openKM()">+ Koordinationsmodell</button>
+      ${tms.length?`<button class="btn btn-secondary" onclick="runAllChecks()">▶ Alle prüfen</button>`:''}
+    </div>
   </div>`;
 }
 
-// ─── RESULT AREA ──────────────────────────────────────────────────────
-function renderResultArea(m){
-  const res=results[pid]?.[m.id];
-  const tabs=[
-    {id:'uebersicht',label:'Übersicht'},
-    {id:'struktur',  label:'Strukturprüfung', n:res?.struktur?.issues?.length},
-    {id:'merkmale',  label:'Merkmalvollständigkeit', n:res?.merkmale?.issues?.length},
-    {id:'delta',     label:'Datadrop-Delta', n:res?.delta?.changes?.length},
-  ];
-  return `<div style="max-width:900px;margin:0 auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+// KM DETAIL
+function renderKMDetail(){
+  const km=(kmData[pid]||[]).find(k=>k.id===selNode.id);
+  if(!km) return renderWelcome();
+  const fms=fmData[pid]||[];
+  const tms=tmData[pid]||[];
+  const kmFms=(km.fmIds||[]).map(id=>fms.find(f=>f.id===id)).filter(Boolean);
+  const allTMs=kmFms.flatMap(fm=>tms.filter(t=>t.fmId===fm.id));
+  const checked=allTMs.filter(t=>results[pid]?.[t.id]);
+  return `<div style="max-width:800px;margin:0 auto">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px">
       <div>
-        <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.02em">${m.name}</div>
-        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:2px">${m.disc} · ${m.datadrop||'kein Datadrop'} · ${m.entities||0} Entities · ${fmtDate(m.uploadedAt)}</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:4px">KOORDINATIONSMODELL</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.02em">🗂 ${km.name}</div>
+        ${km.desc?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${km.desc}</div>`:''}
       </div>
-      <button class="btn btn-primary" onclick="runCheck('${m.id}')">▶ Prüfung starten</button>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" onclick="openKM('${km.id}')">✎ Bearbeiten</button>
+        <button class="btn btn-primary btn-sm" onclick="runKMCheck('${km.id}')">▶ Prüfen</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportKMProtokoll('${km.id}')">⬇ Protokoll</button>
+      </div>
+    </div>
+    <div class="sum-grid">
+      <div class="sum-card" style="border-left-color:var(--global)"><div class="sum-num">${kmFms.length}</div><div class="sum-label">Fachmodelle</div></div>
+      <div class="sum-card" style="border-left-color:var(--accent)"><div class="sum-num">${allTMs.length}</div><div class="sum-label">Teilmodelle</div></div>
+      <div class="sum-card" style="border-left-color:var(--ok)"><div class="sum-num">${checked.length}</div><div class="sum-label">Geprüft</div></div>
+      <div class="sum-card" style="border-left-color:var(--warn)"><div class="sum-num">${allTMs.length-checked.length}</div><div class="sum-label">Ausstehend</div></div>
+    </div>
+    <div class="sc"><div class="sc-header"><span class="sc-title">Enthaltene Fachmodelle</span></div>
+    <table class="ptable"><thead><tr><th>Fachmodell</th><th>Disziplin</th><th>Teilmodelle</th><th>Status</th><th></th></tr></thead>
+    <tbody>${kmFms.map(fm=>{
+      const fmTMs=tms.filter(t=>t.fmId===fm.id);
+      const fmRes=fmTMs.map(t=>results[pid]?.[t.id]).filter(Boolean);
+      const st=fmRes.length===0?'gray':fmRes.some(r=>getOverallStatus(r)==='err')?'err':fmRes.some(r=>getOverallStatus(r)==='warn')?'warn':'ok';
+      const col=DISC_COLORS[fm.disc]||'#8899b0';
+      return `<tr style="cursor:pointer" onclick="selNode={type:'fm',id:'${fm.id}'};activeTab='uebersicht';refreshTree();refreshDetail()">
+        <td><strong>${fm.name}</strong></td>
+        <td><span style="font-size:11px;font-family:var(--mono);font-weight:600;padding:2px 6px;border-radius:3px;background:${col}22;color:${col}">${fm.disc||'—'}</span></td>
+        <td style="font-family:var(--mono)">${fmTMs.length}</td>
+        <td><span class="ampel" style="background:${st==='gray'?'var(--border)':st==='ok'?'var(--ok)':st==='warn'?'var(--warn)':'var(--err)'}"></span> ${fmRes.length===0?'Nicht geprüft':st==='ok'?'OK':st==='warn'?'Warnungen':'Fehler'}</td>
+        <td><button class="btn-ghost" style="font-size:11px" onclick="event.stopPropagation();selNode={type:'fm',id:'${fm.id}'};activeTab='uebersicht';refreshTree();refreshDetail()">→</button></td>
+      </tr>`;}).join('')}
+    </tbody></table></div>
+    <button class="btn btn-danger btn-sm" onclick="deleteKM('${km.id}')">KM löschen</button>
+  </div>`;
+}
+
+// FM DETAIL
+function renderFMDetail(){
+  const fm=(fmData[pid]||[]).find(f=>f.id===selNode.id);
+  if(!fm) return renderWelcome();
+  const tms=(tmData[pid]||[]).filter(t=>t.fmId===fm.id);
+  const col=DISC_COLORS[fm.disc]||'#8899b0';
+  const tabs=[{id:'uebersicht',label:'Übersicht'},{id:'struktur',label:'Strukturprüfung'},{id:'merkmale',label:'Merkmalvollständigkeit'}];
+  return `<div style="max-width:860px;margin:0 auto">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px">
+      <div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:4px">FACHMODELL</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px;font-weight:600;color:var(--text)">${fm.name}</span>
+          <span style="font-size:12px;font-family:var(--mono);font-weight:600;padding:3px 8px;border-radius:4px;background:${col}22;color:${col}">${fm.disc||'—'}</span>
+        </div>
+        ${fm.note?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${fm.note}</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" onclick="openFM('${fm.id}')">✎</button>
+        <button class="btn btn-secondary btn-sm" onclick="openTMFor('${fm.id}')">+ Teilmodell</button>
+        <button class="btn btn-primary btn-sm" onclick="runFMCheck('${fm.id}')">▶ Prüfen</button>
+      </div>
+    </div>
+    <div class="sc"><div class="sc-header"><span class="sc-title">Teilmodelle (${tms.length})</span>
+      <button class="btn btn-secondary btn-xs" onclick="openTMFor('${fm.id}')">+ Hinzufügen</button>
+    </div>
+    <table class="ptable"><thead><tr><th>Dateiname</th><th>Datadrop</th><th>Entities</th><th>Objekte</th><th>PropertySets</th><th>Status</th><th></th></tr></thead>
+    <tbody>${!tms.length?`<tr><td colspan="7" style="padding:16px;text-align:center;color:var(--text3)">Noch keine Teilmodelle – <button class="btn btn-primary btn-xs" onclick="openTMFor('${fm.id}')">+ IFC hochladen</button></td></tr>`:
+    tms.map(tm=>{
+      const res=results[pid]?.[tm.id];
+      const st=res?getOverallStatus(res):'pending';
+      const stCol={ok:'var(--ok)',warn:'var(--warn)',err:'var(--err)',pending:'var(--border)'}[st];
+      return `<tr style="cursor:pointer" onclick="selNode={type:'tm',id:'${tm.id}'};activeTab='uebersicht';refreshTree();refreshDetail()">
+        <td><strong>${tm.name}</strong>${tm.note?`<div style="font-size:10px;color:var(--text3)">${tm.note}</div>`:''}</td>
+        <td><span style="font-family:var(--mono);font-size:11px">${tm.datadrop||'—'}</span></td>
+        <td style="font-family:var(--mono)">${tm.parsed?.entities?.toLocaleString()||'—'}</td>
+        <td style="font-family:var(--mono)">${tm.parsed?.objectCount||'—'}</td>
+        <td style="font-family:var(--mono)">${tm.parsed?.psetCount||'—'}</td>
+        <td><span class="ampel" style="background:${stCol}"></span> ${res?{ok:'OK',warn:'Warnungen',err:'Fehler'}[st]:'Nicht geprüft'}</td>
+        <td onclick="event.stopPropagation()">
+          <div style="display:flex;gap:3px">
+            <button class="btn-ghost" style="font-size:11px" onclick="selNode={type:'tm',id:'${tm.id}'};activeTab='uebersicht';runCheck('${tm.id}')" title="Prüfen">▶</button>
+            <button class="btn-ghost" style="font-size:11px;color:var(--err)" onclick="deleteTM('${tm.id}')">⌫</button>
+          </div>
+        </td>
+      </tr>`;}).join('')}
+    </tbody></table></div>
+    <button class="btn btn-danger btn-sm" onclick="deleteFM('${fm.id}')">FM löschen</button>
+  </div>`;
+}
+
+// TM DETAIL
+function renderTMDetail(){
+  const tm=(tmData[pid]||[]).find(t=>t.id===selNode.id);
+  if(!tm) return renderWelcome();
+  const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
+  const res=results[pid]?.[tm.id];
+  const tabs=[{id:'uebersicht',label:'Übersicht'},{id:'struktur',label:'Strukturprüfung',n:res?.struktur?.issues?.length},{id:'merkmale',label:'Merkmale',n:res?.merkmale?.issues?.length},{id:'delta',label:'Datadrop-Delta',n:res?.delta?.changes?.length}];
+  return `<div style="max-width:860px;margin:0 auto">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px">
+      <div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:4px">TEILMODELL${fm?` · ${fm.name}`:''}</div>
+        <div style="font-size:18px;font-weight:600;color:var(--text)">📄 ${tm.name}</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:3px">${tm.datadrop||'kein Datadrop'} · ${tm.parsed?.schema||'—'} · ${tm.parsed?.entities?.toLocaleString()||0} Entities · ${fmtDate(tm.uploadedAt)}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-primary btn-sm" onclick="runCheck('${tm.id}')">▶ Prüfen</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportProtokoll('${tm.id}')">⬇ Protokoll</button>
+      </div>
     </div>
     <div class="res-tabs">
-      ${tabs.map(t=>`<div class="res-tab ${activeTab===t.id?'active':''}" onclick="activeTab='${t.id}';document.getElementById('right-panel').innerHTML=renderResultArea(models['${pid}'].find(x=>x.id==='${m.id}'))">${t.label}${t.n!=null?`<span class="res-badge">${t.n}</span>`:''}</div>`).join('')}
+      ${tabs.map(t=>`<div class="res-tab ${activeTab===t.id?'active':''}" onclick="activeTab='${t.id}';refreshDetail()">${t.label}${t.n!=null?`<span class="res-badge">${t.n}</span>`:''}</div>`).join('')}
     </div>
-    ${!res?renderNoResults(m):renderTabContent(m,res)}
+    ${!res?`<div style="text-align:center;padding:40px;color:var(--text3)"><div style="font-size:28px;margin-bottom:10px">⏳</div><div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Noch nicht geprüft</div><button class="btn btn-primary" onclick="runCheck('${tm.id}')">▶ Jetzt prüfen</button></div>`:renderTabContent(tm,res)}
   </div>`;
 }
-function renderNoResults(m){
-  return `<div style="text-align:center;padding:40px;color:var(--text3)">
-    <div style="font-size:32px;margin-bottom:10px">⏳</div>
-    <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Noch nicht geprüft</div>
-    <div style="font-size:12px;margin-bottom:16px">Starte die Prüfung um Ergebnisse zu sehen</div>
-    <button class="btn btn-primary" onclick="runCheck('${m.id}')">▶ Jetzt prüfen</button>
-  </div>`;
-}
-function renderTabContent(m,res){
-  if(activeTab==='uebersicht') return renderUebersicht(m,res);
+
+// ─── TAB CONTENT ──────────────────────────────────────────────────────
+function renderTabContent(tm,res){
+  if(activeTab==='uebersicht') return renderUebersicht(tm,res);
   if(activeTab==='struktur')   return renderStruktur(res);
   if(activeTab==='merkmale')   return renderMerkmale(res);
-  if(activeTab==='delta')      return renderDelta(res);
+  if(activeTab==='delta')      return renderDelta(res,tm);
   return '';
 }
-
-// ÜBERSICHT TAB
-function renderUebersicht(m,res){
+function renderUebersicht(tm,res){
   const st=res.struktur||{}, mk=res.merkmale||{}, dl=res.delta||{};
-  const stStatus=structStatus(st), mkStatus=merkmalStatus(mk);
-  const cards=[
-    {label:'Strukturprüfung',status:stStatus,main:st.matchedTypes||0,sub:`von ${st.totalExpected||0} erwarteten Objekttypen gefunden`,err:st.issues?.length||0,errLabel:'Abweichungen'},
-    {label:'Merkmalvollständigkeit',status:mkStatus,main:mkStatus==='ok'?'100%':(mk.filled||0)+'/'+(mk.total||0),sub:'PropertySets befüllt',err:mk.issues?.length||0,errLabel:'Mängel'},
-    {label:'Datadrop-Delta',status:dl.prev?'info':'gray',main:dl.changes?.length||0,sub:'Änderungen seit letztem Stand',err:dl.missing||0,errLabel:'fehlend'},
-  ];
-  const statusColors={ok:'var(--ok)',warn:'var(--warn)',err:'var(--err)',info:'var(--info)',gray:'var(--border)'};
-  return `<div class="summary-grid">
-    ${cards.map(c=>`<div class="sum-card" style="border-left-color:${statusColors[c.status]}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <div class="ampel" style="background:${statusColors[c.status]}"></div>
-        <span style="font-size:11px;font-weight:600;color:var(--text2)">${c.label}</span>
-      </div>
-      <div class="sum-num" style="font-size:24px">${c.main}</div>
-      <div class="sum-sub">${c.sub}</div>
-      ${c.err>0?`<div style="margin-top:8px"><span class="sp sp-err">⚠ ${c.err} ${c.errLabel}</span></div>`:''}
+  const stC=structStatus(st), mkC=merkmalStatus(mk);
+  const colMap={ok:'var(--ok)',warn:'var(--warn)',err:'var(--err)',gray:'var(--border)',info:'var(--info)'};
+  return `<div class="sum-grid">
+    ${[
+      {label:'Strukturprüfung',status:stC,num:st.matchedTypes||0,sub:`/${st.totalExpected||0} Typen gefunden`,err:st.issues?.length},
+      {label:'Merkmale',status:mkC,num:`${mk.total>0?Math.round((mk.filled||0)/mk.total*100):0}%`,sub:`${mk.filled||0}/${mk.total||0} PropertySets`,err:mk.issues?.length},
+      {label:'Datadrop-Delta',status:dl.prev?'info':'gray',num:dl.changes?.length||0,sub:'Änderungen',err:dl.missing},
+      {label:'Modellgröße',status:'info',num:tm.parsed?.objectCount||0,sub:`Objekte, ${tm.parsed?.psetCount||0} PSets`,err:0},
+    ].map(c=>`<div class="sum-card" style="border-left-color:${colMap[c.status]}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><div class="ampel" style="background:${colMap[c.status]}"></div><span style="font-size:11px;font-weight:600;color:var(--text2)">${c.label}</span></div>
+      <div class="sum-num" style="font-size:22px">${c.num}</div><div class="sum-label">${c.sub}</div>
+      ${c.err?`<div style="margin-top:6px"><span class="sp sp-${c.status==='err'?'err':'warn'}">⚠ ${c.err}</span></div>`:''}
     </div>`).join('')}
   </div>
-  <div class="sc">
-    <div class="sc-header"><span class="sc-title">Modellinformationen</span></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0">
-      ${[
-        ['Schema',m.schema||'—'],
-        ['Entities',m.entities||0],
-        ['Objekte',m.objectCount||0],
-        ['PropertySets',m.psetCount||0],
-        ['GlobalIds',m.guidCount||0],
-        ['Geprüft am',fmtDate(res.checkedAt)],
-      ].map(([l,v])=>`<div style="padding:10px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)"><div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:3px">${l}</div><div style="font-weight:500">${v}</div></div>`).join('')}
+  <div class="sc"><div class="sc-header"><span class="sc-title">Modellinformationen</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr)">
+      ${[['Schema',tm.parsed?.schema||'—'],['IFC-Entities',tm.parsed?.entities?.toLocaleString()||0],['Objekte',tm.parsed?.objectCount||0],['PropertySets',tm.parsed?.psetCount||0],['GlobalIds',tm.parsed?.guidCount||0],['Geprüft',fmtDate(res.checkedAt)]].map(([l,v])=>`<div style="padding:10px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)"><div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:2px">${l}</div><div style="font-weight:500">${v}</div></div>`).join('')}
     </div>
   </div>`;
 }
-
-// STRUKTURPRÜFUNG TAB
 function renderStruktur(res){
   const st=res.struktur||{};
-  if(!st.checks?.length) return `<div class="empty-state">Keine Strukturdaten verfügbar</div>`;
-  return `<div class="sc"><div class="sc-header">
-    <span class="sc-title">Objekttypen-Abgleich</span>
-    <span style="font-size:11px;color:var(--text3)">${st.matchedTypes||0} von ${st.totalExpected||0} Typen gefunden</span>
-  </div>
-  <table class="ptable"><thead><tr>
-    <th>Objekttyp (Merkmalserver)</th><th>IFC-Entities</th><th>Gefunden</th><th>Anzahl im Modell</th><th>Status</th>
-  </tr></thead><tbody>
-  ${st.checks.map(c=>`<tr>
-    <td><span style="font-weight:500">${c.nodeLabel}</span></td>
-    <td><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.expected.join(', ')}</span></td>
-    <td style="font-family:var(--mono);font-size:11px">${c.found.join(', ')||'—'}</td>
-    <td style="font-family:var(--mono)">${c.count||0}</td>
-    <td><span class="sp ${c.count>0?'sp-ok':'sp-err'}">${c.count>0?'✓ Vorhanden':'✗ Nicht gefunden'}</span></td>
+  if(!st.checks?.length) return `<div class="info-box info-amber">Keine Objekttyp-Zuweisungen für dieses Projekt im Merkmalserver gefunden.</div>`;
+  return `<div class="sc"><div class="sc-header"><span class="sc-title">Objekttypen-Abgleich</span><span style="font-size:11px;color:var(--text3)">${st.matchedTypes}/${st.totalExpected} gefunden</span></div>
+  <table class="ptable"><thead><tr><th>Erwartete IFC-Entities</th><th>Im Modell gefunden</th><th>Anzahl</th><th>Status</th></tr></thead><tbody>
+  ${st.checks.map(c=>`<tr><td><span style="font-family:var(--mono);font-size:10px">${c.expected.join(', ')}</span></td>
+    <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.found.join(', ')||'—'}</td>
+    <td style="font-family:var(--mono)">${c.count}</td>
+    <td><span class="sp ${c.count>0?'sp-ok':'sp-err'}">${c.count>0?'✓':'✗ Fehlt'}</span></td>
   </tr>`).join('')}
   </tbody></table></div>
-  ${st.issues?.length?`<div class="sc"><div class="sc-header"><span class="sc-title">Abweichungen (${st.issues.length})</span></div>
-  <table class="ptable"><thead><tr><th>Problem</th><th>Erwartete Entities</th><th>Empfehlung</th></tr></thead><tbody>
-  ${st.issues.map(i=>`<tr><td>${i.node}</td><td style="font-family:var(--mono);font-size:10px">${i.expected}</td><td style="color:var(--text2);font-size:11px">${i.hint}</td></tr>`).join('')}
-  </tbody></table></div>`:''}`;
+  ${st.issues?.length?`<div class="sc"><div class="sc-header"><span class="sc-title">Abweichungen</span></div><table class="ptable"><thead><tr><th>Entitytyp</th><th>Hinweis</th></tr></thead><tbody>${st.issues.map(i=>`<tr><td style="font-family:var(--mono);font-size:11px">${i.expected}</td><td style="color:var(--text2)">${i.hint}</td></tr>`).join('')}</tbody></table></div>`:''}`;
 }
-
-// MERKMALVOLLSTÄNDIGKEIT TAB
 function renderMerkmale(res){
   const mk=res.merkmale||{};
-  if(!mk.checks?.length) return `<div class="empty-state"><div style="font-size:13px;margin-bottom:8px">Keine Merkmalzuweisungen für dieses Projekt gefunden</div><div style="font-size:11px">Weise im Merkmalserver Merkmale den Objektknoten zu</div></div>`;
+  if(!mk.checks?.length) return `<div class="info-box info-amber">Keine Merkmalzuweisungen für dieses Projekt gefunden.</div>`;
   const pct=mk.total>0?Math.round(mk.filled/mk.total*100):0;
-  const fillColor=pct>=80?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
-  return `<div class="sc"><div class="sc-header"><span class="sc-title">Vollständigkeit</span>
-    <span style="font-weight:500;font-family:var(--mono);color:${fillColor}">${pct}%</span>
-  </div>
-  <div style="padding:14px">
-    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${fillColor}"></div></div>
-    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-family:var(--mono);color:var(--text3)">
-      <span>${mk.filled||0} gefunden</span><span>${(mk.total||0)-(mk.filled||0)} fehlend</span><span>${mk.total||0} gesamt</span>
-    </div>
-  </div></div>
-  <div class="sc"><div class="sc-header"><span class="sc-title">Details pro Merkmal</span></div>
-  <table class="ptable"><thead><tr>
-    <th>Merkmal</th><th>Property Set · Attribut</th><th>Objekte geprüft</th><th>Status</th>
-  </tr></thead><tbody>
-  ${(mk.checks||[]).map(c=>{
-    const pct2=c.total>0?Math.round(c.found/c.total*100):0;
-    const st2=pct2===100?'sp-ok':pct2>0?'sp-warn':'sp-err';
-    return `<tr>
-      <td><span style="font-weight:500">${c.name}</span></td>
-      <td><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.pset}.${c.attr}</span></td>
-      <td><div style="display:flex;align-items:center;gap:8px">
-        <div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:${pct2}%;background:${pct2===100?'var(--ok)':pct2>0?'var(--warn)':'var(--err)'}"></div></div>
-        <span style="font-family:var(--mono);font-size:10px">${c.found}/${c.total}</span>
-      </div></td>
-      <td><span class="sp ${st2}">${pct2}%</span></td>
-    </tr>`;
-  }).join('')}
+  const fillCol=pct>=80?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
+  return `<div class="sc"><div class="sc-header"><span class="sc-title">Vollständigkeit</span><span style="font-weight:600;font-family:var(--mono);color:${fillCol}">${pct}%</span></div>
+  <div style="padding:14px"><div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;background:${fillCol};width:${pct}%;border-radius:4px;transition:width 0.4s"></div></div>
+  <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;font-family:var(--mono);color:var(--text3)"><span>${mk.filled||0} gefunden</span><span>${(mk.total||0)-(mk.filled||0)} fehlend</span><span>${mk.total||0} gesamt</span></div></div></div>
+  <div class="sc"><div class="sc-header"><span class="sc-title">Details</span></div>
+  <table class="ptable"><thead><tr><th>Merkmal</th><th>PropertySet · Attribut</th><th>Vollständigkeit</th><th>Status</th></tr></thead><tbody>
+  ${mk.checks.map(c=>{const p=c.total>0?Math.round(c.found/c.total*100):0;const sc2=p===100?'sp-ok':p>0?'sp-warn':'sp-err';return`<tr><td style="font-weight:500">${c.name}</td><td><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.pset}.${c.attr}</span></td><td><div style="display:flex;align-items:center;gap:8px"><div style="height:4px;width:80px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:${p}%;background:${p===100?'var(--ok)':p>0?'var(--warn)':'var(--err)'};border-radius:2px"></div></div><span style="font-family:var(--mono);font-size:10px">${c.found}/${c.total}</span></div></td><td><span class="sp ${sc2}">${p}%</span></td></tr>`;}).join('')}
   </tbody></table></div>`;
 }
-
-// DATADROP DELTA TAB
-function renderDelta(res){
+function renderDelta(res,tm){
   const dl=res.delta||{};
-  if(!dl.prev){
-    return `<div style="text-align:center;padding:40px;color:var(--text3)">
-      <div style="font-size:28px;margin-bottom:10px">📊</div>
-      <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Kein Vorstand verfügbar</div>
-      <div style="font-size:12px">Für den Datadrop-Vergleich wird ein früherer Modellstand desselben Gewerks benötigt. Lade weitere Modelle hoch.</div>
-    </div>`;
-  }
-  const changes=dl.changes||[];
-  const byType={new:changes.filter(c=>c.type==='new'),changed:changes.filter(c=>c.type==='changed'),missing:changes.filter(c=>c.type==='missing')};
-  return `<div class="summary-grid">
-    ${[['Neu',byType.new.length,'delta-new','delta-new'],['Geändert',byType.changed.length,'delta-changed','delta-changed'],['Fehlend',byType.missing.length,'delta-missing','delta-missing']].map(([l,n,sc])=>`
-    <div class="sum-card" style="border-left-color:var(--${sc.includes('new')?'info':sc.includes('changed')?'warn':'err'})">
-      <div class="sum-num">${n}</div><div class="sum-label">${l}</div>
-    </div>`).join('')}
+  if(!dl.prev) return `<div style="text-align:center;padding:32px;color:var(--text3)"><div style="font-size:28px;margin-bottom:8px">📊</div><div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Kein Vorstand verfügbar</div><div style="font-size:12px">Für den Vergleich wird ein früheres Teilmodell desselben Fachmodells benötigt.</div></div>`;
+  const ch=dl.changes||[];
+  const newC=ch.filter(c=>c.type==='new'), changedC=ch.filter(c=>c.type==='changed'), misC=ch.filter(c=>c.type==='missing');
+  return `<div class="sum-grid">
+    <div class="sum-card" style="border-left-color:var(--info)"><div class="sum-num">${newC.length}</div><div class="sum-label">Neu</div></div>
+    <div class="sum-card" style="border-left-color:var(--warn)"><div class="sum-num">${changedC.length}</div><div class="sum-label">Verändert</div></div>
+    <div class="sum-card" style="border-left-color:var(--err)"><div class="sum-num">${misC.length}</div><div class="sum-label">Fehlend</div></div>
+    <div class="sum-card" style="border-left-color:var(--ok)"><div class="sum-num">${ch.length}</div><div class="sum-label">Änderungen gesamt</div></div>
   </div>
-  <div class="info-box info-blue">Vergleich mit: <strong>${dl.prevName||dl.prev}</strong> · ${fmtDate(dl.prevDate)}</div>
-  <div class="sc"><div class="sc-header"><span class="sc-title">Änderungen (${changes.length})</span></div>
-  <table class="ptable"><thead><tr><th>GlobalId</th><th>Entitytyp</th><th>Name</th><th>Änderung</th></tr></thead><tbody>
-  ${changes.slice(0,200).map(c=>`<tr>
-    <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.guid}</td>
+  <div class="info-box info-blue">Vergleich mit: <strong>${dl.prevName}</strong> · ${fmtDate(dl.prevDate)}</div>
+  <div class="sc"><div class="sc-header"><span class="sc-title">Änderungen (${Math.min(ch.length,200)} von ${ch.length})</span></div>
+  <table class="ptable"><thead><tr><th>GlobalId</th><th>Entity</th><th>Name</th><th>Typ</th></tr></thead><tbody>
+  ${ch.slice(0,200).map(c=>`<tr>
+    <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.guid.slice(0,16)}…</td>
     <td><span class="tag tag-gray">${c.entity||'—'}</span></td>
     <td style="font-size:11px">${c.name||'—'}</td>
-    <td><span class="sp sp-${c.type==='new'?'info':c.type==='missing'?'err':'warn'} ${c.type}">${c.type==='new'?'Neu':c.type==='missing'?'Fehlend':'Geändert'}</span></td>
+    <td><span class="sp ${c.type==='new'?'sp-info':c.type==='missing'?'sp-err':'sp-warn'}">${c.type==='new'?'Neu':c.type==='missing'?'Fehlend':'Geändert'}</span></td>
   </tr>`).join('')}
-  ${changes.length>200?`<tr><td colspan="4" style="padding:10px;text-align:center;color:var(--text3);font-size:11px">… ${changes.length-200} weitere Änderungen (Export für vollständige Liste)</td></tr>`:''}
   </tbody></table></div>`;
 }
 
 // ─── IFC PARSER ───────────────────────────────────────────────────────
 function parseIFC(text){
-  const result={schema:'',entities:0,objectCount:0,psetCount:0,guidCount:0,entityTypes:{},propertySets:{},guids:{},guidNames:{}};
-  // Schema
-  const schemaMatch=text.match(/FILE_SCHEMA\s*\(\s*\(\s*'([^']+)'/);
-  if(schemaMatch) result.schema=schemaMatch[1];
-  // Parse entity lines: #N= IFCTYPE(...)
+  const r={schema:'',entities:0,objectCount:0,psetCount:0,guidCount:0,entityTypes:{},propertySets:{},guids:{},guidNames:{}};
+  const sm=text.match(/FILE_SCHEMA\s*\(\s*\(\s*'([^']+)'/);
+  if(sm) r.schema=sm[1];
+  const OBJ_TYPES=new Set(['IFCWALL','IFCWALLSTANDARDCASE','IFCSLAB','IFCCOLUMN','IFCBEAM','IFCSTAIR','IFCSTAIRFLIGHT','IFCRAMP','IFCRAMPFLIGHT','IFCDOOR','IFCWINDOW','IFCCURTAINWALL','IFCSPACE','IFCZONE','IFCPIPESEGMENT','IFCPIPEFITTING','IFCDUCTSEGMENT','IFCDUCTFITTING','IFCCABLESEGMENT','IFCPUMP','IFCVALVE','IFCLIGHTFIXTURE','IFCSWITCHINGDEVICE','IFCAIRHANDLINGUNIT','IFCSPACEHEATER','IFCPLATE','IFCMEMBER','IFCFURNISHINGELEMENT','IFCBUILDINGELEMENTPROXY','IFCFOOTING','IFCBOILER']);
   const lines=text.split('\n');
-  const entityLine=/^#(\d+)\s*=\s*([A-Z][A-Z0-9_]*)\s*\((.*)$/;
-  // We'll collect data in two passes
-  const rawEntities={};
   for(const line of lines){
-    const m=entityLine.exec(line.trim());
+    const ln=line.trim();
+    const m=ln.match(/^#\d+\s*=\s*([A-Z][A-Z0-9_]*)\s*\((.*)/);
     if(!m) continue;
-    result.entities++;
-    const [,id,type,rest]=m;
-    rawEntities[id]={type,rest};
-    result.entityTypes[type]=(result.entityTypes[type]||0)+1;
-  }
-  // Count objects
-  const objectTypes=['IFCWALL','IFCWALLSTANDARDCASE','IFCSLAB','IFCCOLUMN','IFCBEAM','IFCSTAIR','IFCSTAIRS','IFCSTAIRFLIGHT','IFCRAMP','IFCRAMPFLIGHT','IFCDOOR','IFCWINDOW','IFCCURTAINWALL','IFCSPACE','IFCZONE','IFCPIPESEGMENT','IFCPIPEFITTING','IFCDUCTSEGMENT','IFCDUCTFITTING','IFCCABLESEGMENT','IFCPUMP','IFCVALVE','IFCLIGHTFIXTURE','IFCSWITCHINGDEVICE','IFCAIRHANDLINGUNIT','IFCSPACEHEATER','IFCPLATE','IFCMEMBER','IFCFURNISHINGELEMENT','IFCBUILDINGELEMENTPROXY'];
-  result.objectCount=objectTypes.reduce((s,t)=>s+(result.entityTypes[t]||0),0);
-  // PropertySets
-  for(const [id,ent] of Object.entries(rawEntities)){
-    if(ent.type==='IFCPROPERTYSET'){
-      result.psetCount++;
-      const nameMatch=ent.rest.match(/,\s*'([^']+)'/);
-      if(nameMatch){const n=nameMatch[1];result.propertySets[n]=(result.propertySets[n]||0)+1;}
+    r.entities++;
+    const[,type,rest]=m;
+    r.entityTypes[type]=(r.entityTypes[type]||0)+1;
+    if(OBJ_TYPES.has(type)) r.objectCount++;
+    if(type==='IFCPROPERTYSET'){
+      r.psetCount++;
+      const nm=rest.match(/,\s*'([^']+)'/);
+      if(nm) r.propertySets[nm[1]]=(r.propertySets[nm[1]]||0)+1;
     }
-    // GlobalIds (IfcRoot subclasses have GUID as first param)
-    if(objectTypes.includes(ent.type)||ent.type==='IFCPROPERTYSET'||ent.type==='IFCBUILDING'||ent.type==='IFCBUILDINGSTOREY'){
-      const guidMatch=ent.rest.match(/^'([A-Za-z0-9_$]{22})'/);
-      if(guidMatch){
-        result.guidCount++;
-        const guid=guidMatch[1];
-        const nameMatch=ent.rest.match(/'[^']*',\s*\$?,\s*'([^']+)'/);
-        result.guids[guid]=ent.type;
-        result.guidNames[guid]=nameMatch?nameMatch[1]:'';
+    if(OBJ_TYPES.has(type)){
+      const gm=rest.match(/^'([A-Za-z0-9_$]{22})'/);
+      if(gm){
+        r.guidCount++;
+        const nm2=rest.match(/'[^']*',\s*\$?,\s*'([^']+)'/);
+        r.guids[gm[1]]=type; r.guidNames[gm[1]]=nm2?nm2[1]:'';
       }
     }
   }
-  return result;
+  return r;
 }
 
 // ─── PRÜF-LOGIK ───────────────────────────────────────────────────────
-function runCheck(modelId){
-  const m=(models[pid]||[]).find(x=>x.id===modelId);
-  if(!m){showToast('Modell nicht gefunden');return;}
-  if(!m.parsed){showToast('Kein IFC-Inhalt gespeichert – Modell neu hochladen');return;}
-  showParse('Prüfung läuft…','Struktur, Merkmale, Datadrop-Delta');
+function runCheck(tmId){
+  const tm=(tmData[pid]||[]).find(t=>t.id===tmId);
+  if(!tm?.parsed){showToast('Kein IFC-Inhalt – Teilmodell neu hochladen');return;}
+  const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
+  showParse('Prüfung läuft…',tm.name);
   setTimeout(()=>{
-    const parsed=m.parsed;
-    const res={checkedAt:new Date().toISOString()};
-    res.struktur=checkStruktur(parsed);
-    res.merkmale=checkMerkmale(parsed);
-    res.delta=checkDelta(modelId,parsed,m);
-    if(!results[pid])results[pid]={};
-    results[pid][modelId]=res;
-    saveResults();
-    hideParse();
-    selModelId=modelId;
-    activeTab='uebersicht';
-    renderWorkspace();
+    if(!results[pid]) results[pid]={};
+    results[pid][tmId]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tmId,tm)};
+    saveR(); hideParse(); selNode={type:'tm',id:tmId}; activeTab='uebersicht'; if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();} updateMainBadges();
     showToast('✓ Prüfung abgeschlossen');
+  },350);
+}
+function runFMCheck(fmId){
+  const tms=(tmData[pid]||[]).filter(t=>t.fmId===fmId&&t.parsed);
+  if(!tms.length){showToast('Keine Teilmodelle mit IFC-Daten');return;}
+  showParse(`Fachmodell prüfen…`,`${tms.length} Teilmodelle`);
+  setTimeout(()=>{
+    if(!results[pid]) results[pid]={};
+    const fm=(fmData[pid]||[]).find(f=>f.id===fmId);
+    tms.forEach(tm=>{results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tm.id,tm)};});
+    saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges(); showToast(`✓ ${tms.length} Teilmodelle geprüft`);
+  },400);
+}
+function runKMCheck(kmId){
+  const km=(kmData[pid]||[]).find(k=>k.id===kmId);
+  if(!km) return;
+  const fmIds=km.fmIds||[];
+  const tms=(tmData[pid]||[]).filter(t=>fmIds.includes(t.fmId)&&t.parsed);
+  if(!tms.length){showToast('Keine Teilmodelle mit IFC-Daten im KM');return;}
+  showParse(`Koordinationsmodell prüfen…`,`${km.name} · ${tms.length} Teilmodelle`);
+  setTimeout(()=>{
+    if(!results[pid]) results[pid]={};
+    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tm.id,tm)};});
+    saveR(); hideParse(); selNode={type:'km',id:kmId}; activeTab='uebersicht'; if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();} updateMainBadges();
+    showToast(`✓ Koordinationsmodell ${km.name} geprüft`);
   },400);
 }
 function runAllChecks(){
-  const mList=models[pid]||[];
-  if(!mList.length){showToast('Keine Modelle vorhanden');return;}
-  showParse('Alle Modelle prüfen…',`${mList.length} Modelle`);
+  const tms=(tmData[pid]||[]).filter(t=>t.parsed);
+  if(!tms.length){showToast('Keine Teilmodelle mit IFC-Daten');return;}
+  showParse('Alle Modelle prüfen…',`${tms.length} Teilmodelle`);
   setTimeout(()=>{
-    mList.forEach(m=>{
-      if(!m.parsed) return;
-      const res={checkedAt:new Date().toISOString()};
-      res.struktur=checkStruktur(m.parsed);
-      res.merkmale=checkMerkmale(m.parsed);
-      res.delta=checkDelta(m.id,m.parsed,m);
-      if(!results[pid])results[pid]={};
-      results[pid][m.id]=res;
-    });
-    saveResults();
-    hideParse();
-    renderWorkspace();
-    showToast(`✓ ${mList.length} Modelle geprüft`);
+    if(!results[pid]) results[pid]={};
+    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tm.id,tm)};});
+    saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges(); showToast(`✓ ${tms.length} Teilmodelle geprüft`);
   },500);
 }
-
-function checkStruktur(parsed){
-  const assign=assignments[pid]||{};
-  const nodeIds=Object.keys(assign);
-  const checks=[];const issues=[];
-  // Map nodeIds to expected entity types via IFC_ENTITY_MAP
-  const usedNodes=new Set(nodeIds);
-  for(const [nodeKey,entityList] of Object.entries(IFC_ENTITY_MAP)){
-    if(!usedNodes.has(nodeKey)&&!nodeIds.some(n=>n.toLowerCase().includes(nodeKey))) continue;
-    const found=entityList.filter(e=>parsed.entityTypes[e]>0);
-    const count=entityList.reduce((s,e)=>s+(parsed.entityTypes[e]||0),0);
-    const check={nodeLabel:nodeKey,expected:entityList,found,count};
-    checks.push(check);
-    if(found.length===0) issues.push({node:nodeKey,expected:entityList.join(', '),hint:`Keine ${entityList[0]}-Instanzen gefunden. Ist das Gewerk im Modell enthalten?`});
-  }
-  // Also check entity types from assignments directly
-  const assignedNodes=Object.keys(assign);
-  let totalExpected=checks.length;
-  let matchedTypes=checks.filter(c=>c.found.length>0).length;
-  return{checks,issues,totalExpected,matchedTypes};
+function checkStruktur(parsed,fm){
+  const disc=fm?.disc;
+  const expected=disc&&IFC_ENTITY_MAP[disc]?IFC_ENTITY_MAP[disc]:Object.values(IFC_ENTITY_MAP).flat();
+  const unique=[...new Set(expected)];
+  const checks=unique.map(e=>({expected:[e],found:parsed.entityTypes[e]?[e]:[],count:parsed.entityTypes[e]||0}));
+  const relevant=checks.filter(c=>c.count>0||c.expected.some(e=>expected.includes(e)));
+  const issues=relevant.filter(c=>c.count===0).map(c=>({expected:c.expected[0],hint:`Keine ${c.expected[0]}-Instanzen im Modell gefunden`}));
+  return{checks:relevant,issues,totalExpected:relevant.length,matchedTypes:relevant.filter(c=>c.count>0).length};
 }
-
 function checkMerkmale(parsed){
   const assign=assignments[pid]||{};
   const pp=projParams[pid]||[];
-  const checks=[];let filled=0,total=0;
-  // Build a set of expected pset.attr combos from project assignments
   const expected=new Set();
   Object.values(assign).forEach(list=>list.forEach(a=>{
     const param=pp.find(p=>p.id===a.paramId)||globalParams.find(p=>p.id===a.globalRef);
     if(param?.pset&&param?.attr) expected.add(`${param.pset}||${param.attr}||${param.name}`);
   }));
+  const checks=[]; let filled=0,total=0;
   for(const key of expected){
-    const [pset,attr,name]=key.split('||');
+    const[pset,attr,name]=key.split('||');
     total++;
     const inModel=!!parsed.propertySets[pset];
     if(inModel) filled++;
     checks.push({name,pset,attr,found:inModel?1:0,total:1});
   }
-  const issues=checks.filter(c=>c.found===0).map(c=>({param:c.name,pset:c.pset,attr:c.attr,severity:'error'}));
-  return{checks,issues,filled,total};
+  return{checks,issues:checks.filter(c=>!c.found),filled,total};
 }
-
-function checkDelta(modelId,parsed,m){
-  // Find a previous model of same discipline
-  const mList=models[pid]||[];
-  const prev=mList.find(x=>x.id!==modelId&&x.disc===m.disc&&x.parsed&&x.uploadedAt<m.uploadedAt);
-  if(!prev) return{prev:null,changes:[]};
-  const prevGuids=prev.parsed.guids||{};
-  const curGuids=parsed.guids||{};
-  const curNames=parsed.guidNames||{};
-  const prevNames=prev.parsed.guidNames||{};
-  const changes=[];let missing=0;
-  // New in current
-  for(const [guid,entity] of Object.entries(curGuids)){
-    if(!prevGuids[guid]) changes.push({guid,entity,name:curNames[guid]||'',type:'new'});
-  }
-  // Missing in current
-  for(const guid of Object.keys(prevGuids)){
-    if(!curGuids[guid]){changes.push({guid,entity:prevGuids[guid],name:prevNames[guid]||'',type:'missing'});missing++;}
-  }
-  return{prev:prev.id,prevName:prev.name,prevDate:prev.uploadedAt,changes,missing};
+function checkDelta(tmId,tm){
+  const fmTMs=(tmData[pid]||[]).filter(t=>t.fmId===tm.fmId&&t.id!==tmId&&t.parsed&&t.uploadedAt<tm.uploadedAt);
+  if(!fmTMs.length) return{prev:null,changes:[]};
+  const prev=fmTMs.sort((a,b)=>b.uploadedAt.localeCompare(a.uploadedAt))[0];
+  const pG=prev.parsed.guids||{}, cG=tm.parsed.guids||{}, cN=tm.parsed.guidNames||{}, pN=prev.parsed.guidNames||{};
+  const changes=[];
+  for(const[g,e] of Object.entries(cG)) if(!pG[g]) changes.push({guid:g,entity:e,name:cN[g]||'',type:'new'});
+  for(const g of Object.keys(pG)) if(!cG[g]) changes.push({guid:g,entity:pG[g],name:pN[g]||'',type:'missing'});
+  return{prev:prev.id,prevName:prev.name,prevDate:prev.uploadedAt,changes,missing:changes.filter(c=>c.type==='missing').length};
 }
-
-// ─── STATUS HELPERS ────────────────────────────────────────────────────
 function getOverallStatus(res){
-  const st=structStatus(res.struktur||{});
-  const mk=merkmalStatus(res.merkmale||{});
-  if(st==='err'||mk==='err') return 'err';
-  if(st==='warn'||mk==='warn') return 'warn';
+  const s=structStatus(res.struktur||{}), m=merkmalStatus(res.merkmale||{});
+  if(s==='err'||m==='err') return 'err';
+  if(s==='warn'||m==='warn') return 'warn';
   return 'ok';
 }
-function structStatus(st){if(!st.checks?.length) return 'gray';if(st.issues?.length>3)return 'err';if(st.issues?.length>0)return 'warn';return 'ok';}
-function merkmalStatus(mk){if(!mk.total)return 'gray';const pct=mk.filled/mk.total;if(pct<0.5)return 'err';if(pct<1)return 'warn';return 'ok';}
-function statusLabel(s){return{ok:'✓ OK',warn:'⚠ Warnungen',err:'✗ Fehler',pending:'Nicht geprüft',gray:'—'}[s]||s;}
+function structStatus(st){if(!st.checks?.length)return 'gray';if((st.issues?.length||0)>3)return 'err';if((st.issues?.length||0)>0)return 'warn';return 'ok';}
+function merkmalStatus(mk){if(!mk.total)return 'gray';const p=mk.filled/mk.total;if(p<0.5)return 'err';if(p<1)return 'warn';return 'ok';}
 
-// ─── ADD MODEL ────────────────────────────────────────────────────────
-function openAdd(){document.getElementById('add-ol').classList.add('open');document.getElementById('add-ok').disabled=true;document.getElementById('ifc-drop-label').textContent='IFC-Datei ablegen oder klicken';pendingFile=null;pendingParsed=null;}
-function closeAdd(){document.getElementById('add-ol').classList.remove('open');}
+// ─── MODELLHOST CONFIG ────────────────────────────────────────────────
+function openHostConfig(){
+  const hc=hostConfig[pid]||{};
+  document.getElementById('host-path-input').value=hc.path||'';
+  cdeSlots=[...(hc.cdes||[])];
+  renderCDEList();
+  document.getElementById('host-ol').classList.add('open');
+}
+function renderCDEList(){
+  const cdeTypes=[{type:'acc',name:'Autodesk ACC / BIM 360',icon:'🟠'},{type:'sharepoint',name:'SharePoint / Teams',icon:'🟦'},{type:'trimble',name:'Trimble Connect',icon:'🔵'},{type:'generic',name:'Generische CDE',icon:'🗄'}];
+  document.getElementById('cde-list').innerHTML=cdeSlots.map((c,i)=>`<div class="cde-card">
+    <div class="cde-logo" style="background:var(--surface2)">${cdeTypes.find(t=>t.type===c.type)?.icon||'🗄'}</div>
+    <div style="flex:1">
+      <div style="font-size:12px;font-weight:500;color:var(--text)">${cdeTypes.find(t=>t.type===c.type)?.name||'CDE'}</div>
+      <div style="font-size:11px;color:var(--text3)">${c.url||'Noch nicht konfiguriert'}</div>
+    </div>
+    <span class="host-status host-warn">Konzept</span>
+    <button class="btn-ghost" style="color:var(--err)" onclick="cdeSlots.splice(${i},1);renderCDEList()">⌫</button>
+  </div>`).join('')
+  +(cdeSlots.length?'':'')+`<div class="info-box info-amber" style="${cdeSlots.length?'margin-top:8px':''}">CDE-Schnittstellen erfordern serverseitige OAuth-Authentifizierung und werden in einer späteren Ausbaustufe verbunden. Konfiguration wird gespeichert.</div>`;
+}
+function addCDESlot(){cdeSlots.push({type:'generic',url:''});renderCDEList();}
+function saveHostConfig(){
+  if(!hostConfig[pid]) hostConfig[pid]={};
+  hostConfig[pid].path=document.getElementById('host-path-input').value.trim();
+  hostConfig[pid].cdes=cdeSlots;
+  localStorage.setItem(HOST_KEY,JSON.stringify(hostConfig));
+  closeModal('host-ol'); renderHostBar(); renderWorkspace();
+  showToast('✓ Modellhost gespeichert');
+}
 
+// ─── KM CRUD ─────────────────────────────────────────────────────────
+function openKM(id=null){
+  editKMId=id;
+  document.getElementById('km-title').textContent=id?'Koordinationsmodell bearbeiten':'Koordinationsmodell anlegen';
+  const km=id?(kmData[pid]||[]).find(k=>k.id===id):null;
+  document.getElementById('km-name').value=km?.name||'';
+  document.getElementById('km-desc').value=km?.desc||'';
+  const fms=fmData[pid]||[];
+  document.getElementById('km-fm-list').innerHTML=!fms.length
+    ?`<div style="padding:12px;color:var(--text3);font-size:12px">Noch keine Fachmodelle vorhanden</div>`
+    :fms.map(f=>`<label class="check-item"><input type="checkbox" class="fm-pick" value="${f.id}" ${km?.fmIds?.includes(f.id)?'checked':''}><span style="font-size:12px;font-family:var(--mono);font-weight:600;padding:1px 5px;border-radius:3px;background:${DISC_COLORS[f.disc]||'#8899b0'}22;color:${DISC_COLORS[f.disc]||'#8899b0'}">${f.disc||'—'}</span> <span style="font-size:12px">${f.name}</span></label>`).join('');
+  document.getElementById('km-ol').classList.add('open');
+  setTimeout(()=>document.getElementById('km-name').focus(),200);
+}
+function saveKM(){
+  const name=document.getElementById('km-name').value.trim();
+  if(!name){showToast('Name erforderlich');return;}
+  const fmIds=[...document.querySelectorAll('.fm-pick:checked')].map(c=>c.value);
+  if(!kmData[pid]) kmData[pid]=[];
+  if(editKMId){const i=kmData[pid].findIndex(k=>k.id===editKMId);if(i>-1)kmData[pid][i]={...kmData[pid][i],name,desc:document.getElementById('km-desc').value.trim(),fmIds};}
+  else{const km={id:uid(),name,desc:document.getElementById('km-desc').value.trim(),fmIds};kmData[pid].push(km);expandedKMs.add(km.id);}
+  save(); closeModal('km-ol'); renderProjBar(); renderWorkspaceAndGraph(); showToast('✓ Koordinationsmodell gespeichert');
+}
+function deleteKM(id){if(!confirm('Koordinationsmodell löschen?'))return;kmData[pid]=(kmData[pid]||[]).filter(k=>k.id!==id);save();selNode=null;renderWorkspace();renderProjBar();showToast('Gelöscht');}
+
+// ─── FM CRUD ─────────────────────────────────────────────────────────
+function openFM(id=null){
+  editFMId=id;
+  document.getElementById('fm-title').textContent=id?'Fachmodell bearbeiten':'Fachmodell anlegen';
+  const fm=id?(fmData[pid]||[]).find(f=>f.id===id):null;
+  document.getElementById('fm-name').value=fm?.name||'';
+  document.getElementById('fm-disc').value=fm?.disc||'';
+  document.getElementById('fm-note').value=fm?.note||'';
+  document.getElementById('fm-ol').classList.add('open');
+  setTimeout(()=>document.getElementById('fm-name').focus(),200);
+}
+function saveFM(){
+  const name=document.getElementById('fm-name').value.trim();
+  if(!name){showToast('Name erforderlich');return;}
+  if(!fmData[pid]) fmData[pid]=[];
+  const fm={id:editFMId||uid(),name,disc:document.getElementById('fm-disc').value,note:document.getElementById('fm-note').value.trim()};
+  if(editFMId){const i=fmData[pid].findIndex(f=>f.id===editFMId);if(i>-1)fmData[pid][i]=fm;}
+  else{fmData[pid].push(fm);expandedFMs.add(fm.id);}
+  save(); closeModal('fm-ol'); renderProjBar(); renderWorkspaceAndGraph(); showToast('✓ Fachmodell gespeichert');
+}
+function deleteFM(id){
+  const tms=(tmData[pid]||[]).filter(t=>t.fmId===id);
+  if(tms.length&&!confirm(`Fachmodell mit ${tms.length} Teilmodellen löschen?`)) return;
+  fmData[pid]=(fmData[pid]||[]).filter(f=>f.id!==id);
+  tmData[pid]=(tmData[pid]||[]).filter(t=>t.fmId!==id);
+  kmData[pid]=(kmData[pid]||[]).map(k=>({...k,fmIds:(k.fmIds||[]).filter(i=>i!==id)}));
+  save(); selNode=null; renderProjBar(); renderWorkspaceAndGraph(); showToast('Gelöscht');
+}
+
+// ─── TM CRUD ─────────────────────────────────────────────────────────
+function openTM(){
+  pendingParsed=null; pendingFile=null;
+  document.getElementById('ifc-drop-label').textContent='IFC-Datei ablegen oder klicken';
+  document.getElementById('tm-ok').disabled=true;
+  document.getElementById('tm-datadrop').value='';
+  document.getElementById('tm-note').value='';
+  const fms=fmData[pid]||[];
+  document.getElementById('tm-fm-sel').innerHTML=fms.map(f=>`<option value="${f.id}">${f.disc?f.disc+' · ':''} ${f.name}</option>`).join('');
+  document.getElementById('tm-ol').classList.add('open');
+}
+function openTMFor(fmId){
+  openTM();
+  setTimeout(()=>{const s=document.getElementById('tm-fm-sel');if(s)s.value=fmId;},50);
+}
 function handleIFCFile(file){
   if(!file||!file.name.match(/\.ifc$/i)){showToast('Nur .ifc Dateien');return;}
-  document.getElementById('ifc-drop-label').textContent=`⏳ ${file.name} wird gelesen…`;
+  document.getElementById('ifc-drop-label').textContent=`⏳ Wird analysiert…`;
   const reader=new FileReader();
   reader.onload=e=>{
-    try{
-      const text=e.target.result;
-      showParse('IFC wird analysiert…',file.name);
-      setTimeout(()=>{
-        pendingParsed=parseIFC(text);
-        pendingFile={name:file.name,size:file.size};
-        hideParse();
-        document.getElementById('ifc-drop-label').textContent=`✓ ${file.name} (${pendingParsed.entities.toLocaleString()} Entities, ${pendingParsed.objectCount} Objekte)`;
-        document.getElementById('add-ok').disabled=false;
-      },200);
-    }catch(err){hideParse();showToast('Fehler beim Lesen: '+err.message);}
+    showParse('IFC analysieren…',file.name);
+    setTimeout(()=>{
+      try{pendingParsed=parseIFC(e.target.result);pendingFile={name:file.name,size:e.target.result.length};}catch(err){hideParse();showToast('Fehler: '+err.message);return;}
+      hideParse();
+      document.getElementById('ifc-drop-label').textContent=`✓ ${file.name} · ${pendingParsed.entities.toLocaleString()} Entities · ${pendingParsed.objectCount} Objekte`;
+      document.getElementById('tm-ok').disabled=false;
+    },200);
   };
   reader.readAsText(file,'utf-8');
 }
-
-function confirmAdd(){
-  if(!pendingParsed||!pid){showToast('IFC-Datei fehlt');return;}
-  const disc=document.getElementById('add-disc').value;
-  const datadrop=document.getElementById('add-datadrop').value.trim();
-  const note=document.getElementById('add-note').value.trim();
-  const m={
-    id:uid(),name:pendingFile.name,size:pendingFile.size,disc,datadrop,note,
-    schema:pendingParsed.schema,entities:pendingParsed.entities,
-    objectCount:pendingParsed.objectCount,psetCount:pendingParsed.psetCount,
-    guidCount:pendingParsed.guidCount,
-    parsed:pendingParsed,uploadedAt:new Date().toISOString()
-  };
-  if(!models[pid])models[pid]=[];
-  models[pid].push(m);
-  saveModels();
-  closeAdd();
-  selModelId=m.id;
-  renderWorkspace();
-  showToast(`✓ Modell hinzugefügt – ${m.entities.toLocaleString()} Entities erkannt`);
+function saveTM(){
+  if(!pendingParsed||!pid){showToast('IFC fehlt');return;}
+  const fmId=document.getElementById('tm-fm-sel').value;
+  if(!fmId){showToast('Fachmodell wählen');return;}
+  if(!tmData[pid]) tmData[pid]=[];
+  const tm={id:uid(),name:pendingFile.name,fmId,datadrop:document.getElementById('tm-datadrop').value.trim(),note:document.getElementById('tm-note').value.trim(),parsed:pendingParsed,uploadedAt:new Date().toISOString()};
+  tmData[pid].push(tm);
+  save(); closeModal('tm-ol'); selNode={type:'tm',id:tm.id}; renderProjBar(); renderWorkspaceAndGraph();
+  showToast(`✓ ${tm.name} hinzugefügt`);
 }
-
-function deleteModel(modelId){
-  if(!confirm('Modell aus dem Host entfernen?')) return;
-  models[pid]=(models[pid]||[]).filter(m=>m.id!==modelId);
-  if(results[pid]) delete results[pid][modelId];
-  saveModels();saveResults();
-  if(selModelId===modelId) selModelId=null;
-  renderWorkspace();showToast('Modell entfernt');
-}
-
-function selectModel(modelId){selModelId=modelId;activeTab='uebersicht';renderWorkspace();}
+function deleteTM(id){if(!confirm('Teilmodell entfernen?'))return;tmData[pid]=(tmData[pid]||[]).filter(t=>t.id!==id);if(results[pid])delete results[pid][id];save();saveR();if(selNode?.id===id)selNode=null;renderProjBar();renderWorkspaceAndGraph();showToast('Entfernt');}
 
 // ─── EXPORT ───────────────────────────────────────────────────────────
-function exportProtokoll(){
-  const m=(models[pid]||[]).find(x=>x.id===selModelId);
-  const res=results[pid]?.[selModelId];
-  if(!m||!res){showToast('Kein Prüfergebnis vorhanden');return;}
+function exportProtokoll(tmId){
+  const tm=(tmData[pid]||[]).find(t=>t.id===tmId);
+  const res=results[pid]?.[tmId];
+  if(!tm||!res){showToast('Kein Ergebnis vorhanden');return;}
   const proj=projects.find(p=>p.id===pid);
-  const rows=[['BIM Manager – Prüfprotokoll'],['Projekt:',proj?.name||pid],['Modell:',m.name],['Gewerk:',m.disc],['Datadrop:',m.datadrop||'—'],['Geprüft:',fmtDate(res.checkedAt)],[''],
-    ['=== STRUKTURPRÜFUNG ==='],['Objekttyp','Entities erwartet','Gefunden','Anzahl','Status'],
-    ...(res.struktur?.checks||[]).map(c=>[c.nodeLabel,c.expected.join(','),c.found.join(',')||'—',c.count,c.count>0?'OK':'Fehler']),
-    [''],['=== MERKMALVOLLSTÄNDIGKEIT ==='],['Merkmal','PropertySet','Attribut','Status'],
-    ...(res.merkmale?.checks||[]).map(c=>[c.name,c.pset,c.attr,c.found>0?'Gefunden':'Fehlt']),
-    [''],['=== DATADROP-DELTA ==='],['GlobalId','Entity','Name','Änderung'],
+  const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
+  const rows=[['BIM Manager – Prüfprotokoll'],['Projekt',proj?.name||pid],['Koordinationsmodell',fm?'—':'—'],['Fachmodell',fm?.name||'—'],['Teilmodell',tm.name],['Datadrop',tm.datadrop||'—'],['Geprüft',fmtDate(res.checkedAt)],[''],
+    ['STRUKTURPRÜFUNG'],['Entity','Gefunden','Anzahl','Status'],
+    ...(res.struktur?.checks||[]).map(c=>[c.expected[0],c.found[0]||'—',c.count,c.count>0?'OK':'Fehlt']),
+    [''],['MERKMALVOLLSTÄNDIGKEIT'],['Merkmal','PropertySet','Attribut','Status'],
+    ...(res.merkmale?.checks||[]).map(c=>[c.name,c.pset,c.attr,c.found?'Gefunden':'Fehlt']),
+    [''],['DATADROP-DELTA'],['GlobalId','Entity','Name','Typ'],
     ...(res.delta?.changes||[]).map(c=>[c.guid,c.entity,c.name,c.type]),
   ];
   const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=`pruefprotokoll-${m.disc}-${m.datadrop||'ohne'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
-  showToast('✓ Prüfprotokoll exportiert');
+  const a=document.createElement('a');a.href=url;a.download=`pruefprotokoll-${fm?.disc||'model'}-${tm.datadrop||'dd'}-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  URL.revokeObjectURL(url);showToast('✓ Protokoll exportiert');
+}
+function exportKMProtokoll(kmId){
+  const km=(kmData[pid]||[]).find(k=>k.id===kmId);if(!km)return;
+  const fmIds=km.fmIds||[];
+  const tms=(tmData[pid]||[]).filter(t=>fmIds.includes(t.fmId));
+  const rows=[['KM-Prüfprotokoll'],['KM',km.name],[''],['Fachmodell','Teilmodell','Datadrop','Struktur','Merkmale','Status']];
+  tms.forEach(tm=>{
+    const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
+    const res=results[pid]?.[tm.id];
+    rows.push([fm?.name||'—',tm.name,tm.datadrop||'—',res?`${res.struktur?.matchedTypes||0}/${res.struktur?.totalExpected||0}`:'—',res?`${Math.round((res.merkmale?.filled||0)/(res.merkmale?.total||1)*100)}%`:'—',res?getOverallStatus(res):'nicht geprüft']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`km-protokoll-${km.name}-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  URL.revokeObjectURL(url);showToast('✓ KM-Protokoll exportiert');
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────
-function onProjChange(){pid=document.getElementById('psel')?.value||null;selModelId=null;activeTab='uebersicht';render();}
-function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return d;}}
-function showParse(msg,sub){const o=document.getElementById('parse-ol');o.classList.add('open');document.getElementById('parse-msg').textContent=msg;document.getElementById('parse-sub').textContent=sub;}
+function onProjChange(){pid=document.getElementById('psel')?.value||null;setCurrentProject(pid||'');selNode=null;activeTab='uebersicht';nodePos={};graphSel=null;render();}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showParse(msg,sub){document.getElementById('parse-ol').classList.add('open');document.getElementById('parse-msg').textContent=msg;document.getElementById('parse-sub').textContent=sub;}
 function hideParse(){document.getElementById('parse-ol').classList.remove('open');}
+function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return d;}}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 function comingSoon(){showToast('Modul wird in Kürze entwickelt');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape') closeAdd();});
+
+// ─── MAIN TAB SYSTEM ──────────────────────────────────────────────────
+let mainTab = 'konfig';
+
+function setMainTab(tab) {
+  mainTab = tab;
+  ['konfig','pruefung','viewer'].forEach(t => {
+    document.getElementById('mtab-'+t)?.classList.toggle('active', t===tab);
+  });
+  renderMainContent();
+}
+
+function renderMainContent() {
+  const el = document.getElementById('main-content');
+  if (!el) return;
+  if (mainTab === 'konfig')   { el.innerHTML = ''; renderGraphEditor(el); }
+  else if (mainTab === 'pruefung') { el.innerHTML = ''; renderPruefungPanel(el); }
+  else if (mainTab === 'viewer')  { el.innerHTML = ''; renderViewerPanel(el); }
+}
+
+function updateMainBadges() {
+  const tms = tmData[pid] || [], fms = fmData[pid] || [], kms = kmData[pid] || [];
+  const b1 = document.getElementById('mtb-konfig');
+  const b2 = document.getElementById('mtb-pruefung');
+  const b3 = document.getElementById('mtb-viewer');
+  if (b1) b1.textContent = `${kms.length}KM · ${fms.length}FM · ${tms.length}TM`;
+  if (b2) b2.textContent = tms.filter(t=>results[pid]?.[t.id]).length + '/' + tms.length;
+  if (b3) b3.textContent = tms.filter(t=>t.parsed).length + ' Modelle';
+}
+
+// ═══════════════════════════════════════════════════════
+// GRAPH EDITOR
+// ═══════════════════════════════════════════════════════
+let graphSel = null; // {type, id}
+let draggingEdge = null; // {fromType, fromId, x1,y1, x2,y2}
+let nodePos = {}; // {id: {x,y}}
+
+const NODE_W = 160, NODE_H = 54, NODE_RX = 8;
+const COL_X = { tm: 0.15, fm: 0.5, km: 0.85 }; // fraction of SVG width
+
+function renderGraphEditor(container) {
+  container.innerHTML = `
+    <div class="graph-wrap">
+      <div class="graph-toolbar">
+        <strong style="font-size:12px;color:var(--text2)">Modellstruktur</strong>
+        <div style="width:1px;height:18px;background:var(--border)"></div>
+        <button class="btn btn-sm" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:var(--warn)" onclick="addGraphNode('tm')">+ Teilmodell</button>
+        <button class="btn btn-sm" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:var(--global)" onclick="addGraphNode('fm')">+ Fachmodell</button>
+        <button class="btn btn-sm" style="background:rgba(0,201,167,0.15);border:1px solid rgba(0,201,167,0.4);color:var(--accent)" onclick="addGraphNode('km')">+ Koordinationsmodell</button>
+        <div style="margin-left:auto;font-size:11px;color:var(--text3)">Ziehe vom ▶ eines Knotens auf einen anderen um eine Verbindung zu erzeugen · Klick auf Linie löscht sie</div>
+        <button class="btn btn-secondary btn-sm" onclick="autoLayout()">↔ Ausrichten</button>
+      </div>
+      <div class="graph-canvas-wrap" id="graph-canvas-wrap">
+        <div class="graph-cols">
+          <div class="graph-col-header"><span class="graph-col-label col-tm">Teilmodelle</span></div>
+          <div class="graph-col-header"><span class="graph-col-label col-fm">Fachmodelle</span></div>
+          <div class="graph-col-header"><span class="graph-col-label col-km">Koordinationsmodelle</span></div>
+        </div>
+        <svg id="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>`;
+  initGraphPositions();
+  setTimeout(drawGraph, 50);
+}
+
+function getNodes() {
+  return {
+    tms: tmData[pid] || [],
+    fms: fmData[pid] || [],
+    kms: kmData[pid] || [],
+  };
+}
+
+function getEdges() {
+  // tm→fm edges from tmData[pid][].fmId (can be multiple via fmIds array)
+  const edges = [];
+  (tmData[pid] || []).forEach(tm => {
+    const ids = tm.fmIds || (tm.fmId ? [tm.fmId] : []);
+    ids.forEach(fid => edges.push({from: tm.id, to: fid, type: 'tm-fm'}));
+  });
+  // fm→km edges from kmData[pid][].fmIds
+  (kmData[pid] || []).forEach(km => {
+    (km.fmIds || []).forEach(fid => edges.push({from: fid, to: km.id, type: 'fm-km'}));
+  });
+  return edges;
+}
+
+function initGraphPositions() {
+  const {tms, fms, kms} = getNodes();
+  const svg = document.getElementById('graph-svg');
+  if (!svg) return;
+  const W = svg.clientWidth || 900;
+  const H = svg.clientHeight || 600;
+  const margin = 80;
+  const allNodes = [
+    ...tms.map(n => ({...n, colType:'tm'})),
+    ...fms.map(n => ({...n, colType:'fm'})),
+    ...kms.map(n => ({...n, colType:'km'})),
+  ];
+  allNodes.forEach((n, idx) => {
+    if (!nodePos[n.id]) {
+      const col = COL_X[n.colType] || 0.5;
+      const sameCol = allNodes.filter(x => x.colType === n.colType);
+      const posInCol = sameCol.findIndex(x => x.id === n.id);
+      const colCount = sameCol.length;
+      const ySpacing = Math.min(90, (H - margin*2) / Math.max(colCount, 1));
+      const totalH = ySpacing * (colCount - 1);
+      const startY = (H - totalH) / 2;
+      nodePos[n.id] = {
+        x: W * col - NODE_W/2,
+        y: startY + posInCol * ySpacing
+      };
+    }
+  });
+}
+
+function autoLayout() {
+  nodePos = {};
+  initGraphPositions();
+  drawGraph();
+}
+
+function drawGraph() {
+  const svg = document.getElementById('graph-svg');
+  if (!svg) return;
+  const W = svg.clientWidth || 900, H = svg.clientHeight || 600;
+  const {tms, fms, kms} = getNodes();
+  const edges = getEdges();
+  const DISC_C = {ARK:'#3b82f6',TW:'#8b5cf6',TGA:'#f97316',ELT:'#f59e0b',SAN:'#06b6d4',HZG:'#ef4444',LFT:'#10b981',BRA:'#dc2626',GEO:'#92400e',FRE:'#65a30d',BIM:'#00c9a7'};
+
+  let svgContent = `<defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#8899b0" opacity="0.7"/>
+    </marker>
+  </defs>`;
+
+  // Column backgrounds
+  const colW = W / 3;
+  svgContent += `<rect x="0" y="0" width="${colW}" height="${H}" fill="rgba(245,158,11,0.04)" rx="0"/>`;
+  svgContent += `<rect x="${colW}" y="0" width="${colW}" height="${H}" fill="rgba(139,92,246,0.04)" rx="0"/>`;
+  svgContent += `<rect x="${colW*2}" y="0" width="${colW}" height="${H}" fill="rgba(0,201,167,0.04)" rx="0"/>`;
+  svgContent += `<line x1="${colW}" y1="0" x2="${colW}" y2="${H}" stroke="#e2e8f0" stroke-width="1"/>`;
+  svgContent += `<line x1="${colW*2}" y1="0" x2="${colW*2}" y2="${H}" stroke="#e2e8f0" stroke-width="1"/>`;
+
+  // Draw edges first (behind nodes)
+  edges.forEach((edge, ei) => {
+    const fromPos = nodePos[edge.from], toPos = nodePos[edge.to];
+    if (!fromPos || !toPos) return;
+    const x1 = fromPos.x + NODE_W, y1 = fromPos.y + NODE_H/2;
+    const x2 = toPos.x, y2 = toPos.y + NODE_H/2;
+    const cx1 = x1 + (x2-x1)*0.45, cy1 = y1;
+    const cx2 = x1 + (x2-x1)*0.55, cy2 = y2;
+    const edgeCol = edge.type==='tm-fm' ? 'rgba(245,158,11,0.6)' : 'rgba(0,201,167,0.6)';
+    svgContent += `<path d="M${x1},${y1} C${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}"
+      stroke="${edgeCol}" stroke-width="2" fill="none" stroke-dasharray="${edge.type==='tm-fm'?'6,3':'none'}"
+      marker-end="url(#arrowhead)" cursor="pointer"
+      onclick="deleteEdge('${edge.from}','${edge.to}','${edge.type}')"
+      onmouseover="this.setAttribute('stroke-width','3');this.setAttribute('stroke','#ef4444')"
+      onmouseout="this.setAttribute('stroke-width','2');this.setAttribute('stroke','${edgeCol}')"/>`;
+  });
+
+  // Draw dragging edge
+  if (draggingEdge) {
+    svgContent += `<line x1="${draggingEdge.x1}" y1="${draggingEdge.y1}" x2="${draggingEdge.x2}" y2="${draggingEdge.y2}"
+      stroke="#8899b0" stroke-width="1.5" stroke-dasharray="5,3" pointer-events="none"/>`;
+  }
+
+  // Draw nodes
+  const allNodes = [
+    ...tms.map(n => ({...n, colType:'tm', col:'#f59e0b', bg:'rgba(245,158,11,0.1)', border:'rgba(245,158,11,0.4)'})),
+    ...fms.map(n => ({...n, colType:'fm', col:DISC_C[n.disc]||'#8b5cf6', bg:`${DISC_C[n.disc]||'#8b5cf6'}15`, border:`${DISC_C[n.disc]||'#8b5cf6'}55`})),
+    ...kms.map(n => ({...n, colType:'km', col:'#00c9a7', bg:'rgba(0,201,167,0.1)', border:'rgba(0,201,167,0.4)'})),
+  ];
+
+  allNodes.forEach(node => {
+    const pos = nodePos[node.id];
+    if (!pos) return;
+    const isSel = graphSel?.id === node.id;
+    const x = pos.x, y = pos.y;
+    const label = node.name || node.id.slice(0,12);
+    const sub = node.disc || (node.colType==='km'?'KM':'') || '';
+    const shortened = label.length > 18 ? label.slice(0,17)+'…' : label;
+
+    svgContent += `<g transform="translate(${x},${y})" cursor="pointer"
+      onclick="selectGraphNode('${node.id}','${node.colType}')"
+      onmousedown="startNodeDrag(event,'${node.id}','${node.colType}')">
+      <rect width="${NODE_W}" height="${NODE_H}" rx="${NODE_RX}" ry="${NODE_RX}"
+        fill="${node.bg}" stroke="${isSel?node.col:node.border}" stroke-width="${isSel?2:1.5}"/>
+      ${isSel?`<rect width="${NODE_W}" height="${NODE_H}" rx="${NODE_RX}" ry="${NODE_RX}" fill="none" stroke="${node.col}" stroke-width="3" opacity="0.25"/>`:''}
+      <text x="10" y="20" font-family="Space Grotesk,sans-serif" font-size="12" font-weight="600" fill="#1a2540">${escSvg(shortened)}</text>
+      ${sub?`<text x="10" y="36" font-family="JetBrains Mono,monospace" font-size="10" fill="${node.col}">${escSvg(sub)}</text>`:''}
+      <text x="${NODE_W-8}" y="${NODE_H/2+5}" font-family="monospace" font-size="14" fill="${node.col}" text-anchor="middle"
+        cursor="crosshair"
+        onmousedown="startEdgeDrag(event,'${node.id}','${node.colType}')" title="Verbindung ziehen">▶</text>
+      <text x="${NODE_W-22}" y="12" font-family="monospace" font-size="10" fill="#8899b0" cursor="pointer"
+        onclick="event.stopPropagation();deleteGraphNode('${node.id}','${node.colType}')">✕</text>
+    </g>`;
+  });
+
+  svg.innerHTML = svgContent;
+
+  // Attach drag events to SVG
+  svg.onmousemove = onSvgMouseMove;
+  svg.onmouseup = onSvgMouseUp;
+}
+
+function escSvg(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Node dragging
+let draggingNode = null, dragOffset = {x:0, y:0};
+
+function startNodeDrag(evt, id, colType) {
+  if (evt.target.textContent === '▶') return; // don't drag when starting edge
+  evt.stopPropagation();
+  const svg = document.getElementById('graph-svg');
+  const rect = svg.getBoundingClientRect();
+  const pos = nodePos[id] || {x:0, y:0};
+  draggingNode = id;
+  dragOffset = {x: evt.clientX - rect.left - pos.x, y: evt.clientY - rect.top - pos.y};
+  svg.style.cursor = 'grabbing';
+}
+
+function startEdgeDrag(evt, fromId, fromType) {
+  evt.stopPropagation(); evt.preventDefault();
+  const svg = document.getElementById('graph-svg');
+  const rect = svg.getBoundingClientRect();
+  const pos = nodePos[fromId];
+  if (!pos) return;
+  draggingEdge = {fromId, fromType, x1: pos.x + NODE_W, y1: pos.y + NODE_H/2, x2: evt.clientX - rect.left, y2: evt.clientY - rect.top};
+  svg.style.cursor = 'crosshair';
+}
+
+function onSvgMouseMove(evt) {
+  const svg = document.getElementById('graph-svg');
+  const rect = svg.getBoundingClientRect();
+  const mx = evt.clientX - rect.left, my = evt.clientY - rect.top;
+  if (draggingNode) {
+    nodePos[draggingNode] = {x: mx - dragOffset.x, y: my - dragOffset.y};
+    drawGraph(); return;
+  }
+  if (draggingEdge) {
+    draggingEdge.x2 = mx; draggingEdge.y2 = my;
+    drawGraph();
+  }
+}
+
+function onSvgMouseUp(evt) {
+  const svg = document.getElementById('graph-svg');
+  svg.style.cursor = 'default';
+  if (draggingNode) { draggingNode = null; drawGraph(); return; }
+  if (draggingEdge) {
+    const {fromId, fromType} = draggingEdge;
+    draggingEdge = null;
+    // Find which node was dropped on
+    const rect = svg.getBoundingClientRect();
+    const mx = evt.clientX - rect.left, my = evt.clientY - rect.top;
+    const {tms, fms, kms} = getNodes();
+    const allNodes = [...tms.map(n=>({...n,ct:'tm'})),...fms.map(n=>({...n,ct:'fm'})),...kms.map(n=>({...n,ct:'km'}))];
+    const target = allNodes.find(n => {
+      const p = nodePos[n.id]; if (!p) return false;
+      return mx >= p.x && mx <= p.x+NODE_W && my >= p.y && my <= p.y+NODE_H;
+    });
+    if (target && target.id !== fromId) createEdge(fromId, fromType, target.id, target.ct);
+    else drawGraph();
+  }
+}
+
+function createEdge(fromId, fromType, toId, toType) {
+  // TM → FM
+  if (fromType === 'tm' && toType === 'fm') {
+    const tm = (tmData[pid]||[]).find(t=>t.id===fromId); if (!tm) return;
+    if (!tm.fmIds) tm.fmIds = tm.fmId ? [tm.fmId] : [];
+    if (!tm.fmIds.includes(toId)) { tm.fmIds.push(toId); tm.fmId = tm.fmIds[0]; save(); showToast('✓ Teilmodell → Fachmodell verbunden'); }
+    else showToast('Verbindung bereits vorhanden');
+  }
+  // FM → KM
+  else if (fromType === 'fm' && toType === 'km') {
+    const km = (kmData[pid]||[]).find(k=>k.id===toId); if (!km) return;
+    if (!km.fmIds) km.fmIds = [];
+    if (!km.fmIds.includes(fromId)) { km.fmIds.push(fromId); save(); showToast('✓ Fachmodell → Koordinationsmodell verbunden'); }
+    else showToast('Verbindung bereits vorhanden');
+  }
+  else showToast('Nur TM→FM und FM→KM Verbindungen möglich');
+  renderWorkspaceAndGraph();
+}
+
+function deleteEdge(fromId, toId, type) {
+  if (type === 'tm-fm') {
+    const tm = (tmData[pid]||[]).find(t=>t.id===fromId); if (!tm) return;
+    tm.fmIds = (tm.fmIds||[tm.fmId]).filter(id=>id!==toId);
+    tm.fmId = tm.fmIds[0]||null;
+  } else if (type === 'fm-km') {
+    const km = (kmData[pid]||[]).find(k=>k.id===toId); if (!km) return;
+    km.fmIds = (km.fmIds||[]).filter(id=>id!==fromId);
+  }
+  save(); showToast('Verbindung gelöscht'); drawGraph(); updateMainBadges();
+}
+
+function selectGraphNode(id, colType) {
+  graphSel = {id, colType};
+  drawGraph();
+}
+
+function addGraphNode(colType) {
+  if (!pid) { showToast('Erst Projekt wählen'); return; }
+  if (colType === 'km') openKM();
+  else if (colType === 'fm') openFM();
+  else openTM();
+}
+
+function deleteGraphNode(id, colType) {
+  if (colType === 'km') deleteKM(id);
+  else if (colType === 'fm') deleteFM(id);
+  else deleteTM(id);
+}
+
+function renderWorkspaceAndGraph() {
+  updateMainBadges();
+  if (mainTab === 'konfig') {
+    const el = document.getElementById('main-content');
+    renderGraphEditor(el);
+  } else if (mainTab === 'pruefung') {
+    const el = document.getElementById('main-content');
+    renderPruefungPanel(el);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PRÜFUNG PANEL (existing renderWorkspace logic, adapted)
+// ═══════════════════════════════════════════════════════
+function renderPruefungPanel(container) {
+  container.innerHTML = `
+    <div class="tree-panel">
+      <div class="panel-header">
+        <span class="panel-title">Modellstruktur</span>
+        <button class="btn-ghost" style="font-size:11px" onclick="runAllChecks()">▶ Alle</button>
+      </div>
+      <div class="tree-scroll" id="tree-scroll">${renderTree()}</div>
+    </div>
+    <div class="right-panel" id="right-panel">${renderDetailPanel()}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// THREE.JS VIEWER
+// ═══════════════════════════════════════════════════════
+let threeScene = null, threeCamera = null, threeRenderer = null, threeAnimId = null;
+let isDragging3D = false, prevMouse = {x:0, y:0}, cameraTheta = 0.8, cameraPhi = 0.6, cameraRadius = 25;
+let viewerSel = null; // selected node from tree
+
+const ENTITY_COLORS = {
+  IFCWALL:0x3b82f6, IFCWALLSTANDARDCASE:0x3b82f6,
+  IFCSLAB:0x8b5cf6, IFCROOF:0x6366f1,
+  IFCCOLUMN:0xef4444, IFCBEAM:0xf97316,
+  IFCSTAIR:0xf59e0b, IFCSTAIRFLIGHT:0xf59e0b,
+  IFCDOOR:0x10b981, IFCWINDOW:0x06b6d4,
+  IFCCURTAINWALL:0x22d3ee, IFCSPACE:0x84cc16,
+  IFCPIPESEGMENT:0x0ea5e9, IFCDUCTSEGMENT:0x10b981,
+  IFCLIGHTFIXTURE:0xfbbf24, IFCPUMP:0x64748b,
+};
+const ENTITY_LABELS = {
+  IFCWALL:'Wände', IFCWALLSTANDARDCASE:'Wände',
+  IFCSLAB:'Decken/Böden', IFCROOF:'Dach',
+  IFCCOLUMN:'Stützen', IFCBEAM:'Träger',
+  IFCSTAIR:'Treppen', IFCSTAIRFLIGHT:'Treppenläufe',
+  IFCDOOR:'Türen', IFCWINDOW:'Fenster',
+  IFCCURTAINWALL:'Vorhangfassaden', IFCSPACE:'Räume',
+  IFCPIPESEGMENT:'Rohre', IFCDUCTSEGMENT:'Kanäle',
+  IFCLIGHTFIXTURE:'Leuchten', IFCPUMP:'Pumpen',
+};
+
+function renderViewerPanel(container) {
+  container.innerHTML = `
+    <div class="viewer-sidebar">
+      <div class="panel-header">
+        <span class="panel-title">Auswahl</span>
+      </div>
+      <div class="panel-scroll" id="viewer-tree">${renderViewerTree()}</div>
+      <div style="padding:10px;border-top:1px solid var(--border);font-size:10px;color:var(--text3)">
+        Maus: Orbit · Scroll: Zoom · Klick auf Knoten: Ansicht anpassen
+      </div>
+    </div>
+    <div class="viewer-canvas">
+      <canvas id="three-canvas"></canvas>
+      <div class="viewer-hud" id="viewer-hud">Kein Modell ausgewählt</div>
+      <div class="viewer-controls">
+        <div class="vc-btn" onclick="resetCamera()" title="Ansicht zurücksetzen">⟳</div>
+        <div class="vc-btn" onclick="viewFront()" title="Vorderansicht">↑</div>
+        <div class="vc-btn" onclick="viewTop()" title="Draufsicht">⊙</div>
+      </div>
+      <div class="viewer-legend" id="viewer-legend"></div>
+      <div class="viewer-no-model" id="viewer-no-model" style="display:flex">
+        <div><div style="font-size:32px;margin-bottom:10px">🏗️</div><div style="font-size:14px;font-weight:600;color:#90b8e0">Wähle ein Modell in der Struktur</div><div style="font-size:11px;color:var(--nav-text);margin-top:5px">Teilmodell, Fachmodell oder Koordinationsmodell</div></div>
+      </div>
+    </div>`;
+  initThree();
+}
+
+function renderViewerTree() {
+  const tms = tmData[pid]||[], fms = fmData[pid]||[], kms = kmData[pid]||[];
+  if (!tms.length && !fms.length && !kms.length) return '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Keine Modelle konfiguriert</div>';
+  let html = '';
+  // KMs
+  kms.forEach(km => {
+    html += `<div class="tree-km"><div class="tree-km-header" onclick="selectViewerNode('km','${km.id}')">
+      <span class="tree-km-icon">🗂</span><span class="tree-km-name">${km.name}</span></div>`;
+    (km.fmIds||[]).forEach(fid => {
+      const fm = fms.find(f=>f.id===fid); if(!fm) return;
+      const col = DISC_COLORS[fm.disc]||'#8899b0';
+      html += `<div class="tree-fm"><div class="tree-fm-header" onclick="selectViewerNode('fm','${fm.id}')">
+        <span class="tree-fm-disc" style="background:${col}22;color:${col}">${fm.disc||'—'}</span>
+        <span class="tree-fm-name">${fm.name}</span></div>`;
+      tms.filter(t=>(t.fmIds||[t.fmId]).includes(fm.id)).forEach(tm => {
+        html += `<div class="tree-tm" onclick="selectViewerNode('tm','${tm.id}')">
+          <span class="tree-tm-icon">📄</span><span class="tree-tm-name">${tm.name}</span>
+          ${tm.datadrop?`<span style="font-size:9px;font-family:var(--mono);color:var(--text3)">${tm.datadrop}</span>`:''}
+        </div>`;
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  // Free FMs
+  const usedFmIds = new Set(kms.flatMap(k=>k.fmIds||[]));
+  fms.filter(f=>!usedFmIds.has(f.id)).forEach(fm => {
+    const col = DISC_COLORS[fm.disc]||'#8899b0';
+    html += `<div class="tree-fm"><div class="tree-fm-header" onclick="selectViewerNode('fm','${fm.id}')">
+      <span class="tree-fm-disc" style="background:${col}22;color:${col}">${fm.disc||'—'}</span>
+      <span class="tree-fm-name">${fm.name}</span></div>`;
+    tms.filter(t=>(t.fmIds||[t.fmId]).includes(fm.id)).forEach(tm => {
+      html += `<div class="tree-tm" onclick="selectViewerNode('tm','${tm.id}')"><span class="tree-tm-icon">📄</span><span class="tree-tm-name">${tm.name}</span></div>`;
+    });
+    html += '</div>';
+  });
+  return html;
+}
+
+function selectViewerNode(type, id) {
+  viewerSel = {type, id};
+  let tmsToShow = [];
+  if (type === 'tm') {
+    const tm = (tmData[pid]||[]).find(t=>t.id===id);
+    if (tm) tmsToShow = [tm];
+  } else if (type === 'fm') {
+    tmsToShow = (tmData[pid]||[]).filter(t=>(t.fmIds||[t.fmId]).includes(id));
+  } else if (type === 'km') {
+    const km = (kmData[pid]||[]).find(k=>k.id===id);
+    const fmIds = km?.fmIds||[];
+    tmsToShow = (tmData[pid]||[]).filter(t=>(t.fmIds||[t.fmId]).some(fid=>fmIds.includes(fid)));
+  }
+  loadModelsIntoViewer(tmsToShow);
+}
+
+function initThree() {
+  const canvas = document.getElementById('three-canvas');
+  if (!canvas || !window.THREE) return;
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight;
+
+  threeScene = new THREE.Scene();
+  threeScene.background = new THREE.Color(0x0f1623);
+  threeScene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(10, 20, 10); threeScene.add(dir);
+  const dir2 = new THREE.DirectionalLight(0x4488ff, 0.3);
+  dir2.position.set(-10, -5, -10); threeScene.add(dir2);
+  // Grid
+  const grid = new THREE.GridHelper(40, 20, 0x1e2d45, 0x1e2d45);
+  threeScene.add(grid);
+
+  threeCamera = new THREE.PerspectiveCamera(45, canvas.width/canvas.height, 0.1, 1000);
+  updateCamera3D();
+  threeRenderer = new THREE.WebGLRenderer({canvas, antialias:true});
+  threeRenderer.setSize(canvas.width, canvas.height);
+  threeRenderer.setPixelRatio(window.devicePixelRatio);
+  threeRenderer.shadowMap.enabled = true;
+
+  canvas.addEventListener('mousedown', e => { isDragging3D = true; prevMouse = {x:e.clientX, y:e.clientY}; });
+  canvas.addEventListener('mouseup', () => isDragging3D = false);
+  canvas.addEventListener('mousemove', e => {
+    if (!isDragging3D) return;
+    const dx = e.clientX - prevMouse.x, dy = e.clientY - prevMouse.y;
+    cameraTheta -= dx * 0.008; cameraPhi = Math.max(0.1, Math.min(1.5, cameraPhi - dy * 0.008));
+    prevMouse = {x:e.clientX, y:e.clientY}; updateCamera3D();
+  });
+  canvas.addEventListener('wheel', e => {
+    cameraRadius = Math.max(3, Math.min(80, cameraRadius + e.deltaY * 0.05));
+    updateCamera3D(); e.preventDefault();
+  }, {passive:false});
+
+  if (threeAnimId) cancelAnimationFrame(threeAnimId);
+  function animate() {
+    threeAnimId = requestAnimationFrame(animate);
+    threeRenderer.render(threeScene, threeCamera);
+  }
+  animate();
+}
+
+function updateCamera3D() {
+  if (!threeCamera) return;
+  threeCamera.position.x = cameraRadius * Math.sin(cameraTheta) * Math.cos(cameraPhi);
+  threeCamera.position.y = cameraRadius * Math.sin(cameraPhi);
+  threeCamera.position.z = cameraRadius * Math.cos(cameraTheta) * Math.cos(cameraPhi);
+  threeCamera.lookAt(0, 2, 0);
+}
+function resetCamera() { cameraTheta = 0.8; cameraPhi = 0.6; cameraRadius = 25; updateCamera3D(); }
+function viewFront()   { cameraTheta = 0; cameraPhi = 0.2; updateCamera3D(); }
+function viewTop()     { cameraTheta = 0; cameraPhi = 1.48; updateCamera3D(); }
+
+function loadModelsIntoViewer(tms) {
+  if (!threeScene) return;
+  // Remove old model objects
+  const toRemove = [];
+  threeScene.traverse(obj => { if (obj.userData.isModel) toRemove.push(obj); });
+  toRemove.forEach(obj => threeScene.remove(obj));
+
+  const noModelEl = document.getElementById('viewer-no-model');
+  const hudEl = document.getElementById('viewer-hud');
+  const legendEl = document.getElementById('viewer-legend');
+
+  if (!tms.length || !tms.some(t=>t.parsed)) {
+    if (noModelEl) noModelEl.style.display='flex';
+    if (hudEl) hudEl.textContent='Kein Modell mit IFC-Daten';
+    if (legendEl) legendEl.innerHTML='';
+    return;
+  }
+
+  if (noModelEl) noModelEl.style.display='none';
+
+  // Aggregate entity types from all selected TMs
+  const aggTypes = {};
+  let totalEntities = 0, totalObjects = 0, totalPsets = 0;
+  tms.forEach(tm => {
+    if (!tm.parsed) return;
+    Object.entries(tm.parsed.entityTypes || {}).forEach(([type, count]) => {
+      aggTypes[type] = (aggTypes[type]||0) + count;
+    });
+    totalEntities += tm.parsed.entities || 0;
+    totalObjects += tm.parsed.objectCount || 0;
+    totalPsets += tm.parsed.psetCount || 0;
+  });
+
+  // Visualize: create colored boxes for each entity type with IFC color
+  const RENDER_TYPES = Object.keys(ENTITY_COLORS).filter(t => aggTypes[t] > 0);
+  const totalRenderCount = RENDER_TYPES.reduce((s,t) => s + aggTypes[t], 0);
+  const GRID_SIZE = 3;
+  let legendHTML = '';
+  let col = 0, row = 0, maxCol = 4;
+  const spacing = 2.0;
+
+  RENDER_TYPES.forEach((type, idx) => {
+    const count = aggTypes[type];
+    const color = ENTITY_COLORS[type];
+    const countNorm = Math.min(count, 200);
+    const scaleX = 0.4 + Math.log10(countNorm+1) * 0.3;
+    const scaleY = 0.3 + Math.log10(countNorm+1) * 0.25;
+    const scaleZ = 0.4 + Math.log10(countNorm+1) * 0.3;
+    const geo = new THREE.BoxGeometry(scaleX, scaleY, scaleZ);
+    const mat = new THREE.MeshLambertMaterial({color, transparent:true, opacity:0.85});
+    // Place in grid
+    for (let i = 0; i < Math.min(count, 120); i++) {
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.userData.isModel = true;
+      const gridCol = (idx * 7 + i) % 12;
+      const gridRow = Math.floor((idx * 7 + i) / 12);
+      const jitter = () => (Math.random()-0.5)*0.15;
+      mesh.position.set(
+        (gridCol - 5.5) * spacing + jitter(),
+        scaleY/2 + Math.random()*0.1,
+        (gridRow - 3) * spacing + jitter()
+      );
+      threeScene.add(mesh);
+    }
+    // Edges for first instance
+    const edges = new THREE.EdgesGeometry(geo);
+    const edgeMat = new THREE.LineBasicMaterial({color, opacity:0.4, transparent:true});
+    const edgeMesh = new THREE.LineSegments(edges, edgeMat);
+    edgeMesh.userData.isModel = true;
+    edgeMesh.position.set((-5.5 + idx%12) * spacing, scaleY/2, Math.floor(idx/12) * spacing - 3);
+    threeScene.add(edgeMesh);
+
+    const hexColor = '#' + color.toString(16).padStart(6,'0');
+    legendHTML += `<div class="legend-item"><div class="legend-dot" style="background:${hexColor}"></div>${ENTITY_LABELS[type]||type} <span style="color:var(--text3)">(${count})</span></div>`;
+    col++; if(col>=maxCol){col=0;row++;}
+  });
+
+  if (legendEl) legendEl.innerHTML = legendHTML;
+  if (hudEl) hudEl.innerHTML = `${tms.length} TM · ${totalObjects.toLocaleString()} Objekte · ${totalPsets} PSets · ${totalEntities.toLocaleString()} Entities`;
+
+  // Auto-frame
+  cameraRadius = Math.max(15, Math.min(60, Math.sqrt(totalRenderCount) * 0.8 + 15));
+  updateCamera3D();
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')['host-ol','km-ol','fm-ol','tm-ol'].forEach(id=>closeModal(id));});
 init();
 </script>
 </body>

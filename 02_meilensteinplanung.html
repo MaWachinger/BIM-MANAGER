@@ -209,6 +209,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--nav-bg);color:#e2e8f0;padding:12px 18px;border-radius:var(--r);font-size:13px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
 </style>
+<script src="bim_sync.js"></script>
 </head>
 <body>
 
@@ -219,23 +220,23 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   </div>
   <nav class="nav">
     <div class="nav-section">Hauptmodule</div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('index.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('05_modellpruefung.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung
     </div>
     <div class="nav-item active">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/><circle cx="16" cy="15" r="2"/></svg>Meilensteinplanung
       <span class="nav-badge" id="nav-count">0</span>
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/><path d="M8 10h4M8 14h2M8 6h4"/></svg>Berichtsgenerator
     </div>
-    <div class="nav-item" onclick="comingSoon()">
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M8 7l1.5 1.5-1.5 1.5M12 7l-1.5 1.5 1.5 1.5M7 14h6"/></svg>Protokollierung
     </div>
   </nav>
@@ -437,6 +438,9 @@ let currentView = 'gantt', selectedDz = [];
 function init() {
   try { const s=JSON.parse(localStorage.getItem(SET_KEY))||{}; document.getElementById('sb-user').textContent=s.name||'BIM Manager'; } catch(e){}
   try { projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[]; } catch(e){ projects=[]; }
+  // Restore active project
+  const _activePid = getCurrentProject();
+  if(_activePid) { setTimeout(()=>{ const s=document.getElementById('proj-sel'); if(s&&_activePid){ s.value=_activePid; if(s.value) onProjectChange(); }},200); }
   try { milestones=JSON.parse(localStorage.getItem(MS_KEY))||{}; } catch(e){ milestones={}; }
 
   buildDzChips();
@@ -465,6 +469,7 @@ function populateSelect() {
 
 function onProjectChange() {
   currentPid = document.getElementById('proj-sel').value || null;
+  setCurrentProject(currentPid||'');
   document.getElementById('btn-new').disabled = !currentPid;
   if (currentPid) {
     const p = projects.find(x=>x.id===currentPid);
@@ -916,6 +921,12 @@ document.addEventListener('keydown',e=>{
 });
 
 init();
+
+// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
 </script>
 </body>
 </html>

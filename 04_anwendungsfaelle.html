@@ -171,6 +171,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .tag{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);display:inline-block}
 .tag-gray{background:var(--surface2);color:var(--text2)}
 </style>
+<script src="bim_sync.js"></script>
 </head>
 <body>
 <aside class="sidebar">
@@ -180,11 +181,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
   </div>
   <nav class="nav">
     <div class="nav-section">Module</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
+    <div class="nav-item" onclick="goTo('index.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="goTo('02_meilensteinplanung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
+    <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
     <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle<span class="nav-badge" id="nav-count">0</span></div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
   </nav>
   <div class="sidebar-footer">
     <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
@@ -443,7 +444,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
   </div>
 </div>
 <div class="toast" id="toast"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
+</script>
 <script>
 const PROJ_KEY='bim_projects_v2',AWF_KEY='bim_awf_v1',STAMM_KEY='bim_awf_stamm_v1',SET_KEY='bim_settings_v1';
 const LP_LIST=['LP1','LP2','LP3','LP4','LP5','LP6','LP7','LP8','LP9'];
@@ -459,7 +466,7 @@ const IO_COLORS={input:'var(--info)',datadrop:'var(--warn)',output:'var(--ok)'};
 const QS_TYPES={eingang:'Eingangsprüfung',ergebnis:'Ergebnisprüfung',intervall:'Intervall-Lieferung'};
 
 let projects=[],awfData={},stammData=[];
-let mode='stamm',pid=null,selId=null,editId=null,editScope=null,sbEditId=null,sbEditScope=null;
+let mode='stamm',pid=getCurrentProject()||null,selId=null,editId=null,editScope=null,sbEditId=null,sbEditScope=null;
 let qColor=AWF_COLORS[0],qLp=[],qDisc=[],ioRows=[],qsRows=[],importRows=[],confirmCb=null;
 
 function init(){
@@ -693,7 +700,7 @@ function closeConfirm(){document.getElementById('confirm-ol').classList.remove('
 // EXPORT
 function exportCSV(scope){const list=scope==='stamm'?stammData:(awfData[pid]||[]);const rows=[['Tätigkeit','Zweck','Beschreibung','Status','Quelle','Leistungsphasen','Disziplinen','Steckbrief %']];list.forEach(a=>rows.push([a.taetig,a.zweck,a.desc||'',STATUS_L[a.status]||'',SOURCE_L[a.source]||'',(a.phases||[]).join('; '),(a.disciplines||[]).join('; '),calcComp(a)+'%']));const csv=rows.map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`awf-${scope}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);showToast('✓ CSV exportiert');}
 
-function onProjChange(){pid=document.getElementById('psel')?.value||null;selId=null;render();}
+function onProjChange(){pid=document.getElementById('psel')?.value||null;setCurrentProject(pid||'');selId=null;render();}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 function comingSoon(){showToast('Modul wird in Kürze entwickelt');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeQuick();closeSbModal();closeImport();closeTpick();closeConfirm();}});

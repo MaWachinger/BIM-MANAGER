@@ -272,6 +272,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .no-project-inner .ei{font-size:36px;margin-bottom:10px}
 .no-project-inner .et{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px}
 </style>
+<script src="bim_sync.js"></script>
 </head>
 <body>
 
@@ -283,13 +284,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
   </div>
   <nav class="nav">
     <div class="nav-section">Module</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/><circle cx="16" cy="15" r="2"/></svg>Meilensteinplanung</div>
+    <div class="nav-item" onclick="goTo('index.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="goTo('05_modellpruefung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung</div>
+    <div class="nav-item" onclick="goTo('02_meilensteinplanung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/><circle cx="16" cy="15" r="2"/></svg>Meilensteinplanung</div>
     <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver<span class="nav-badge" id="nav-count">0</span></div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
-    <div class="nav-item" onclick="comingSoon()"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M8 7l1.5 1.5-1.5 1.5M12 7l-1.5 1.5 1.5 1.5M7 14h6"/></svg>Protokollierung</div>
+    <div class="nav-item" onclick="goTo('04_anwendungsfaelle.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>Berichtsgenerator</div>
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M8 7l1.5 1.5-1.5 1.5M12 7l-1.5 1.5 1.5 1.5M7 14h6"/></svg>Protokollierung</div>
   </nav>
   <div class="sidebar-footer">
     <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
@@ -365,6 +366,42 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
         <div class="modal-section-title">Leistungsphasen</div>
         <div class="phase-grid" id="phase-grid-modal"></div>
       </div>
+      <div class="modal-section" id="wertebereich-section">
+        <div class="modal-section-title">Wertebereich <span style="background:var(--accent-dim);color:var(--accent);font-size:9px;padding:1px 6px;border-radius:3px;margin-left:4px;font-family:var(--mono)">Stufe 4 Prüfung</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">Definiert welche Werte als gültig gelten. Wird in der Semantischen Prüfung Stufe 4 ausgewertet.</div>
+        <div class="fg">
+          <label>Validierungstyp</label>
+          <select id="p-valtype" onchange="updateWertUI()">
+            <option value="">— Kein Wertebereich —</option>
+            <option value="enum">Aufzählung (erlaubte Werte)</option>
+            <option value="range">Wertebereich (min / max)</option>
+            <option value="regex">Muster (regulärer Ausdruck)</option>
+            <option value="notempty">Nicht leer (beliebiger Wert)</option>
+          </select>
+        </div>
+        <div id="wert-ui-enum" style="display:none">
+          <div class="fg">
+            <label>Erlaubte Werte <span style="color:var(--text3);font-weight:400">(kommagetrennt)</span></label>
+            <input type="text" id="p-enum" placeholder="z. B. EI30, EI60, EI90, REI90">
+            <span class="form-hint">Groß-/Kleinschreibung wird bei der Prüfung ignoriert</span>
+          </div>
+        </div>
+        <div id="wert-ui-range" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="fg"><label>Mindestwert</label><input type="number" id="p-min" placeholder="z. B. 0"></div>
+            <div class="fg"><label>Maximalwert</label><input type="number" id="p-max" placeholder="z. B. 100"></div>
+          </div>
+          <div class="fg"><label>Einheit <span style="color:var(--text3);font-weight:400">(optional)</span></label><input type="text" id="p-unit" placeholder="z. B. m, m², °C, kN/m²"></div>
+        </div>
+        <div id="wert-ui-regex" style="display:none">
+          <div class="fg">
+            <label>Regulärer Ausdruck</label>
+            <input type="text" id="p-regex" placeholder="z. B. ^[A-Z]{2}\d{3}$">
+            <span class="form-hint">Wird gegen den Wert im IFC-Attribut geprüft</span>
+          </div>
+          <div class="fg"><label>Beispiel für gültigen Wert</label><input type="text" id="p-regex-example" placeholder="z. B. AB123"></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeParamModal()">Abbrechen</button>
@@ -432,7 +469,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
+</script>
 <script>
 // ─── STORAGE KEYS ─────────────────────────────────────────────────────
 const PROJ_KEY   = 'bim_projects_v2';
@@ -590,7 +633,7 @@ const DTYPE_SHORT={IfcLabel:'Text',IfcText:'L.Text',IfcReal:'Dez.',IfcInteger:'G
 
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={};
-let mode='global', pid=null, selectedNodeId=null;
+let mode='global', pid=getCurrentProject()||null, selectedNodeId=null;
 let editParamId=null, editParamScope=null;
 let confirmCb=null, importRows=[], importScope='global', importTab2='csv';
 let selectedIfcTypes=[], selectedPhases=[];
@@ -789,7 +832,7 @@ function glibRows(list){
     <td><div style="font-weight:500;color:var(--text);margin-bottom:2px">${p.name}</div>${p.desc?`<div style="font-size:10px;color:var(--text3)">${p.desc.slice(0,50)}</div>`:''}</td>
     <td><div style="font-family:var(--mono);font-size:10px;color:var(--text2)">${p.pset}</div><div style="font-family:var(--mono);font-size:10px;color:var(--accent)">.${p.attr}</div></td>
     <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono)"><span style="width:6px;height:6px;border-radius:50%;background:${g.color}"></span>${g.code}</span></td>
-    <td><span class="tag tag-gray">${DTYPE_SHORT[p.dtype]||p.dtype}</span></td>
+    <td><span class="tag tag-gray">${DTYPE_SHORT[p.dtype]||p.dtype}</span>${p.validation?`<span class="tag" style="background:var(--accent-dim);color:var(--accent);margin-left:3px" title="Wertebereich: ${p.validation.type}">S4 ✓</span>`:''}</td>
     <td><div style="display:flex;gap:2px;flex-wrap:wrap">${(p.phases||[]).map(ph=>`<span style="font-size:9px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 3px;border-radius:2px">${ph}</span>`).join('')}</div></td>
     <td><div style="display:flex;gap:4px;justify-content:flex-end">
       <button class="btn btn-xs btn-global" onclick="copyToProject('${p.id}')">→ Projekt</button>
@@ -884,6 +927,7 @@ function renderProject(){
 
 function onProjChange(){
   pid=document.getElementById('psel')?.value||null;
+  setCurrentProject(pid||'');
   selectedNodeId=null;libSearch='';
   if(pid&&!projParams[pid]) projParams[pid]=[];
   if(pid&&!assignments[pid]) assignments[pid]={};
@@ -1357,10 +1401,20 @@ function openParamModal(id=null, scope='global'){
     document.getElementById('p-grp').value=src.grp||'001';
     selectedIfcTypes=[...(src.ifcTypes||[])];
     selectedPhases=[...(src.phases||[])];
+    // Validation / Wertebereich
+    const v=src.validation;
+    const vt=v?.type||'';
+    if(document.getElementById('p-valtype')) document.getElementById('p-valtype').value=vt;
+    if(vt==='enum'&&document.getElementById('p-enum')) document.getElementById('p-enum').value=(v.values||[]).join(', ');
+    if(vt==='range'){if(document.getElementById('p-min'))document.getElementById('p-min').value=v.min!=null?v.min:'';if(document.getElementById('p-max'))document.getElementById('p-max').value=v.max!=null?v.max:'';if(document.getElementById('p-unit'))document.getElementById('p-unit').value=v.unit||'';}
+    if(vt==='regex'){if(document.getElementById('p-regex'))document.getElementById('p-regex').value=v.pattern||'';if(document.getElementById('p-regex-example'))document.getElementById('p-regex-example').value=v.example||'';}
+    updateWertUI();
   } else {
     ['p-name','p-desc','p-pset','p-attr'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('p-dtype').value='IfcLabel';
     document.getElementById('p-grp').value='001';
+    if(document.getElementById('p-valtype')) document.getElementById('p-valtype').value='';
+    updateWertUI();
     selectedIfcTypes=[]; selectedPhases=[];
   }
   syncIfcCbs(); syncPhases();
@@ -1368,16 +1422,29 @@ function openParamModal(id=null, scope='global'){
   setTimeout(()=>document.getElementById('p-name').focus(),200);
 }
 function closeParamModal(){document.getElementById('param-ol').classList.remove('open');editParamId=null;}
+function updateWertUI(){
+  const vt=document.getElementById('p-valtype')?.value||'';
+  document.getElementById('wert-ui-enum').style.display=vt==='enum'?'':'none';
+  document.getElementById('wert-ui-range').style.display=vt==='range'?'':'none';
+  document.getElementById('wert-ui-regex').style.display=vt==='regex'?'':'none';
+}
 function saveParam(){
   const name=document.getElementById('p-name').value.trim();
   const pset=document.getElementById('p-pset').value.trim();
   const attr=document.getElementById('p-attr').value.trim();
   if(!name||!pset||!attr){showToast('Name, PSet und Attribut erforderlich');return;}
+  const valtype=document.getElementById('p-valtype')?.value||'';
+  let validation=null;
+  if(valtype==='enum'){const vals=document.getElementById('p-enum').value.split(',').map(v=>v.trim()).filter(Boolean);if(vals.length)validation={type:'enum',values:vals};}
+  else if(valtype==='range'){const mn=document.getElementById('p-min').value,mx=document.getElementById('p-max').value;validation={type:'range',min:mn!==''?parseFloat(mn):null,max:mx!==''?parseFloat(mx):null,unit:document.getElementById('p-unit').value.trim()};}
+  else if(valtype==='regex'){validation={type:'regex',pattern:document.getElementById('p-regex').value.trim(),example:document.getElementById('p-regex-example').value.trim()};}
+  else if(valtype==='notempty'){validation={type:'notempty'};}
   const data={id:editParamId||uid(),name,pset,attr,
     desc:document.getElementById('p-desc').value.trim(),
     dtype:document.getElementById('p-dtype').value,
     grp:document.getElementById('p-grp').value,
     ifcTypes:[...selectedIfcTypes],phases:[...selectedPhases],
+    validation,
     updated:new Date().toISOString()};
   const scope=editParamScope||'global';
   if(scope==='global'){

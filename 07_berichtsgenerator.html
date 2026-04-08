@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BIM Manager · Berichtsgenerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;--nav-hover:#1a2744;--nav-active:#152238;
+  --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.13);--accent-mid:rgba(0,201,167,0.3);
+  --global:#8b5cf6;--global-dim:rgba(139,92,246,0.1);
+  --bg:#f0f3f8;--surface:#fff;--surface2:#f5f7fa;--border:#e2e8f0;
+  --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
+  --ok:#10b981;--ok-bg:#ecfdf5;--warn:#f59e0b;--warn-bg:#fffbeb;
+  --err:#ef4444;--err-bg:#fef2f2;--info:#3b82f6;--info-bg:#eff6ff;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --r:6px;--rl:10px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+/* SIDEBAR */
+.sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
+.logo{padding:20px 18px 18px;border-bottom:1px solid var(--nav-border)}
+.logo-mark{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0f1623;font-family:var(--mono)}
+.logo-name{font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:-0.02em}
+.logo-sub{font-size:10px;color:var(--nav-text);letter-spacing:0.06em;text-transform:uppercase;margin-left:39px;font-family:var(--mono)}
+.logo-ver{font-size:9px;color:#3d5473;margin-left:39px;font-family:var(--mono)}
+.nav{padding:8px 0;flex:1}
+.nav-section{padding:14px 18px 5px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3d5473;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--nav-text);font-size:13px;border-left:2px solid transparent;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:#c8d8e8}
+.nav-item.active{background:var(--nav-active);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-icon{width:17px;height:17px;opacity:0.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:#1e2d45;color:var(--nav-text);font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px}
+.nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
+.nav-user{padding:14px 18px;border-top:1px solid var(--nav-border);display:flex;align-items:center;gap:10px}
+.nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0f1623;flex-shrink:0}
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar-title{font-size:13px;color:var(--text3)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* MOD TABS */
+.mod-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;flex-shrink:0}
+.mod-tab{padding:11px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.mod-tab:hover{color:var(--text2)}
+.mod-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+/* PAGE */
+.page{flex:1;overflow-y:auto;padding:28px}
+/* TEMPLATE GRID */
+.template-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.tpl-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--rl);padding:20px;cursor:pointer;transition:all 0.15s;position:relative}
+.tpl-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(0,201,167,0.1);transform:translateY(-1px)}
+.tpl-card.selected{border-color:var(--accent);background:var(--accent-dim)}
+.tpl-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.tpl-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+.tpl-desc{font-size:11px;color:var(--text3);line-height:1.55}
+.tpl-sel-badge{position:absolute;top:12px;right:12px;background:var(--accent);color:#0f1623;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;font-family:var(--mono)}
+/* MAIN LAYOUT */
+.bericht-layout{display:grid;grid-template-columns:1fr 280px;gap:22px;align-items:start}
+/* PREVIEW */
+.preview-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.preview-header{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.preview-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
+.preview-badge{padding:2px 9px;border-radius:8px;font-size:10px;font-weight:600;font-family:var(--mono);background:var(--accent-dim);color:var(--accent)}
+.preview-body{padding:0;max-height:680px;overflow-y:auto}
+/* REPORT DOCUMENT */
+.report-doc{padding:28px;font-family:var(--sans);color:var(--text);font-size:13px;line-height:1.65}
+.report-meta{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px}
+.report-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.03em;margin-bottom:3px}
+.report-sub{font-size:12px;color:var(--text3);margin-bottom:20px}
+.report-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.rstat{border-radius:var(--r);padding:14px;text-align:center;border:1px solid var(--border)}
+.rstat-num{font-size:28px;font-weight:700;letter-spacing:-0.03em}
+.rstat-label{font-size:11px;color:var(--text3);margin-top:3px}
+.report-section{margin:20px 0}
+.report-section h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.report-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:12px}
+.report-item .ri-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+.report-filler{color:var(--text3);font-size:11px;font-style:italic;padding:10px 0}
+/* CONFIG PANEL */
+.config-panel{display:flex;flex-direction:column;gap:14px}
+.config-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.config-card-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
+.config-card-body{padding:14px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg:last-child{margin-bottom:0}
+.fg label{font-size:11px;font-weight:500;color:var(--text2)}
+.fg select,.fg input{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%}
+.fg select:focus,.fg input:focus{border-color:var(--accent)}
+.datasource-item{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12px}
+.ds-name{color:var(--text2)}
+.ds-status{font-size:10px;font-family:var(--mono)}
+.ds-ok{color:var(--ok)}
+.ds-warn{color:var(--warn)}
+.ds-none{color:var(--text3)}
+.checkbox-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer}
+.checkbox-row input{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+/* PROTOKOLL */
+.prot-layout{display:grid;grid-template-columns:280px 1fr;gap:0;min-height:calc(100vh - 120px);background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.prot-sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.prot-sidebar-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.prot-sidebar-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono)}
+.prot-scroll{flex:1;overflow-y:auto}
+.prot-item{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+.prot-item:hover{background:var(--surface2)}
+.prot-item.active{background:var(--accent-dim)}
+.prot-type{font-size:10px;font-family:var(--mono);font-weight:600;padding:1px 5px;border-radius:3px;display:inline-block;margin-bottom:4px}
+.prot-title{font-size:12px;font-weight:500;color:var(--text)}
+.prot-date{font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px}
+.prot-detail{flex:1;overflow-y:auto;padding:22px 26px}
+/* PROTOCOL TYPES */
+.pt-besprechung{background:var(--info-bg);color:var(--info)}
+.pt-datadrop{background:var(--accent-dim);color:var(--accent)}
+.pt-pruef{background:var(--err-bg);color:var(--err)}
+.pt-tagebuch{background:var(--surface2);color:var(--text2)}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#0f1623}.btn-primary:hover{background:#00b396}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-secondary:hover{background:var(--surface2)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-ghost{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;display:inline-flex;align-items:center;transition:all 0.12s}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.sp{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.sp-ok{background:var(--ok-bg);color:var(--ok)}
+.sp-err{background:var(--err-bg);color:var(--err)}
+.sp-warn{background:var(--warn-bg);color:var(--warn)}
+.sp-gray{background:var(--surface2);color:var(--text3)}
+.tag{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);display:inline-block}
+.tag-gray{background:var(--surface2);color:var(--text2)}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:18px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:5}
+.modal-title{font-size:15px;font-weight:600;color:var(--text)}
+.modal-close{width:26px;height:26px;border:1px solid var(--border);border-radius:var(--r);background:transparent;cursor:pointer;font-size:15px;color:var(--text3);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:18px 22px}
+.modal-section{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.modal-section-title{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);margin-bottom:8px}
+.modal-footer{padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+/* PRINT */
+@media print{
+  .sidebar,.topbar,.mod-tabs,.config-panel,.template-grid,.preview-header{display:none!important}
+  .main{margin-left:0!important}
+  .bericht-layout{grid-template-columns:1fr!important}
+  .preview-body{max-height:none!important}
+  body{background:white}
+}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--nav-bg);color:#e2e8f0;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+<script src="bim_sync.js"></script>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><div class="logo-icon">BIM</div><div class="logo-name">BIM Manager</div></div>
+    <div class="logo-sub">Berichtsgenerator</div>
+    <div class="logo-ver">V0.1 · PROTOTYP</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Hauptmodule</div>
+    <div class="nav-item" onclick="goTo('index.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung<span class="nav-badge">6</span></div>
+    <div class="nav-item" onclick="goTo('05_modellpruefung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung<span class="nav-badge" id="nb-mp">0</span></div>
+    <div class="nav-item" onclick="goTo('02_meilensteinplanung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
+    <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/><path d="M10 9h4M10 13h4M6 9h.01M6 13h.01"/></svg>Berichtsgenerator</div>
+    <div class="nav-item" onclick="goTo('04_anwendungsfaelle.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
+  </nav>
+  <div class="nav-user">
+    <div class="nav-avatar" id="nav-avatar">TM</div>
+    <div><div style="font-size:12px;font-weight:500;color:#c8d8e8" id="nav-name">BIM Manager</div><div style="font-size:10px;color:var(--nav-text)">BIM Manager</div></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="topbar-title">Berichtsgenerator</span>
+    <div class="topbar-right">
+      <button class="btn btn-primary" id="topbar-action" onclick="generateReport()">↓ Bericht generieren</button>
+    </div>
+  </div>
+  <div class="mod-tabs">
+    <div class="mod-tab active" id="tab-berichte" onclick="setTab('berichte')">Berichtsgenerator</div>
+    <div class="mod-tab" id="tab-protokoll" onclick="setTab('protokoll')">Protokollierung<span style="font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;background:var(--surface2);color:var(--text3);margin-left:5px" id="tb-prot">0</span></div>
+  </div>
+  <div class="page" id="page"></div>
+</div>
+
+<!-- NEUES PROTOKOLL MODAL -->
+<div class="modal-overlay" id="prot-ol" onclick="if(event.target===this)closeProtModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="prot-modal-title">Neues Protokoll</div>
+      <button class="modal-close" onclick="closeProtModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg full"><label>Titel *</label><input type="text" id="pm-title" placeholder="z. B. Koordinationsbesprechung LP3 – 3. Sitzung"></div>
+        <div class="fg"><label>Typ</label>
+          <select id="pm-type">
+            <option value="besprechung">Besprechungsprotokoll</option>
+            <option value="datadrop">Datadrop-Protokoll</option>
+            <option value="pruef">Prüfprotokoll</option>
+            <option value="tagebuch">Projekttagesbuch</option>
+          </select>
+        </div>
+        <div class="fg"><label>Datum</label><input type="date" id="pm-date"></div>
+        <div class="fg"><label>Ort / Plattform</label><input type="text" id="pm-location" placeholder="z. B. Teams, Vor Ort, SharePoint"></div>
+        <div class="fg full"><label>Teilnehmer</label><input type="text" id="pm-participants" placeholder="Kommagetrennt: T. Müller (ARK), M. Bauer (TW), …"></div>
+        <div class="fg full"><label>Inhalt / Tagesordnungspunkte</label><textarea id="pm-content" rows="6" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%;resize:vertical;line-height:1.6" placeholder="TOP 1: Koordinationsmodell Stand LP3&#10;TOP 2: Offene Kollisionen&#10;TOP 3: Nächste Datadrops"></textarea></div>
+        <div class="fg full"><label>Maßnahmen / Beschlüsse</label><textarea id="pm-actions" rows="4" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%;resize:vertical;line-height:1.6" placeholder="MA-01: ARK liefert Koordinationsmodell bis 15.03 (T. Müller)&#10;MA-02: …"></textarea></div>
+        <div class="fg full"><label>Nächster Termin</label><input type="date" id="pm-next"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeProtModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveProtokoll()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+// ─── STORAGE ──────────────────────────────────────────────────────────
+const PROJ_KEY      = 'bim_projects_v2';
+const ASSIGN_KEY    = 'bim_obj_assignments_v1';
+const PPARAM_KEY    = 'bim_proj_params_v1';
+const GLOBAL_KEY    = 'bim_global_params_v2';
+const TM_KEY        = 'bim_teilmodelle_v1';
+const FM_KEY        = 'bim_fachmodelle_v1';
+const MS_KEY        = 'bim_milestones_v1';
+const CHECKSET_KEY  = 'bim_checkset_v1';
+const PRUEF_RES_KEY = 'bim_pruef_results_v1';
+const STAMM_KEY     = 'bim_pruef_stamm_v1';
+const AWF_KEY       = 'bim_awf_v1';
+const PROT_KEY      = 'bim_protokolle_v1';   // own storage
+const SET_KEY       = 'bim_settings_v1';
+
+// ─── TEMPLATES ────────────────────────────────────────────────────────
+const TEMPLATES = [
+  {id:'modellpruef',  icon:'🔍', color:'#3b82f6', bg:'#dbeafe', name:'Modellprüfbericht',    desc:'Vollständige Prüfergebnisse mit Fehlerklassifizierung und Maßnahmenplan'},
+  {id:'meilenstein',  icon:'📅', color:'#8b5cf6', bg:'#ede9fe', name:'Meilensteinbericht',   desc:'Status aller Meilensteine und Datadrops für den Auftraggeber'},
+  {id:'compliance',   icon:'🏷',  color:'#f59e0b', bg:'#fef3c7', name:'Merkmal-Compliance',  desc:'Nachweis der erfüllten Informationsanforderungen gemäß BAP'},
+  {id:'statusreport', icon:'📊', color:'#10b981', bg:'#d1fae5', name:'Projektstatusreport',  desc:'Executive Summary über alle aktiven Projekte mit Ampelstatus'},
+  {id:'protokoll',    icon:'📝', color:'#6366f1', bg:'#e0e7ff', name:'Meeting-Protokoll',    desc:'Besprechungsprotokoll mit Maßnahmen und Fristen'},
+  {id:'datadrop',     icon:'📦', color:'#f97316', bg:'#ffedd5', name:'Datadrop-Checkliste',  desc:'Übergabeprotokoll für IFC-Lieferungen an die CDE'},
+];
+
+const PROT_TYPES = {
+  besprechung:{label:'Besprechung',cls:'pt-besprechung'},
+  datadrop:   {label:'Datadrop',   cls:'pt-datadrop'},
+  pruef:      {label:'Prüfprotokoll',cls:'pt-pruef'},
+  tagebuch:   {label:'Tagebuch',  cls:'pt-tagebuch'},
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────
+let projects=[], assignments={}, projParams={}, globalParams=[], milestones={};
+let tmData={}, fmData={}, checksets={}, pruefResults={}, stammRules=[], awfData={};
+let protokolle=[];
+let currentTab='berichte', selTemplate='modellpruef', selPid=getCurrentProject(), selFormat='html', selProt=null;
+let autoReport=false, editProtId=null;
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+function init(){
+  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};
+    const name=s.name||'BIM Manager';
+    document.getElementById('nav-name').textContent=name;
+    document.getElementById('nav-avatar').textContent=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  }catch(e){}
+  try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
+  try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
+  try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
+  try{globalParams=JSON.parse(localStorage.getItem(GLOBAL_KEY))||[];}catch(e){globalParams=[];}
+  try{milestones=JSON.parse(localStorage.getItem(MS_KEY))||{};}catch(e){milestones={};}
+  try{tmData=JSON.parse(localStorage.getItem(TM_KEY))||{};}catch(e){tmData={};}
+  try{fmData=JSON.parse(localStorage.getItem(FM_KEY))||{};}catch(e){fmData={};}
+  try{checksets=JSON.parse(localStorage.getItem(CHECKSET_KEY))||{};}catch(e){checksets={};}
+  try{pruefResults=JSON.parse(localStorage.getItem(PRUEF_RES_KEY))||{};}catch(e){pruefResults={};}
+  try{stammRules=JSON.parse(localStorage.getItem(STAMM_KEY))||[];}catch(e){stammRules=[];}
+  try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
+  try{protokolle=JSON.parse(localStorage.getItem(PROT_KEY))||[];}catch(e){protokolle=[];}
+  if(projects.length) selPid=projects[0].id;
+  updateNavBadges();
+  render();
+}
+const saveProts=()=>localStorage.setItem(PROT_KEY,JSON.stringify(protokolle));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmtDate=(d)=>{if(!d)return'—';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});}catch{return d;}};
+const fmtDateShort=(d)=>{if(!d)return'—';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});}catch{return d;}};
+const today=()=>new Date().toISOString().slice(0,10);
+
+function updateNavBadges(){
+  const mpCount=Object.values(tmData).flat().length;
+  document.getElementById('nb-mp').textContent=mpCount;
+  document.getElementById('tb-prot').textContent=protokolle.length;
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────
+function setTab(tab){
+  currentTab=tab;
+  ['berichte','protokoll'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===tab));
+  const ta=document.getElementById('topbar-action');
+  if(tab==='berichte'){ta.textContent='↓ Bericht generieren';ta.onclick=generateReport;document.getElementById('topbar-title').textContent='Berichtsgenerator';}
+  else{ta.textContent='+ Neues Protokoll';ta.onclick=()=>openProtModal();document.getElementById('topbar-title').textContent='Protokollierung';}
+  render();
+}
+function render(){
+  if(currentTab==='berichte') renderBerichte();
+  else renderProtokoll();
+  updateNavBadges();
+}
+
+// ═══════════════════════════════════════════════════════
+// BERICHTE TAB
+// ═══════════════════════════════════════════════════════
+function renderBerichte(){
+  const proj=projects.find(p=>p.id===selPid);
+  document.getElementById('page').innerHTML=`
+    <div style="max-width:1140px;margin:0 auto">
+      <div style="margin-bottom:22px">
+        <h1 style="font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.03em;margin-bottom:4px">Berichtsgenerator</h1>
+        <p style="font-size:13px;color:var(--text3)">Automatische Berichte auf Basis der Modul-Ergebnisse erstellen</p>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">Berichtsvorlage wählen</div>
+      <div class="template-grid">
+        ${TEMPLATES.map(t=>`<div class="tpl-card ${selTemplate===t.id?'selected':''}" onclick="selTemplate='${t.id}';renderBerichte()">
+          ${selTemplate===t.id?'<span class="tpl-sel-badge">Vorlage ausgewählt</span>':''}
+          <div class="tpl-icon" style="background:${t.bg}">${t.icon}</div>
+          <div class="tpl-name">${t.name}</div>
+          <div class="tpl-desc">${t.desc}</div>
+        </div>`).join('')}
+      </div>
+      <div class="bericht-layout">
+        <div>
+          <div class="preview-wrap">
+            <div class="preview-header">
+              <span class="preview-title">Vorschau: ${TEMPLATES.find(t=>t.id===selTemplate)?.name||''}</span>
+              <span class="preview-badge">Vorlage ausgewählt</span>
+            </div>
+            <div class="preview-body" id="preview-body">
+              ${buildReportPreview(selTemplate, selPid)}
+            </div>
+          </div>
+        </div>
+        <div class="config-panel">
+          <div class="config-card">
+            <div class="config-card-header">Konfiguration</div>
+            <div class="config-card-body">
+              <div class="fg">
+                <label>Projekt</label>
+                <select id="cfg-proj" onchange="selPid=this.value;setCurrentProject(selPid);document.getElementById('preview-body').innerHTML=buildReportPreview(selTemplate,selPid)">
+                  <option value="">— Projekt wählen —</option>
+                  ${projects.map(p=>`<option value="${p.id}" ${p.id===selPid?'selected':''}>${p.number} · ${p.name}</option>`).join('')}
+                </select>
+              </div>
+              <div class="fg">
+                <label>Ausgabeformat</label>
+                <select id="cfg-format" onchange="selFormat=this.value">
+                  <option value="html">HTML (Browser / Druck)</option>
+                  <option value="csv">CSV (Daten-Export)</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Empfänger (E-Mail)</label>
+                <input type="email" id="cfg-email" placeholder="E-Mail-Adresse">
+              </div>
+              <label class="checkbox-row"><input type="checkbox" id="cfg-auto" ${autoReport?'checked':''}> Automatisch nach Prüfung</label>
+            </div>
+          </div>
+          <div class="config-card">
+            <div class="config-card-header">Datenquellen</div>
+            <div class="config-card-body">
+              ${renderDatasources(selPid)}
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateReport()">↓ Bericht generieren</button>
+          <button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="printReport()">🖨 Drucken / PDF</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderDatasources(pid){
+  const tms=tmData[pid]||[], ms=milestones[pid]||[], pp=projParams[pid]||[], prots=protokolle.filter(p=>p.pid===pid);
+  const res=pruefResults[pid];
+  const hasMp=tms.some(t=>t.parsed)&&res&&Object.keys(res).length>0;
+  const hasMile=ms.length>0;
+  const hasMerk=pp.length>0||Object.keys(assignments[pid]||{}).length>0;
+  const hasProt=prots.length>0;
+  const ds=[
+    {name:'Modellprüfung',ok:hasMp,val:hasMp?'heute':'kein Ergebnis'},
+    {name:'Meilensteinplanung',ok:hasMile,val:hasMile?'aktuell':'kein Eintrag'},
+    {name:'Merkmalserver',ok:hasMerk,val:hasMerk?'aktuell':'kein Eintrag'},
+    {name:'Protokollierung',ok:hasProt,val:hasProt?`${prots.length} Einträge`:'kein Eintrag'},
+    {name:'Anwendungsfälle',ok:!!(awfData[pid]||[]).length,val:(awfData[pid]||[]).length?`${(awfData[pid]||[]).length} AWF`:'kein Eintrag'},
+  ];
+  return ds.map(d=>`<div class="datasource-item">
+    <span class="ds-name">${d.ok?'✓':'○'} ${d.name}</span>
+    <span class="ds-status ${d.ok?'ds-ok':'ds-none'}">${d.val}</span>
+  </div>`).join('');
+}
+
+// ─── REPORT BUILDERS ──────────────────────────────────────────────────
+function buildReportPreview(tplId, pid){
+  if(!pid) return `<div style="padding:40px;text-align:center;color:var(--text3)"><div style="font-size:28px;margin-bottom:10px">📄</div><div style="font-size:13px">Bitte zuerst ein Projekt auswählen</div></div>`;
+  const proj=projects.find(p=>p.id===pid);
+  if(!proj) return `<div style="padding:40px;text-align:center;color:var(--text3)">Projekt nicht gefunden</div>`;
+  const builders={modellpruef:buildModellpruefBericht,meilenstein:buildMeilensteinBericht,compliance:buildComplianceBericht,statusreport:buildStatusreport,protokoll:buildMeetingProtokoll,datadrop:buildDatadropCheckliste};
+  return (builders[tplId]||buildModellpruefBericht)(proj,pid);
+}
+
+function buildModellpruefBericht(proj,pid){
+  const cs=checksets[pid]||[], tms=tmData[pid]||[], res=pruefResults[pid]||{};
+  const allRes=tms.flatMap(tm=>cs.map(id=>res[tm.id]?.[id]).filter(Boolean));
+  const pass=allRes.filter(r=>r.status==='pass').length, fail=allRes.filter(r=>r.status==='fail').length, warn=allRes.filter(r=>r.status==='warn').length;
+  const fms=fmData[pid]||[];
+  return `<div class="report-doc">
+    <div class="report-meta">Modellprüfbericht · ${proj.number||'PRJ'}</div>
+    <div class="report-title">${proj.name}</div>
+    <div class="report-sub">Erstellt: ${fmtDate(today())} · Prüfer: ${getUserName()} · Version: ${tms.length>0?Math.max(1,Math.floor(tms.length/Math.max(fms.length,1))):1}</div>
+    <div class="report-stats">
+      <div class="rstat" style="border-color:var(--ok)"><div class="rstat-num" style="color:var(--ok)">${pass}</div><div class="rstat-label">Bestanden</div></div>
+      <div class="rstat" style="border-color:var(--warn)"><div class="rstat-num" style="color:var(--warn)">${warn}</div><div class="rstat-label">Warnungen</div></div>
+      <div class="rstat" style="border-color:var(--err)"><div class="rstat-num" style="color:var(--err)">${fail}</div><div class="rstat-label">Fehler</div></div>
+    </div>
+    <div class="report-section">
+      <h3>1. Zusammenfassung</h3>
+      ${tms.length?`<p>Es wurden ${tms.length} Teilmodell${tms.length>1?'e':''} mit ${cs.length} Prüfregeln untersucht. ${fail>0?`Es wurden <strong>${fail} kritische Fehler</strong>, ${warn} Warnungen und ${pass} bestandene Prüfungen festgestellt.`:`Alle ${pass} Prüfungen bestanden.`}</p>`:`<p class="report-filler">Noch keine Modelle im Modell-Host des Projekts. Modelle im Modul Modellprüfung hochladen um Ergebnisse zu sehen.</p>`}
+    </div>
+    ${fail>0?`<div class="report-section">
+      <h3>2. Kritische Fehler (Maßnahmen erforderlich)</h3>
+      ${tms.flatMap(tm=>cs.map(ruleId=>{const r=res[tm.id]?.[ruleId];const rule=stammRules.find(x=>x.id===ruleId);if(!r||r.status!=='fail') return null;return {tm,rule,r};}).filter(Boolean)).slice(0,6).map(({tm,rule,r})=>`<div class="report-item"><span class="ri-icon">✗</span><span>${rule?.name||ruleId} – ${tm.name} (${r.passed||0}/${r.total||0} bestanden)</span></div>`).join('')}
+      ${fail>6?`<div class="report-filler">…${fail-6} weitere Fehler im vollständigen Bericht</div>`:''}
+    </div>`:''}
+    ${warn>0?`<div class="report-section">
+      <h3>3. Warnungen</h3>
+      ${tms.flatMap(tm=>cs.map(ruleId=>{const r=res[tm.id]?.[ruleId];const rule=stammRules.find(x=>x.id===ruleId);if(!r||r.status!=='warn') return null;return {tm,rule};}).filter(Boolean)).slice(0,5).map(({tm,rule})=>`<div class="report-item"><span class="ri-icon">⚠</span><span>${rule?.name||''} – ${tm.name}</span></div>`).join('')}
+    </div>`:''}
+    <div class="report-section">
+      <h3>4. Geprüfte Teilmodelle</h3>
+      ${tms.length?tms.map(tm=>{const fm=fms.find(f=>f.id===tm.fmId);const tmR=cs.map(id=>res[tm.id]?.[id]).filter(Boolean);const tp=tmR.filter(r=>r.status==='pass').length,tf=tmR.filter(r=>r.status==='fail').length;return`<div class="report-item"><span class="ri-icon">${tf>0?'✗':tp>0?'✓':'○'}</span><span>${tm.name} (${fm?.disc||'—'} · ${tm.datadrop||'—'}): ${tp} Pass, ${tf} Fail</span></div>`;}).join(''):`<p class="report-filler">Keine Teilmodelle vorhanden.</p>`}
+    </div>
+    <p class="report-filler">…weitere Inhalte werden automatisch befüllt…</p>
+  </div>`;
+}
+
+function buildMeilensteinBericht(proj,pid){
+  const ms=(milestones[pid]||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const todayStr=today();
+  return `<div class="report-doc">
+    <div class="report-meta">Meilensteinbericht · ${proj.number||'PRJ'}</div>
+    <div class="report-title">${proj.name}</div>
+    <div class="report-sub">Stand: ${fmtDate(todayStr)} · ${proj.pm||getUserName()}</div>
+    ${!ms.length?`<p class="report-filler">Keine Meilensteine definiert. Im Meilensteinmodul Meilensteine anlegen.</p>`:''}
+    ${ms.length?`<div class="report-stats">
+      <div class="rstat" style="border-color:var(--ok)"><div class="rstat-num" style="color:var(--ok)">${ms.filter(m=>m.date<todayStr).length}</div><div class="rstat-label">Abgeschlossen</div></div>
+      <div class="rstat" style="border-color:var(--warn)"><div class="rstat-num" style="color:var(--warn)">${ms.filter(m=>m.date>=todayStr&&m.date<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)).length}</div><div class="rstat-label">Nächste 30 Tage</div></div>
+      <div class="rstat" style="border-color:var(--border)"><div class="rstat-num">${ms.filter(m=>m.date>todayStr).length}</div><div class="rstat-label">Ausstehend</div></div>
+    </div>
+    <div class="report-section"><h3>Meilenstein-Übersicht</h3>
+    ${ms.map(m=>{const past=m.date<todayStr,near=!past&&m.date<=new Date(Date.now()+30*86400000).toISOString().slice(0,10);return`<div class="report-item"><span class="ri-icon">${past?'✓':near?'⏰':'○'}</span><span><strong>${m.name||m.type||'MS'}</strong> – ${fmtDate(m.date)} <span class="sp ${past?'sp-ok':near?'sp-warn':'sp-gray'}">${past?'Abgeschlossen':near?'Bald':'Ausstehend'}</span></span></div>`;}).join('')}
+    </div>`:''}
+    <p class="report-filler">…Datadrop-Status und Liefernachweis folgen…</p>
+  </div>`;
+}
+
+function buildComplianceBericht(proj,pid){
+  const pp=projParams[pid]||[], assign=assignments[pid]||{};
+  const totalMerkmale=new Set(Object.values(assign).flatMap(list=>list.map(a=>a.globalRef))).size;
+  const withVal=pp.filter(p=>p.validation).length;
+  const awfs=awfData[pid]||[];
+  return `<div class="report-doc">
+    <div class="report-meta">Merkmal-Compliance · ${proj.number||'PRJ'}</div>
+    <div class="report-title">${proj.name}</div>
+    <div class="report-sub">Nachweis der Informationsanforderungen gemäß BAP · ${fmtDate(today())}</div>
+    <div class="report-stats">
+      <div class="rstat" style="border-color:var(--accent)"><div class="rstat-num" style="color:var(--accent)">${totalMerkmale}</div><div class="rstat-label">Merkmale definiert</div></div>
+      <div class="rstat" style="border-color:var(--ok)"><div class="rstat-num" style="color:var(--ok)">${withVal}</div><div class="rstat-label">Mit Wertebereich</div></div>
+      <div class="rstat" style="border-color:var(--global)"><div class="rstat-num" style="color:var(--global)">${awfs.length}</div><div class="rstat-label">Anwendungsfälle</div></div>
+    </div>
+    <div class="report-section"><h3>1. Anwendungsfälle und Merkmalsabdeckung</h3>
+    ${awfs.length?awfs.map(a=>`<div class="report-item"><span class="ri-icon">✓</span><span><strong>${a.taetig||a.name} ${a.zweck||''}</strong> · <span class="sp sp-ok">${a.status==='aktiv'?'Aktiv':'—'}</span></span></div>`).join(''):`<p class="report-filler">Keine Anwendungsfälle definiert.</p>`}
+    </div>
+    <div class="report-section"><h3>2. Merkmals-Steckbrief</h3>
+    ${pp.slice(0,8).map(p=>`<div class="report-item"><span class="ri-icon">${p.validation?'✓':'○'}</span><span><strong>${p.name}</strong> · ${p.pset}.${p.attr} · ${p.validation?`Wertebereich: ${p.validation.type}`:'Kein Wertebereich'}</span></div>`).join('')}
+    ${pp.length>8?`<p class="report-filler">… +${pp.length-8} weitere Merkmale</p>`:''}
+    ${!pp.length?`<p class="report-filler">Keine Projektmerkmale definiert.</p>`:''}
+    </div>
+    <p class="report-filler">…Vollständiger Compliance-Nachweis im Export…</p>
+  </div>`;
+}
+
+function buildStatusreport(proj,pid){
+  const tms=tmData[pid]||[], ms=milestones[pid]||[], awfs=awfData[pid]||[];
+  const prots=protokolle.filter(p=>p.pid===pid);
+  const todayStr=today();
+  const nextMs=ms.filter(m=>m.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  return `<div class="report-doc">
+    <div class="report-meta">Projektstatusreport · ${proj.number||'PRJ'}</div>
+    <div class="report-title">${proj.name}</div>
+    <div class="report-sub">Executive Summary · ${fmtDate(todayStr)} · ${getUserName()}</div>
+    <div class="report-stats">
+      <div class="rstat" style="border-color:var(--info)"><div class="rstat-num" style="color:var(--info)">${tms.length}</div><div class="rstat-label">Teilmodelle</div></div>
+      <div class="rstat" style="border-color:var(--global)"><div class="rstat-num" style="color:var(--global)">${awfs.length}</div><div class="rstat-label">AWF</div></div>
+      <div class="rstat" style="border-color:var(--accent)"><div class="rstat-num" style="color:var(--accent)">${prots.length}</div><div class="rstat-label">Protokolle</div></div>
+    </div>
+    <div class="report-section"><h3>Projektstatus</h3>
+      <div class="report-item"><span class="ri-icon">📋</span><span>Projekt: <strong>${proj.name}</strong> · Nr. ${proj.number||'—'}</span></div>
+      ${proj.lp?`<div class="report-item"><span class="ri-icon">📍</span><span>Aktuelle Leistungsphase: <strong>${proj.lp}</strong></span></div>`:''}
+      ${nextMs?`<div class="report-item"><span class="ri-icon">📅</span><span>Nächster Meilenstein: <strong>${nextMs.name||nextMs.type}</strong> am ${fmtDate(nextMs.date)}</span></div>`:''}
+    </div>
+    <div class="report-section"><h3>Modellstatus</h3>
+      ${tms.length?tms.slice(0,5).map(tm=>{const fm=fms2(pid,tm.fmId);return`<div class="report-item"><span class="ri-icon">📄</span><span>${tm.name} · ${fm} · ${tm.datadrop||'—'}</span></div>`;}).join(''):`<p class="report-filler">Keine Modelle vorhanden.</p>`}
+    </div>
+    <div class="report-section"><h3>Letzte Protokolle</h3>
+      ${prots.slice(-3).reverse().map(p=>`<div class="report-item"><span class="ri-icon">📝</span><span><strong>${p.title}</strong> · ${fmtDate(p.date)}</span></div>`).join('')}
+      ${!prots.length?`<p class="report-filler">Noch keine Protokolle.</p>`:''}
+    </div>
+    <p class="report-filler">…vollständiger Statusbericht folgt…</p>
+  </div>`;
+}
+
+function buildMeetingProtokoll(proj,pid){
+  const prots=protokolle.filter(p=>p.pid===pid&&p.type==='besprechung');
+  const last=prots.slice(-1)[0];
+  return `<div class="report-doc">
+    <div class="report-meta">Besprechungsprotokoll · ${proj.number||'PRJ'}</div>
+    <div class="report-title">${last?.title||proj.name+' – Koordinationsbesprechung'}</div>
+    <div class="report-sub">Datum: ${fmtDate(last?.date||today())} · Ort: ${last?.location||'—'} · ${getUserName()}</div>
+    ${last?.participants?`<div class="report-section"><h3>Teilnehmer</h3><p>${last.participants}</p></div>`:''}
+    ${last?.content?`<div class="report-section"><h3>Tagesordnung</h3><p style="white-space:pre-line">${last.content}</p></div>`:``}
+    ${last?.actions?`<div class="report-section"><h3>Maßnahmen und Beschlüsse</h3><p style="white-space:pre-line">${last.actions}</p></div>`:`<p class="report-filler">Noch keine Besprechungsprotokolle. Im Tab „Protokollierung" anlegen.</p>`}
+    ${last?.next?`<div class="report-section"><h3>Nächster Termin</h3><p>${fmtDate(last.next)}</p></div>`:''}
+  </div>`;
+}
+
+function buildDatadropCheckliste(proj,pid){
+  const tms=tmData[pid]||[], fms=fmData[pid]||[];
+  const ddGroups={};
+  tms.forEach(tm=>{const key=tm.datadrop||'Kein Datadrop';if(!ddGroups[key])ddGroups[key]=[];ddGroups[key].push(tm);});
+  return `<div class="report-doc">
+    <div class="report-meta">Datadrop-Checkliste · ${proj.number||'PRJ'}</div>
+    <div class="report-title">${proj.name}</div>
+    <div class="report-sub">Übergabeprotokoll IFC-Lieferungen · ${fmtDate(today())}</div>
+    <div class="report-stats">
+      <div class="rstat" style="border-color:var(--accent)"><div class="rstat-num" style="color:var(--accent)">${Object.keys(ddGroups).length}</div><div class="rstat-label">Datadrops</div></div>
+      <div class="rstat" style="border-color:var(--info)"><div class="rstat-num" style="color:var(--info)">${tms.length}</div><div class="rstat-label">Teilmodelle</div></div>
+      <div class="rstat" style="border-color:var(--ok)"><div class="rstat-num" style="color:var(--ok)">${tms.filter(t=>t.parsed).length}</div><div class="rstat-label">Mit IFC-Daten</div></div>
+    </div>
+    ${Object.entries(ddGroups).map(([dd,tmList])=>`<div class="report-section"><h3>${dd}</h3>
+      ${tmList.map(tm=>{const fm=fms.find(f=>f.id===tm.fmId);return`<div class="report-item"><span class="ri-icon">${tm.parsed?'✓':'○'}</span><span><strong>${tm.name}</strong> · ${fm?.disc||'—'} · ${fmtDate(tm.uploadedAt)} · ${tm.parsed?`${tm.parsed.entities?.toLocaleString()} Entities`:'Kein IFC'}</span></div>`;}).join('')}
+    </div>`).join('')}
+    ${!tms.length?`<p class="report-filler">Noch keine Modelle geliefert.</p>`:''}
+    <p class="report-filler">…Signatur und Freigabe im Export…</p>
+  </div>`;
+}
+
+// helper
+function fms2(pid,fmId){const fm=(fmData[pid]||[]).find(f=>f.id===fmId);return fm?fm.name:'—';}
+function getUserName(){try{return JSON.parse(localStorage.getItem(SET_KEY))?.name||'BIM Manager';}catch{return 'BIM Manager';}}
+
+// ─── GENERATE / EXPORT ────────────────────────────────────────────────
+function generateReport(){
+  if(!selPid){showToast('Bitte zuerst ein Projekt auswählen');return;}
+  const fmt=document.getElementById('cfg-format')?.value||'html';
+  if(fmt==='csv'){exportCSV();return;}
+  const content=document.getElementById('preview-body')?.innerHTML||'';
+  const tpl=TEMPLATES.find(t=>t.id===selTemplate);
+  const proj=projects.find(p=>p.id===selPid);
+  const fullHtml=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>${tpl?.name||'Bericht'} – ${proj?.name||''}</title>
+  <style>body{font-family:'Segoe UI',sans-serif;max-width:800px;margin:40px auto;color:#1a2540;font-size:13px;line-height:1.65}
+  .report-doc{padding:20px}.report-meta{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#8899b0;margin-bottom:6px}
+  .report-title{font-size:24px;font-weight:700;margin-bottom:4px}.report-sub{font-size:12px;color:#8899b0;margin-bottom:20px}
+  .report-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.rstat{border:1px solid #e2e8f0;border-radius:6px;padding:14px;text-align:center}
+  .rstat-num{font-size:28px;font-weight:700}.rstat-label{font-size:11px;color:#8899b0;margin-top:3px}
+  .report-section{margin:20px 0}.report-section h3{font-size:13px;font-weight:700;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #e2e8f0}
+  .report-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:12px}
+  .report-filler{color:#8899b0;font-size:11px;font-style:italic;padding:10px 0}
+  .sp{display:inline-flex;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600}
+  .sp-ok{background:#ecfdf5;color:#10b981}.sp-err{background:#fef2f2;color:#ef4444}.sp-warn{background:#fffbeb;color:#f59e0b}.sp-gray{background:#f5f7fa;color:#8899b0}</style></head>
+  <body>${content}</body></html>`;
+  const blob=new Blob([fullHtml],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`${tpl?.name||'bericht'}-${proj?.number||'prj'}-${today()}.html`;a.click();URL.revokeObjectURL(url);
+  showToast(`✓ ${tpl?.name||'Bericht'} generiert`);
+}
+function printReport(){
+  const content=document.getElementById('preview-body')?.innerHTML||'';
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bericht</title>
+  <style>body{font-family:'Segoe UI',sans-serif;max-width:800px;margin:40px auto;color:#1a2540;font-size:13px;line-height:1.65}
+  .report-doc{padding:20px}.report-meta{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#8899b0;margin-bottom:6px}
+  .report-title{font-size:24px;font-weight:700;margin-bottom:4px}.report-sub{font-size:12px;color:#8899b0;margin-bottom:20px}
+  .report-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.rstat{border:1px solid #ddd;border-radius:6px;padding:14px;text-align:center}
+  .rstat-num{font-size:28px;font-weight:700}.rstat-label{font-size:11px;color:#999}
+  .report-section{margin:20px 0}.report-section h3{font-size:13px;font-weight:700;padding-bottom:5px;border-bottom:1px solid #ddd;margin-bottom:10px}
+  .report-item{display:flex;gap:8px;margin-bottom:5px;font-size:12px}
+  .report-filler{color:#999;font-style:italic;font-size:11px;padding:8px 0}
+  .sp{display:inline-flex;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600}
+  .sp-ok{background:#ecfdf5;color:#10b981}.sp-err{background:#fef2f2;color:#ef4444}.sp-warn{background:#fffbeb;color:#f59e0b}.sp-gray{background:#f5f7fa;color:#999}</style></head>
+  <body>${content}<script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+function exportCSV(){
+  const proj=projects.find(p=>p.id===selPid);
+  const cs=checksets[selPid]||[], tms=tmData[selPid]||[], res=pruefResults[selPid]||{};
+  const rows=[['Modellprüfbericht – CSV Export'],['Projekt',proj?.name||''],['Datum',today()],[''],['Teilmodell','Regelname','Kategorie','Status','Pass','Total']];
+  tms.forEach(tm=>cs.forEach(ruleId=>{const rule=stammRules.find(r=>r.id===ruleId);const r=res[tm.id]?.[ruleId];rows.push([tm.name,rule?.name||ruleId,rule?.cat||'',r?.status||'—',r?.passed||0,r?.total||0]);}));
+  const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`bericht-${proj?.number||'prj'}-${today()}.csv`;a.click();URL.revokeObjectURL(url);
+  showToast('✓ CSV exportiert');
+}
+
+// ═══════════════════════════════════════════════════════
+// PROTOKOLLIERUNG TAB
+// ═══════════════════════════════════════════════════════
+function renderProtokoll(){
+  const pid=selPid;
+  const filteredProts=protokolle.filter(p=>!pid||p.pid===pid);
+  const sel=filteredProts.find(p=>p.id===selProt);
+  document.getElementById('page').innerHTML=`
+    <div style="max-width:1140px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <h1 style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.03em">Protokollierung</h1>
+          <p style="font-size:12px;color:var(--text3);margin-top:2px">Besprechungs-, Datadrop- und Prüfprotokolle · Projekttagesbuch</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <select class="psel" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;outline:none" onchange="selPid=this.value;renderProtokoll()">
+            <option value="">Alle Projekte</option>
+            ${projects.map(p=>`<option value="${p.id}" ${p.id===selPid?'selected':''}>${p.number} · ${p.name}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" onclick="openProtModal()">+ Neues Protokoll</button>
+        </div>
+      </div>
+      <div class="prot-layout">
+        <div class="prot-sidebar">
+          <div class="prot-sidebar-header">
+            <span class="prot-sidebar-title">Einträge (${filteredProts.length})</span>
+            <div style="display:flex;gap:4px">
+              ${['besprechung','datadrop','pruef','tagebuch'].map(t=>`<button class="btn-ghost" style="font-size:9px;padding:2px 5px" onclick="filterProtType('${t}')" title="${PROT_TYPES[t].label}">${PROT_TYPES[t].label.slice(0,3)}</button>`).join('')}
+            </div>
+          </div>
+          <div class="prot-scroll" id="prot-list">
+            ${!filteredProts.length?`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Noch keine Protokolle.<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openProtModal()">+ Anlegen</button></div>`:filteredProts.slice().reverse().map(p=>`<div class="prot-item ${selProt===p.id?'active':''}" onclick="selProt='${p.id}';renderProtokoll()">
+              <span class="prot-type ${PROT_TYPES[p.type]?.cls||'pt-tagebuch'}">${PROT_TYPES[p.type]?.label||p.type}</span>
+              <div class="prot-title">${p.title}</div>
+              <div class="prot-date">${fmtDate(p.date)} ${p.pid?(projects.find(x=>x.id===p.pid)?.number||''):'alle'}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+        <div class="prot-detail">
+          ${sel?renderProtDetail(sel):renderProtEmpty()}
+        </div>
+      </div>
+    </div>`;
+}
+function renderProtEmpty(){
+  return `<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;color:var(--text3)">
+    <div>
+      <div style="font-size:36px;margin-bottom:12px">📝</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Protokoll auswählen</div>
+      <div style="font-size:12px;margin-bottom:16px">Wähle einen Eintrag links oder lege ein neues Protokoll an</div>
+      <button class="btn btn-primary" onclick="openProtModal()">+ Neues Protokoll</button>
+    </div>
+  </div>`;
+}
+function renderProtDetail(p){
+  const proj=projects.find(x=>x.id===p.pid);
+  return `<div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px">
+      <div>
+        <span class="prot-type ${PROT_TYPES[p.type]?.cls||'pt-tagebuch'}" style="margin-bottom:8px;display:inline-block">${PROT_TYPES[p.type]?.label||p.type}</span>
+        <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:5px">${p.title}</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text3)">
+          ${fmtDate(p.date)} ${p.location?'· '+p.location:''} ${proj?'· '+proj.number:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" onclick="openProtModal('${p.id}')">✎ Bearbeiten</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportProtAsBericht('${p.id}')">⬇ Export</button>
+        <button class="btn btn-ghost" style="color:var(--err)" onclick="deleteProtokoll('${p.id}')">⌫</button>
+      </div>
+    </div>
+    ${p.participants?`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:14px">
+      <div style="font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;margin-bottom:4px">Teilnehmer</div>
+      <div style="font-size:12px">${p.participants}</div>
+    </div>`:''}
+    ${p.content?`<div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);margin-bottom:8px">Inhalt / Tagesordnung</div>
+      <div style="font-size:13px;line-height:1.75;white-space:pre-line;color:var(--text)">${p.content}</div>
+    </div>`:''}
+    ${p.actions?`<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:12px 16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);margin-bottom:8px">Maßnahmen & Beschlüsse</div>
+      <div style="font-size:12px;line-height:1.75;white-space:pre-line">${p.actions}</div>
+    </div>`:''}
+    ${p.next?`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--info-bg);border:1px solid #bfdbfe;border-radius:var(--r);font-size:12px"><span>📅</span><span>Nächster Termin: <strong>${fmtDate(p.next)}</strong></span></div>`:''}
+  </div>`;
+}
+
+// ─── PROTOKOLL CRUD ───────────────────────────────────────────────────
+function openProtModal(id=null){
+  editProtId=id;
+  document.getElementById('prot-modal-title').textContent=id?'Protokoll bearbeiten':'Neues Protokoll';
+  const src=id?protokolle.find(p=>p.id===id):null;
+  document.getElementById('pm-title').value=src?.title||'';
+  document.getElementById('pm-type').value=src?.type||'besprechung';
+  document.getElementById('pm-date').value=src?.date||today();
+  document.getElementById('pm-location').value=src?.location||'';
+  document.getElementById('pm-participants').value=src?.participants||'';
+  document.getElementById('pm-content').value=src?.content||'';
+  document.getElementById('pm-actions').value=src?.actions||'';
+  document.getElementById('pm-next').value=src?.next||'';
+  document.getElementById('prot-ol').classList.add('open');
+  setTimeout(()=>document.getElementById('pm-title').focus(),200);
+}
+function closeProtModal(){document.getElementById('prot-ol').classList.remove('open');editProtId=null;}
+function saveProtokoll(){
+  const title=document.getElementById('pm-title').value.trim();
+  if(!title){showToast('Titel erforderlich');return;}
+  const prot={
+    id:editProtId||uid(), pid:selPid||'',
+    title, type:document.getElementById('pm-type').value,
+    date:document.getElementById('pm-date').value,
+    location:document.getElementById('pm-location').value.trim(),
+    participants:document.getElementById('pm-participants').value.trim(),
+    content:document.getElementById('pm-content').value.trim(),
+    actions:document.getElementById('pm-actions').value.trim(),
+    next:document.getElementById('pm-next').value,
+    created:editProtId?protokolle.find(p=>p.id===editProtId)?.created||new Date().toISOString():new Date().toISOString(),
+    updated:new Date().toISOString()
+  };
+  if(editProtId){const i=protokolle.findIndex(p=>p.id===editProtId);if(i>-1)protokolle[i]=prot;showToast('✓ Protokoll aktualisiert');}
+  else{protokolle.push(prot);selProt=prot.id;showToast('✓ Protokoll gespeichert');}
+  saveProts();closeProtModal();render();
+}
+function deleteProtokoll(id){
+  if(!confirm('Protokoll löschen?')) return;
+  protokolle=protokolle.filter(p=>p.id!==id);
+  if(selProt===id) selProt=null;
+  saveProts();render();showToast('Gelöscht');
+}
+function exportProtAsBericht(id){
+  const p=protokolle.find(x=>x.id===id);if(!p) return;
+  const proj=projects.find(x=>x.id===p.pid);
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${p.title}</title>
+  <style>body{font-family:'Segoe UI',sans-serif;max-width:760px;margin:40px auto;color:#1a2540;font-size:13px;line-height:1.7}h1{font-size:20px;font-weight:700;margin-bottom:4px}h2{font-size:13px;font-weight:700;margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid #e2e8f0}.meta{font-size:11px;color:#8899b0;margin-bottom:20px}.box{background:#f5f7fa;border-left:3px solid #00c9a7;padding:10px 14px;margin:14px 0;font-size:12px;line-height:1.7;white-space:pre-line}</style></head>
+  <body>
+  <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#8899b0">Protokoll · ${proj?.number||''}</div>
+  <h1>${p.title}</h1>
+  <div class="meta">${fmtDate(p.date)}${p.location?' · '+p.location:''}${proj?' · '+proj.name:''}</div>
+  ${p.participants?`<h2>Teilnehmer</h2><p>${p.participants}</p>`:''}
+  ${p.content?`<h2>Inhalt / Tagesordnung</h2><p style="white-space:pre-line">${p.content}</p>`:''}
+  ${p.actions?`<h2>Maßnahmen & Beschlüsse</h2><div class="box">${p.actions}</div>`:''}
+  ${p.next?`<p style="margin-top:20px">📅 Nächster Termin: <strong>${fmtDate(p.next)}</strong></p>`:''}
+  </body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`protokoll-${p.date||today()}.html`;a.click();URL.revokeObjectURL(url);
+  showToast('✓ Protokoll exportiert');
+}
+function filterProtType(type){
+  // Future: filter by type
+  showToast('Filter: '+PROT_TYPES[type]?.label);
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function comingSoon(){showToast('Modul wird in Kürze entwickelt');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeProtModal();});
+init();
+
+// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
+</script>
+</body>
+</html>

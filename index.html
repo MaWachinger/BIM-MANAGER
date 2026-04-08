@@ -1106,10 +1106,7 @@ function setActiveProject(pid) {
 function getActiveProject() {
   return localStorage.getItem('bim_current_project') || '';
 }
-function goTo(module) {
-  // Save current active project before navigating
-  window.location.href = module;
-}
+
 
 // ─── FIRST LAUNCH SEED ────────────────────────────────────────────────
 function seedIfEmpty() {

@@ -23,6 +23,7 @@ const SYNC_PREFIX = 'bim_';
 // ─── INTERNAL STATE ────────────────────────────────────────────────────
 const _enabled = (BIM_SUPABASE_URL.indexOf('supabase.co') !== -1);
 let   _dirty   = {};   // {key: value} — pending writes
+var   _paused  = false;
 let   _flushId = null;
 let   _status  = 'idle';
 
@@ -58,8 +59,17 @@ async function _fetchAll() {
 function _markDirty(key, value) {
   if (!_enabled) return;
   _dirty[key] = value;
-  clearTimeout(_flushId);
-  _flushId = setTimeout(_flush, 1000);
+  if (!_paused) {
+    clearTimeout(_flushId);
+    _flushId = setTimeout(_flush, 1000);
+  }
+}
+function bimSyncPause()  { _paused = true; clearTimeout(_flushId); }
+function bimSyncResume() {
+  _paused = false;
+  if (Object.keys(_dirty).length > 0) {
+    _flushId = setTimeout(_flush, 2000);
+  }
 }
 
 async function _flush() {

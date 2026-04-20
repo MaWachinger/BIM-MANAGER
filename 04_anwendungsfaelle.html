@@ -675,16 +675,40 @@ async function suggestOneAI(idx){
   const r=importRows[idx]; if(!r) return;
   const btn=document.getElementById('aisug-'+idx); if(btn){btn.disabled=true;btn.textContent='⏳';}
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:'Du bist ein BIM-Experte. Antworte NUR mit JSON: {"taetig":"Verb Substantiv","zweck":"für/zur Substantiv"}. Keine Erklärungen.',messages:[{role:'user',content:`Zerlege diesen BIM-Anwendungsfall-Namen nach der Schablone Tätigkeit (Verb+Substantiv) + Zweck (für/zur+Substantiv): "${r.name}". Methodenneutral, phasenneutral.`}]})});
-    const data=await resp.json();
-    const txt=data.content?.find(c=>c.type==='text')?.text||'';
-    const clean=txt.replace(/```json?|```/g,'').trim();
-    const sug=JSON.parse(clean);
-    importRows[idx].taetig=sug.taetig||r.taetig;
-    importRows[idx].zweck=sug.zweck||r.zweck;
-    importRows[idx].aiSuggested=true;
-  }catch(e){showToast('KI-Vorschlag fehlgeschlagen');}
-  renderImpPreview();
+    // Lokale Heuristik (kein API-Aufruf nötig)
+    const name=(r.name||r.Name||'').trim();
+    // Verben-Mapping für BIM-Anwendungsfälle
+    const verbMap=[
+      ['koordinier','Koordinieren'],['prüf','Prüfen'],['erstell','Erstellen'],
+      ['erarbeit','Erarbeiten'],['exportier','Exportieren'],['importier','Importieren'],
+      ['visualisier','Visualisieren'],['auswerт','Auswerten'],['auswert','Auswerten'],
+      ['abstimm','Abstimmen'],['dokumentier','Dokumentieren'],['klassifizier','Klassifizieren'],
+      ['ermittel','Ermitteln'],['überwach','Überwachen'],['simulier','Simulieren'],
+      ['model','Modellieren'],['plan','Planen'],['manage','Managen'],['analys','Analysieren'],
+    ];
+    const zweckMap=[
+      ['kollision','Kollisionsprüfung'],['kosten','Kostenplanung'],['menge','Mengenermittlung'],
+      ['raum','Raumplanung'],['brand','Brandschutzplanung'],['energie','Energieanalyse'],
+      ['terminplan','Terminplanung'],['genehmig','Genehmigung'],['ausschreib','Ausschreibung'],
+      ['übergabe','Übergabe'],['betrieb','Betriebsführung'],['facility','Facility Management'],
+    ];
+    let taetig='Koordinieren', zweck='zur Abstimmung';
+    const lower=name.toLowerCase();
+    for(const[key,val] of verbMap){ if(lower.includes(key)){taetig=val;break;} }
+    for(const[key,val] of zweckMap){ if(lower.includes(key)){zweck='für '+val;break;} }
+    // Use remaining words as zweck if no match
+    if(zweck==='zur Abstimmung'&&name){
+      const words=name.split(/[\s\-_]+/).filter(w=>w.length>3);
+      if(words.length>1) zweck='für '+words.slice(1).join(' ');
+    }
+    importRows[idx]={...r,taetig,zweck};
+    renderImportPreview();
+    showToast('✓ KI-Vorschlag (lokal): '+taetig+' '+zweck);
+  }catch(e){
+    showToast('Fehler: '+e.message);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='✨ KI';}
+  }
 }
 async function suggestAllAI(){
   const toProcess=importRows.filter(r=>!r.taetig&&r.name);

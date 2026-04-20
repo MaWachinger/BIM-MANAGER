@@ -451,7 +451,11 @@ let projects=[], settings={name:'',org:''}, editingId=null, deleteId=null, curre
 function init() {
   // Seed test data on first launch
   const _existing = JSON.parse(localStorage.getItem('bim_projects_v2') || '[]');
-  if (!_existing.length) { seedBIMManagerTestdata(); }
+  if (!_existing.length) {
+    if (typeof bimSyncPause  === 'function') bimSyncPause();   // pause sync during bulk seed
+    seedBIMManagerTestdata();
+    if (typeof bimSyncResume === 'function') bimSyncResume();  // flush all at once after
+  }
   loadSettings(); loadData();
   buildPhaseCheckboxes(); buildBeteiligteForm();
   rebuildSoftwareSelect();

@@ -301,7 +301,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 <div class="main">
   <div class="topbar">
     <span style="font-size:12px;color:var(--text3)">Merkmalserver</span>
-    <div class="topbar-right" id="topbar-right"></div>
+    <div class="topbar-right" id="topbar-right">
+      <button onclick="goTo('08_hilfe.html')" title="Hilfe & Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
+    </div>
   </div>
   <div class="mode-tabs">
     <div class="mode-tab g active" id="tab-global" onclick="setMode('global')">◈ Globale Bibliothek<span class="tb" id="tb-global">0</span></div>

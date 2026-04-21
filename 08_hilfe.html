@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BIM Manager · Hilfe & Dokumentation</title>
+<script src="bim_sync.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;--nav-hover:#1a2744;--nav-active:#152238;
+  --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.13);
+  --bg:#f0f3f8;--surface:#fff;--surface2:#f5f7fa;--border:#e2e8f0;
+  --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
+  --ok:#10b981;--warn:#f59e0b;--err:#ef4444;--info:#3b82f6;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --r:6px;--rl:10px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+.sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
+.logo{padding:20px 18px 18px;border-bottom:1px solid var(--nav-border)}
+.logo-mark{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0f1623;font-family:var(--mono)}
+.logo-name{font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:-0.02em}
+.logo-sub{font-size:10px;color:var(--nav-text);letter-spacing:0.06em;text-transform:uppercase;margin-left:39px;font-family:var(--mono)}
+.nav{padding:8px 0;flex:1}
+.nav-section{padding:14px 18px 5px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3d5473;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--nav-text);font-size:13px;border-left:2px solid transparent;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:#c8d8e8}
+.nav-item.active{background:var(--nav-active);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-icon{width:17px;height:17px;opacity:0.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.content{flex:1;padding:36px 48px;max-width:900px}
+
+/* HELP NAV (left TOC) */
+.help-layout{display:flex;gap:32px;align-items:flex-start}
+.help-toc{width:200px;min-width:200px;position:sticky;top:24px}
+.toc-item{display:block;font-size:12px;color:var(--text3);padding:5px 0;border-left:2px solid var(--border);padding-left:10px;cursor:pointer;transition:all 0.15s;text-decoration:none}
+.toc-item:hover{color:var(--text2);border-left-color:var(--accent)}
+.toc-item.active{color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.toc-section{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);padding:12px 0 4px 12px}
+
+/* MAIN CONTENT */
+.help-body{flex:1;min-width:0}
+.section{margin-bottom:48px;scroll-margin-top:24px}
+h1{font-size:26px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:6px}
+h2{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.02em;margin-bottom:14px;padding-top:8px}
+h3{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:10px;margin-top:20px}
+p{font-size:13px;line-height:1.75;color:var(--text2);margin-bottom:12px}
+.lead{font-size:14px;color:var(--text3);margin-bottom:28px;line-height:1.7}
+
+/* MODULE CARDS */
+.module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.module-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px;cursor:pointer;transition:all 0.15s;border-left:4px solid}
+.module-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.06);transform:translateY(-1px)}
+.mc-icon{font-size:20px;margin-bottom:8px}
+.mc-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.mc-desc{font-size:11px;color:var(--text3);line-height:1.55}
+
+/* WORKFLOW STEPS */
+.steps{counter-reset:step;display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.step{display:flex;gap:14px;align-items:flex-start;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.step::before{counter-increment:step;content:counter(step);width:24px;height:24px;border-radius:50%;background:var(--accent);color:#0f1623;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono)}
+.step-body{flex:1}
+.step-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.step-desc{font-size:12px;color:var(--text3);line-height:1.55}
+
+/* GLOSSAR */
+.glossar-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.gl-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.gl-term{font-size:12px;font-weight:600;color:var(--accent);font-family:var(--mono);margin-bottom:4px}
+.gl-def{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* TIPS */
+.tip{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:10px}
+.tip-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);color:var(--accent);margin-bottom:4px}
+.tip p{margin-bottom:0;font-size:12px}
+.warn-box{background:#fffbeb;border-left:3px solid var(--warn);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:10px}
+.warn-box p{margin-bottom:0;font-size:12px;color:#92400e}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.badge-ok{background:#ecfdf5;color:var(--ok)}
+.badge-warn{background:#fffbeb;color:var(--warn)}
+.badge-info{background:#eff6ff;color:var(--info)}
+
+/* DIVIDER */
+hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+
+/* KEYBOARD SHORTCUT */
+kbd{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:11px;color:var(--text2)}
+
+/* WORKFLOW OVERVIEW DIAGRAM */
+.flow{display:flex;align-items:center;gap:0;margin:16px 0;overflow-x:auto}
+.flow-node{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;text-align:center;min-width:110px;flex-shrink:0}
+.flow-node-name{font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px}
+.flow-node-sub{font-size:10px;color:var(--text3)}
+.flow-arrow{color:var(--text3);font-size:18px;padding:0 4px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><div class="logo-icon">BIM</div><div class="logo-name">BIM Manager</div></div>
+    <div class="logo-sub">Hilfe & Doku</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Module</div>
+    <div class="nav-item" onclick="goTo('index.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M7 3v14M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="goTo('02_meilensteinplanung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
+    <div class="nav-item" onclick="goTo('04_anwendungsfaelle.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M7 10h6M10 7v6"/></svg>Anwendungsfälle</div>
+    <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="3" rx="1"/><rect x="2" y="10" width="16" height="3" rx="1"/><rect x="2" y="15" width="10" height="3" rx="1"/></svg>Merkmalserver</div>
+    <div class="nav-item" onclick="goTo('05_modellpruefung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung</div>
+    <div class="nav-item" onclick="goTo('06_modellpruefung_regeln.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="4"/><path d="M4 17v-1a6 6 0 0112 0v1"/></svg>Prüfregeln</div>
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z"/><path d="M10 9h4M10 13h4M6 9h.01M6 13h.01"/></svg>Berichtsgenerator</div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M10 7v3M10 13h.01"/></svg>Hilfe & Doku</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
+    <div style="font-size:10px;color:var(--nav-text)">Dokumentation V0.1</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span style="font-size:12px;color:var(--text3)">Hilfe & Dokumentation</span>
+    <div class="topbar-right" id="topbar-right">
+      <button onclick="window.print()" style="padding:5px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);font-family:var(--sans);font-size:12px;cursor:pointer;color:var(--text2)">🖨 Drucken / PDF</button>
+    </div>
+  </div>
+  <div style="padding:36px 48px;display:flex;gap:32px;align-items:flex-start;max-width:1100px">
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="help-toc">
+      <div class="toc-section">Inhalt</div>
+      <a class="toc-item active" href="#uebersicht" onclick="setActive(this)">Überblick</a>
+      <a class="toc-item" href="#workflow" onclick="setActive(this)">Typischer Workflow</a>
+      <div class="toc-section">Module</div>
+      <a class="toc-item" href="#projektverwaltung" onclick="setActive(this)">Projektverwaltung</a>
+      <a class="toc-item" href="#meilensteine" onclick="setActive(this)">Meilensteinplanung</a>
+      <a class="toc-item" href="#awf" onclick="setActive(this)">Anwendungsfälle</a>
+      <a class="toc-item" href="#merkmalserver" onclick="setActive(this)">Merkmalserver</a>
+      <a class="toc-item" href="#modellpruefung" onclick="setActive(this)">Modellprüfung</a>
+      <a class="toc-item" href="#pruefregeln" onclick="setActive(this)">Prüfregeln</a>
+      <a class="toc-item" href="#berichte" onclick="setActive(this)">Berichtsgenerator</a>
+      <div class="toc-section">Referenz</div>
+      <a class="toc-item" href="#glossar" onclick="setActive(this)">Glossar</a>
+      <a class="toc-item" href="#sync" onclick="setActive(this)">Datensynchronisation</a>
+      <a class="toc-item" href="#ifc" onclick="setActive(this)">IFC & Formate</a>
+    </div>
+
+    <!-- MAIN HELP CONTENT -->
+    <div class="help-body">
+
+      <!-- ÜBERBLICK -->
+      <div class="section" id="uebersicht">
+        <h1>BIM Manager – Dokumentation</h1>
+        <p class="lead">Digitales Werkzeug zur Koordination von BIM-Projekten nach TMM-Methodik. Alle Module teilen sich einen gemeinsamen Datenstand und sind über Supabase synchronisiert.</p>
+
+        <div class="module-grid">
+          <div class="module-card" style="border-left-color:#3b82f6" onclick="goTo('index.html')">
+            <div class="mc-icon">🏗</div>
+            <div class="mc-name">Projektverwaltung</div>
+            <div class="mc-desc">Einstiegspunkt. Projekte anlegen, Beteiligte erfassen, aktives Projekt für alle Module setzen.</div>
+          </div>
+          <div class="module-card" style="border-left-color:#8b5cf6" onclick="goTo('02_meilensteinplanung.html')">
+            <div class="mc-icon">📅</div>
+            <div class="mc-name">Meilensteinplanung</div>
+            <div class="mc-desc">Meilensteine und Datadrops als Gantt- oder Timeline-Ansicht. Grundlage für Prüfzeitpunkte.</div>
+          </div>
+          <div class="module-card" style="border-left-color:#f59e0b" onclick="goTo('04_anwendungsfaelle.html')">
+            <div class="mc-icon">⚙</div>
+            <div class="mc-name">Anwendungsfälle (AWF)</div>
+            <div class="mc-desc">BIM-Anwendungsfälle nach TMM-Schablone. Stamm + projektspezifische AWF mit RACI, I/O, QS.</div>
+          </div>
+          <div class="module-card" style="border-left-color:#10b981" onclick="goTo('03_merkmalserver_v2.html')">
+            <div class="mc-icon">📋</div>
+            <div class="mc-name">Merkmalserver</div>
+            <div class="mc-desc">Globale Merkmalsbibliothek. Parameter mit Wertebereichen, Phasenzuordnung, IFC-Typen.</div>
+          </div>
+          <div class="module-card" style="border-left-color:#00c9a7" onclick="goTo('05_modellpruefung.html')">
+            <div class="mc-icon">🔍</div>
+            <div class="mc-name">Modellprüfung</div>
+            <div class="mc-desc">IFC-Modelle hochladen, Hierarchie KM → FM → TM aufbauen, 3D-Viewer, Prüfung starten.</div>
+          </div>
+          <div class="module-card" style="border-left-color:#ef4444" onclick="goTo('06_modellpruefung_regeln.html')">
+            <div class="mc-icon">✓</div>
+            <div class="mc-name">Prüfregeln</div>
+            <div class="mc-desc">Prüf-Stamm (S/G/F), Projekt-Checkset, Ergebnisse mit Reifegrad und Viewer-Zoom.</div>
+          </div>
+          <div class="module-card" style="border-left-color:#6366f1;grid-column:1/-1" onclick="goTo('07_berichtsgenerator.html')">
+            <div class="mc-icon">📄</div>
+            <div class="mc-name">Berichtsgenerator & Protokollierung</div>
+            <div class="mc-desc">6 Berichtsvorlagen aus allen Modul-Daten. Integrierte Protokollierung (Besprechung, Datadrop, Prüfung, Tagebuch).</div>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- WORKFLOW -->
+      <div class="section" id="workflow">
+        <h2>Typischer Workflow</h2>
+        <p>Der BIM Manager folgt einem klaren Prozess von der Projektanlage bis zum Prüfbericht. Das aktive Projekt wird in der Projektverwaltung gesetzt und gilt für alle anderen Module.</p>
+
+        <div class="flow">
+          <div class="flow-node" style="border-left:3px solid #3b82f6"><div class="flow-node-name">1 · Projekt</div><div class="flow-node-sub">anlegen & aktivieren</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-left:3px solid #8b5cf6"><div class="flow-node-name">2 · Meilensteine</div><div class="flow-node-sub">Datadrops definieren</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-left:3px solid #f59e0b"><div class="flow-node-name">3 · AWF</div><div class="flow-node-sub">Anwendungsfälle</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-left:3px solid #10b981"><div class="flow-node-name">4 · Merkmale</div><div class="flow-node-sub">Parameter zuweisen</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-left:3px solid #00c9a7"><div class="flow-node-name">5 · Modelle</div><div class="flow-node-sub">IFC hochladen</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-left:3px solid #ef4444"><div class="flow-node-name">6 · Prüfen</div><div class="flow-node-sub">Checkset ausführen</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-left:3px solid #6366f1"><div class="flow-node-name">7 · Bericht</div><div class="flow-node-sub">generieren & senden</div></div>
+        </div>
+
+        <div class="tip">
+          <div class="tip-label">Wichtig</div>
+          <p>In der <strong>Projektverwaltung</strong> immer zuerst <strong>„▶ Öffnen"</strong> klicken um ein Projekt als aktiv zu setzen. Alle anderen Module lesen dieses aktive Projekt automatisch aus.</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- PROJEKTVERWALTUNG -->
+      <div class="section" id="projektverwaltung">
+        <h2>Projektverwaltung</h2>
+        <p>Die Projektverwaltung ist der Einstiegspunkt des Tools. Hier werden Projekte angelegt, Beteiligte erfasst und das aktive Projekt für alle anderen Module gesetzt.</p>
+
+        <h3>Projekt anlegen</h3>
+        <div class="steps">
+          <div class="step"><div class="step-body"><div class="step-title">„+ Neues Projekt" klicken</div><div class="step-desc">Öffnet das Erfassungsformular mit drei Tabs: Stammdaten, Leistungsphasen, Beteiligte.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Stammdaten ausfüllen</div><div class="step-desc">Projektnummer, Name, Auftraggeber, BIM-Level, IFC-Schema, Beschreibung.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Leistungsphasen markieren</div><div class="step-desc">Aktive LP1–LP9 ankreuzen. Beeinflusst welche Prüfregeln aktiv sind.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">„▶ Öffnen" klicken</div><div class="step-desc">Setzt das Projekt als aktiv für alle Module. Ein grünes Badge erscheint in der Topbar.</div></div></div>
+        </div>
+
+        <h3>Beteiligtenmanagement</h3>
+        <p>Im Tab „Beteiligte" können Firmen und Ansprechpartner je Rolle erfasst werden: Auftraggeber, Architekt, TGA, Tragwerk, ELT, CDE-Plattform und weitere. Diese Daten fließen automatisch in die Berichtsvorlagen ein.</p>
+
+        <div class="tip">
+          <div class="tip-label">Tipp</div>
+          <p>Über den <strong>CSV-Export</strong> (oben rechts) können alle Projekte als Tabelle exportiert werden – nützlich für Statusberichte oder die Weitergabe an das Management.</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- MEILENSTEINPLANUNG -->
+      <div class="section" id="meilensteine">
+        <h2>Meilensteinplanung</h2>
+        <p>Meilensteine und Datadrops werden hier geplant und verwaltet. Die Einträge dienen als Prüfzeitpunkte für das Prüfregeln-Modul.</p>
+
+        <h3>Meilensteintypen</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <span class="badge badge-ok">Meilenstein</span>
+          <span style="font-size:12px;color:var(--text2);align-self:center">→ Projektentscheidungen, Freigaben, Planungszäsuren</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <span class="badge badge-info">Datadrop</span>
+          <span style="font-size:12px;color:var(--text2);align-self:center">→ Planlieferungen, IFC-Übergaben, Koordinationsmodell-Updates</span>
+        </div>
+
+        <h3>Ansichten</h3>
+        <p><strong>Gantt:</strong> Zeitbalken-Darstellung aller Einträge. Ideal für die Übersicht über den Projektverlauf.<br>
+        <strong>Timeline:</strong> Chronologische Liste mit Statusampel. Zeigt überfällige Einträge rot markiert.</p>
+
+        <h3>Datadrop anlegen</h3>
+        <div class="steps">
+          <div class="step"><div class="step-body"><div class="step-title">„+ Meilenstein" klicken</div><div class="step-desc">Formular öffnet sich. Typ auf „Datadrop" stellen.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Disziplinen wählen</div><div class="step-desc">Welche Gewerke liefern zu diesem Datadrop? z. B. ARK, TW, TGA.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Datum und Frist setzen</div><div class="step-desc">Frist = letzter Abgabetermin. Wird im Prüfregeln-Modul als Prüfzeitpunkt verwendet.</div></div></div>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- AWF -->
+      <div class="section" id="awf">
+        <h2>Anwendungsfälle (AWF)</h2>
+        <p>BIM-Anwendungsfälle nach TMM-Richtlinie. Das Modul unterscheidet zwischen dem projektübergreifenden <strong>AWF-Stamm</strong> und projektspezifischen AWF im <strong>Projekt-AWF</strong>-Tab.</p>
+
+        <h3>AWF-Schablone</h3>
+        <p>Jeder AWF folgt der Schablone: <em>Tätigkeit (Verb + Substantiv)</em> + <em>Zweck (für/zur + Substantiv)</em>. Beispiel: „Fachmodelle koordinieren zur Kollisionsprüfung".</p>
+
+        <h3>Workflow: Neuen AWF anlegen</h3>
+        <div class="steps">
+          <div class="step"><div class="step-body"><div class="step-title">Schnellerfassung</div><div class="step-desc">Tätigkeit und Zweck eingeben. Wortanzahl-Feedback hilft die Schablone einzuhalten.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Steckbrief ausfüllen</div><div class="step-desc">RACI, Input/Output, Datadrop-Zuordnung, QS-Maßnahmen, Referenzprozess.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Aufgabenstellung & Umsetzungskonzept</div><div class="step-desc">Aufgabenstellung → fließt in die AIA (Auftraggeber-Informationsanforderungen). Umsetzungskonzept → fließt in den BAP.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Reifegrad setzen</div><div class="step-desc">R1 Erfasst bis R5 Freigegeben. Zeigt den Bearbeitungsstatus des AWF.</div></div></div>
+        </div>
+
+        <div class="tip">
+          <div class="tip-label">AG-Import</div>
+          <p>Über den <strong>AG-Import Wizard</strong> können AWF-Listen des Auftraggebers (Excel/CSV) importiert und automatisch in die Schablone umgewandelt werden.</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- MERKMALSERVER -->
+      <div class="section" id="merkmalserver">
+        <h2>Merkmalserver</h2>
+        <p>Zentrale Bibliothek für BIM-Parameter (IFC-Attribute). Unterscheidet zwischen der <strong>Globalen Bibliothek</strong> (projektübergreifend) und den <strong>Projektparametern</strong> (kopierte Projektzuweisung).</p>
+
+        <h3>Parameter anlegen</h3>
+        <div class="steps">
+          <div class="step"><div class="step-body"><div class="step-title">„+ Merkmal" klicken</div><div class="step-desc">Name, IFC Property Set (z. B. Pset_WallCommon), IFC-Attributname (z. B. FireRating).</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Datentyp & Merkmalsgruppe</div><div class="step-desc">IfcLabel, IfcReal, IfcBoolean etc. Gruppe ordnet den Parameter in die AWF-Matrix ein.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">IFC-Elementtypen zuweisen</div><div class="step-desc">Welchen Objekttypen gilt dieser Parameter? z. B. IfcWall, IfcSpace.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Wertebereich definieren (Stufe 4)</div><div class="step-desc">Aufzählung (z. B. EI30, EI60), Bereich (min/max), Regex oder „Nicht leer". Wird für die semantische Prüfung Stufe 4 verwendet.</div></div></div>
+        </div>
+
+        <h3>Vier Prüfstufen</h3>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #3b82f6;border-radius:var(--r);padding:10px;text-align:center"><div style="font-size:11px;font-weight:600;color:#3b82f6;margin-bottom:4px">S1</div><div style="font-size:11px;color:var(--text3)">Objekte vorhanden</div></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #8b5cf6;border-radius:var(--r);padding:10px;text-align:center"><div style="font-size:11px;font-weight:600;color:#8b5cf6;margin-bottom:4px">S2</div><div style="font-size:11px;color:var(--text3)">PSets angelegt</div></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #f59e0b;border-radius:var(--r);padding:10px;text-align:center"><div style="font-size:11px;font-weight:600;color:#f59e0b;margin-bottom:4px">S3</div><div style="font-size:11px;color:var(--text3)">Properties befüllt</div></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #10b981;border-radius:var(--r);padding:10px;text-align:center"><div style="font-size:11px;font-weight:600;color:#10b981;margin-bottom:4px">S4</div><div style="font-size:11px;color:var(--text3)">Wert im Bereich</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--text3)">Parameter mit definiertem Wertebereich zeigen ein grünes <strong>S4 ✓</strong>-Badge in der Parametertabelle.</p>
+      </div>
+
+      <hr>
+
+      <!-- MODELLPRÜFUNG -->
+      <div class="section" id="modellpruefung">
+        <h2>Modellprüfung</h2>
+        <p>IFC-Modelle werden in einer dreistufigen Hierarchie organisiert und geprüft. Der visuelle Graph-Editor zeigt die Modellstruktur, der integrierte 3D-Viewer die Inhalte.</p>
+
+        <h3>Modellhierarchie</h3>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px">
+          <div style="text-align:center;padding:8px 14px;background:#eff6ff;border-radius:var(--r);font-size:12px;font-weight:600;color:#1d4ed8">🗂 Koordinationsmodell<br><span style="font-weight:400;font-size:11px">KM-Gesamt, KM-TGA …</span></div>
+          <div style="color:var(--text3);font-size:18px">→</div>
+          <div style="text-align:center;padding:8px 14px;background:#f0fdf4;border-radius:var(--r);font-size:12px;font-weight:600;color:#166534">FM Fachmodell<br><span style="font-weight:400;font-size:11px">Lüftung, Heizung …</span></div>
+          <div style="color:var(--text3);font-size:18px">→</div>
+          <div style="text-align:center;padding:8px 14px;background:#fefce8;border-radius:var(--r);font-size:12px;font-weight:600;color:#713f12">📄 Teilmodell<br><span style="font-weight:400;font-size:11px">LFT-BA01.ifc …</span></div>
+        </div>
+
+        <h3>IFC hochladen</h3>
+        <div class="steps">
+          <div class="step"><div class="step-body"><div class="step-title">Fachmodell anlegen</div><div class="step-desc">„+ Fachmodell" klicken. Disziplin (ARK, TW, TGA …) und Name vergeben.</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Teilmodell hinzufügen</div><div class="step-desc">.ifc-Datei hochladen (IFC 2x3 / IFC 4). Datadrop-Bezeichnung vergeben (z. B. DD-02).</div></div></div>
+          <div class="step"><div class="step-body"><div class="step-title">Koordinationsmodell erstellen</div><div class="step-desc">Fachmodelle per Drag-Verbindung dem Koordinationsmodell zuweisen. Mehrfachzuweisungen möglich.</div></div></div>
+        </div>
+
+        <h3>Drei Tabs im Modul</h3>
+        <p><strong>Konfiguration:</strong> Visueller Graph-Editor. Verbindungen durch Ziehen vom ▶-Symbol eines Knotens.<br>
+        <strong>Prüfung:</strong> Baumansicht + Detailergebnis je Teilmodell.<br>
+        <strong>Viewer:</strong> 3D-Darstellung der IFC-Entities. Maus = Orbit, Scroll = Zoom.</p>
+      </div>
+
+      <hr>
+
+      <!-- PRÜFREGELN -->
+      <div class="section" id="pruefregeln">
+        <h2>Prüfregeln</h2>
+        <p>Drei Prüfkategorien, ein projektübergreifender Stamm, ein projektspezifisches Checkset und ein Ergebnisviewer mit Reifegrad.</p>
+
+        <h3>Prüfkategorien</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #3b82f6;border-radius:var(--r);padding:12px">
+            <div style="font-size:11px;font-weight:600;color:#3b82f6;margin-bottom:6px">Semantisch (S1–S4)</div>
+            <div style="font-size:11px;color:var(--text3);line-height:1.6">Objekte, PropertySets, Befüllung, Wertebereiche. Basiert auf Merkmalserver-Zuweisungen.</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #f97316;border-radius:var(--r);padding:12px">
+            <div style="font-size:11px;font-weight:600;color:#f97316;margin-bottom:6px">Geometrisch (G1–G3)</div>
+            <div style="font-size:11px;color:var(--text3);line-height:1.6">Bounding-Box-Kollision, Koordinatenursprung (IfcSite), Geschosszuordnung.</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid #8b5cf6;border-radius:var(--r);padding:12px">
+            <div style="font-size:11px;font-weight:600;color:#8b5cf6;margin-bottom:6px">Funktional (F1–F5)</div>
+            <div style="font-size:11px;color:var(--text3);line-height:1.6">IFC-Schema, Georeferenzierung, Geschossbezeichnungen, Datadrop-Vollständigkeit, AWF-Abdeckung.</div>
+          </div>
+        </div>
+
+        <h3>Reifegrad</h3>
+        <p>Zeigt das Verhältnis bestandener zu gesamten Prüfungen in Prozent – aufgeteilt nach S/G/F. 100% = alle aktiven Regeln des Checksets bestanden. Prüfungen früherer Zeitpunkte bleiben dauerhaft aktiv (keine Regression).</p>
+
+        <h3>Prüfergebnis-Viewer</h3>
+        <p>Doppelklick auf eine Ergebniszeile → der 3D-Viewer springt auf den Entitytyp des Konfliktobjekts. Rote Hervorhebung zeigt betroffene Instanzen. Klick auf Viewer-Legende filtert zusätzlich.</p>
+
+        <h3>Regeln importieren</h3>
+        <p>Über „⬆ Import" können Regeln aus JSON oder CSV aus externen Quellen übernommen werden. Klonen (⎘) erzeugt eine Kopie einer bestehenden Regel zum Anpassen von Parametern.</p>
+      </div>
+
+      <hr>
+
+      <!-- BERICHTSGENERATOR -->
+      <div class="section" id="berichte">
+        <h2>Berichtsgenerator & Protokollierung</h2>
+        <p>Berichte werden aus den aktuellen Modul-Daten generiert. Die Datenquellen-Anzeige rechts zeigt welche Module Daten liefern.</p>
+
+        <h3>Sechs Berichtsvorlagen</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+          <div style="font-size:12px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)">🔍 Modellprüfbericht</div>
+          <div style="font-size:12px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)">📅 Meilensteinbericht</div>
+          <div style="font-size:12px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)">🏷 Merkmal-Compliance</div>
+          <div style="font-size:12px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)">📊 Projektstatusreport</div>
+          <div style="font-size:12px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)">📝 Meeting-Protokoll</div>
+          <div style="font-size:12px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)">📦 Datadrop-Checkliste</div>
+        </div>
+
+        <h3>Protokolltypen</h3>
+        <p>Im Tab „Protokollierung" können vier Typen erfasst werden: <strong>Besprechungsprotokoll</strong> (Teilnehmer, TOP, Maßnahmen, Nächster Termin), <strong>Datadrop-Protokoll</strong>, <strong>Prüfprotokoll</strong> und <strong>Projekttagesbuch</strong>. Protokolle fließen automatisch in den Projektstatusreport ein.</p>
+
+        <div class="tip">
+          <div class="tip-label">Export</div>
+          <p>Berichte können als <strong>HTML</strong> (druckfähig, für Browser/PDF) oder als <strong>CSV</strong> (Daten-Export, für Excel) heruntergeladen werden.</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- GLOSSAR -->
+      <div class="section" id="glossar">
+        <h2>Glossar</h2>
+        <div class="glossar-grid">
+          <div class="gl-item"><div class="gl-term">AWF</div><div class="gl-def">Anwendungsfall. Beschreibt eine BIM-Tätigkeit nach der Schablone „Tätigkeit für/zur Zweck". Grundlage für AIA und BAP.</div></div>
+          <div class="gl-item"><div class="gl-term">AIA</div><div class="gl-def">Auftraggeber-Informationsanforderungen. Dokument des AG mit BIM-Anforderungen an den AN.</div></div>
+          <div class="gl-item"><div class="gl-term">BAP</div><div class="gl-def">BIM-Abwicklungsplan. Dokument des AN mit konkreten BIM-Umsetzungsmaßnahmen.</div></div>
+          <div class="gl-item"><div class="gl-term">CDE</div><div class="gl-def">Common Data Environment. Gemeinsame Datenumgebung (z. B. Autodesk ACC, SharePoint).</div></div>
+          <div class="gl-item"><div class="gl-term">Datadrop</div><div class="gl-def">Planlieferung zu einem definierten Zeitpunkt. Enthält IFC-Modelle der beteiligten Disziplinen.</div></div>
+          <div class="gl-item"><div class="gl-term">FM</div><div class="gl-def">Fachmodell. Disziplinspezifisches BIM-Modell (z. B. ARK-Modell, TGA-Modell).</div></div>
+          <div class="gl-item"><div class="gl-term">GlobalId</div><div class="gl-def">Eindeutige Kennung (22 Zeichen) eines IFC-Objekts. Bleibt über Datadrop-Versionen stabil.</div></div>
+          <div class="gl-item"><div class="gl-term">IFC</div><div class="gl-def">Industry Foundation Classes. Offenes Dateiformat für BIM-Modelle (ISO 16739).</div></div>
+          <div class="gl-item"><div class="gl-term">KM</div><div class="gl-def">Koordinationsmodell. Zusammenführung mehrerer Fachmodelle zur Kollisionsprüfung.</div></div>
+          <div class="gl-item"><div class="gl-term">LOD / LOI</div><div class="gl-def">Level of Detail / Level of Information. Definiert Geometrie- und Informationstiefe je Leistungsphase.</div></div>
+          <div class="gl-item"><div class="gl-term">LP</div><div class="gl-def">Leistungsphase nach HOAI (LP1–LP9). Bestimmt welche Prüfregeln aktiv sind.</div></div>
+          <div class="gl-item"><div class="gl-term">PropertySet (PSet)</div><div class="gl-def">Benannte Gruppe von IFC-Attributen (z. B. Pset_WallCommon). Träger der Modellinformationen.</div></div>
+          <div class="gl-item"><div class="gl-term">RACI</div><div class="gl-def">Responsible, Accountable, Consulted, Informed. Verantwortlichkeitsmatrix im AWF-Steckbrief.</div></div>
+          <div class="gl-item"><div class="gl-term">TM</div><div class="gl-def">Teilmodell. Einzelne IFC-Datei innerhalb eines Fachmodells (z. B. aufgeteilt nach Bauabschnitt).</div></div>
+          <div class="gl-item"><div class="gl-term">TMM</div><div class="gl-def">Technisches Merkmal Management. Methodik zur strukturierten Erfassung und Prüfung von BIM-Merkmalen.</div></div>
+          <div class="gl-item"><div class="gl-term">Wertebereich</div><div class="gl-def">Im Merkmalserver definierter erlaubter Wertebereich für ein Attribut. Grundlage für Stufe-4-Prüfung.</div></div>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- SYNCHRONISATION -->
+      <div class="section" id="sync">
+        <h2>Datensynchronisation</h2>
+        <p>Der BIM Manager nutzt <strong>Supabase</strong> für die kollaborative Datensynchronisation. Alle Daten mit dem Prefix <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:12px">bim_</code> werden automatisch synchronisiert.</p>
+
+        <h3>Sync-Statusanzeige</h3>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:#10b981"></div>Synchron – alle Daten aktuell</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></div>Sync läuft – Daten werden übertragen</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>Offline – lokale Daten, kein Supabase</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:#8899b0"></div>Lokal – Supabase nicht konfiguriert</div>
+        </div>
+
+        <div class="warn-box">
+          <p><strong>Erster Seitenaufruf:</strong> Beim erstmaligen Öffnen lädt das Tool die Daten aus Supabase und führt automatisch einen einmaligen Seiten-Reload durch. Das ist normal und sorgt dafür dass alle Module mit aktuellen Daten starten.</p>
+        </div>
+
+        <h3>Daten zurücksetzen</h3>
+        <p>Um alle lokalen Daten zu löschen und neu von Supabase zu laden: Browser-Konsole öffnen (<kbd>F12</kbd>), dann:</p>
+        <div style="background:var(--nav-bg);border-radius:var(--r);padding:12px 14px;font-family:var(--mono);font-size:12px;color:#90b8e0;margin-bottom:12px">
+          Object.keys(localStorage).filter(k=>k.startsWith('bim_')).forEach(k=>localStorage.removeItem(k)); location.reload();
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- IFC -->
+      <div class="section" id="ifc">
+        <h2>IFC-Format & Kompatibilität</h2>
+        <p>Der BIM Manager verarbeitet IFC-Dateien direkt im Browser ohne externen Server. Der Parser extrahiert Entitytypen, PropertySets und GlobalIds.</p>
+
+        <h3>Unterstützte Formate</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <span class="badge badge-ok">IFC 2x3</span>
+          <span class="badge badge-ok">IFC 4</span>
+          <span class="badge badge-info">IFC 4.1 / 4.3 (experimentell)</span>
+        </div>
+
+        <h3>Was der Parser extrahiert</h3>
+        <p>IFC-Schema, Gesamtzahl Entities, Objektanzahl, PropertySet-Namen, GlobalIds der Hauptobjekte. <strong>Nicht extrahiert:</strong> Geometriekoordinaten, Einzelwerte von Properties (IFC-Properties befinden sich in verschachtelten STEP-Strukturen die einen vollständigen IFC-Parser erfordern).</p>
+
+        <div class="tip">
+          <div class="tip-label">Empfehlung für Geometrieprüfung</div>
+          <p>Für präzise Geometrie- und Kollisionsprüfung empfiehlt sich der Export zu <strong>Solibri</strong>. Die Prüfergebnisse können als BCF/CSV zurück in das Tool importiert werden.</p>
+        </div>
+
+        <h3>Dateigrößen</h3>
+        <p>IFC-Dateien werden im Browser-Speicher gehalten. Empfehlung: Teilmodelle unter 50 MB für optimale Performance. Bei größeren Modellen Datei in Teilmodelle aufteilen (z. B. nach Bauabschnitt oder Geschoss).</p>
+      </div>
+
+    </div><!-- /help-body -->
+  </div><!-- /layout -->
+</div><!-- /main -->
+
+<script>
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
+function setActive(el) {
+  document.querySelectorAll('.toc-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Highlight TOC on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      document.querySelectorAll('.toc-item').forEach(i => {
+        i.classList.toggle('active', i.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+// Settings
+try {
+  const s = JSON.parse(localStorage.getItem('bim_settings_v1')) || {};
+  document.getElementById('sb-user').textContent = s.name || 'BIM Manager';
+} catch(e) {}
+</script>
+</body>
+</html>

@@ -643,7 +643,7 @@ let expandedNodes=new Set(['root','rau','tga']); // default expanded
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 function init() {
-  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};document.getElementById('sb-user').textContent=s.name||'BIM Manager';}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};(function(){const _el=document.getElementById('sb-user');if(_el)_el.textContent=s.name||'BIM Manager';}());}catch(e){}
   try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
   try{PARAM_GROUPS=JSON.parse(localStorage.getItem(GRP_KEY))||[];}catch(e){PARAM_GROUPS=[];}
   if(!PARAM_GROUPS.length){PARAM_GROUPS=[...DEFAULT_GROUPS];saveGroups();}
@@ -750,12 +750,12 @@ function render(){
   mode==='global' ? renderGlobal() : renderProject();
 }
 function updateBadges(){
-  document.getElementById('tb-global').textContent=globalParams.length;
-  document.getElementById('nav-count').textContent=globalParams.length;
+  (function(){const _e=document.getElementById('tb-global');if(_e)_e.textContent=globalParams.length;}());
+  (function(){const _e=document.getElementById('nav-count');if(_e)_e.textContent=globalParams.length;}());
   // Count unique global params that have been assigned in this project
   const assignedSet=new Set();
   if(pid) Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedSet.add(a.globalRef); }));
-  document.getElementById('tb-proj').textContent=pid?assignedSet.size:0;
+  (function(){const _e=document.getElementById('tb-proj');if(_e)_e.textContent=pid?assignedSet.size:0;}());
 }
 function setMode(m){
   mode=m;
@@ -781,7 +781,7 @@ function renderTopbarRight(){
 // GLOBAL LIBRARY
 // ═══════════════════════════════════════════════════
 function renderGlobal(){
-  document.getElementById('proj-bar-wrap').innerHTML='';
+  (function(){const _el=document.getElementById('proj-bar-wrap');if(_el)_el.innerHTML='';}());
   const cats=['alle',...PARAM_GROUPS.map(g=>g.code)];
   const list=globalParams.filter(p=>glibCat==='alle'||p.grp===glibCat);
 
@@ -824,7 +824,7 @@ function renderGlobal(){
     </div>
   </div>`;
 }
-function glibSearch(){const q=document.getElementById('glib-q')?.value.toLowerCase()||'';const list=globalParams.filter(p=>(glibCat==='alle'||p.grp===glibCat)&&(!q||p.name.toLowerCase().includes(q)||p.pset.toLowerCase().includes(q)));document.getElementById('glib-table').innerHTML=glibRows(list);}
+function glibSearch(){const q=document.getElementById('glib-q')?.value.toLowerCase()||'';const list=globalParams.filter(p=>(glibCat==='alle'||p.grp===glibCat)&&(!q||p.name.toLowerCase().includes(q)||p.pset.toLowerCase().includes(q)));(function(){const _el=document.getElementById('glib-table');if(_el)_el.innerHTML=glibRows(list);}());}
 function glibRows(list){
   if(!list.length) return `<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">Keine Merkmale gefunden.</div>`;
   return `<table class="ptable"><thead><tr><th>Merkmal</th><th>Property Set · Attribut</th><th>Gruppe</th><th>Typ</th><th>LP</th><th style="width:100px"></th></tr></thead>
@@ -1322,7 +1322,7 @@ function openGlobalPicker(){
   const alreadyRefs=(projParams[pid]||[]).map(p=>p.globalRef).filter(Boolean);
   const available=globalParams.filter(p=>!alreadyRefs.includes(p.id));
   if(!available.length){showToast('Alle globalen Merkmale bereits im Projekt');return;}
-  document.getElementById('import-title').textContent='Aus Globaler Bibliothek übernehmen';
+  (function(){const _el=document.getElementById('import-title');if(_el)_el.textContent='Aus Globaler Bibliothek übernehmen';}());
   document.getElementById('import-ol').classList.add('open');
   document.getElementById('import-body-inner').innerHTML=`
     <div class="info-purple" style="margin-bottom:12px">Wähle Merkmale für <strong>${projects.find(p=>p.id===pid)?.name||''}</strong>. Das Projekt erhält eigene Kopien.</div>
@@ -1388,8 +1388,8 @@ function syncPhases(){LP_LIST.forEach(p=>document.getElementById('ph-'+p)?.class
 
 function openParamModal(id=null, scope='global'){
   editParamId=id; editParamScope=scope;
-  document.getElementById('pm-title').textContent=id?'Merkmal bearbeiten':'Neues Merkmal';
-  document.getElementById('pm-save').textContent=id?'Änderungen speichern':'Speichern';
+  (function(){const _el=document.getElementById('pm-title');if(_el)_el.textContent=id?'Merkmal bearbeiten':'Neues Merkmal';}());
+  (function(){const _el=document.getElementById('pm-save');if(_el)_el.textContent=id?'Änderungen speichern':'Speichern';}());
   const list=scope==='global'?globalParams:(projParams[pid]||[]);
   const src=id?list.find(p=>p.id===id):null;
   if(src){
@@ -1463,7 +1463,7 @@ function confirmDelParam(id,scope){
   if(scope==='global'){
     const p=globalParams.find(x=>x.id===id);if(!p) return;
     const usedIn=Object.entries(projParams).filter(([_,list])=>list.find(x=>x.globalRef===id)).map(([ppid])=>projects.find(x=>x.id===ppid)?.name||ppid).filter(Boolean);
-    document.getElementById('confirm-title').textContent='Globales Merkmal löschen?';
+    (function(){const _el=document.getElementById('confirm-title');if(_el)_el.textContent='Globales Merkmal löschen?';}());
     document.getElementById('confirm-body').innerHTML=`
       <div style="background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--err)">
         ⚠ Du löschst ein <strong>globales Merkmal</strong> aus der Bibliothek. Es muss danach neu erfasst werden – Projektkopien bleiben erhalten, aber der Bezug zur Bibliothek geht verloren.
@@ -1490,7 +1490,7 @@ function confirmDelParam(id,scope){
 // ─── IMPORT ──────────────────────────────────────────────────────────
 function openImport(scope){
   importScope=scope; importRows=[]; importTab2='csv';
-  document.getElementById('import-title').textContent=scope==='global'?'In Bibliothek importieren':'In Projekt importieren';
+  (function(){const _el=document.getElementById('import-title');if(_el)_el.textContent=scope==='global'?'In Bibliothek importieren':'In Projekt importieren';}());
   setImportTab('csv');
   document.getElementById('import-ok').disabled=true;
   document.getElementById('import-ok').onclick=doImport;
@@ -1601,8 +1601,8 @@ function pickGrpColor(c){
 
 function openGrpModal(code=null){
   editingGrpCode=code;
-  document.getElementById('grp-title').textContent = code ? 'Gruppe bearbeiten' : 'Neue Merkmalsgruppe';
-  document.getElementById('grp-save').textContent  = code ? 'Änderungen speichern' : 'Anlegen';
+  (function(){const _el=document.getElementById('grp-title');if(_el)_el.textContent=code ? 'Gruppe bearbeiten' : 'Neue Merkmalsgruppe';}());
+  (function(){const _el=document.getElementById('grp-save');if(_el)_el.textContent=code ? 'Änderungen speichern' : 'Anlegen';}());
   if(code){
     const g=GRP_MAP[code];
     document.getElementById('g-code').value  = g?.code  || '';
@@ -1644,7 +1644,7 @@ function saveGrp(){
 function confirmDelGrp(code){
   const g=GRP_MAP[code]; if(!g) return;
   const paramCount=globalParams.filter(p=>p.grp===code).length;
-  document.getElementById('confirm-title').textContent='Merkmalsgruppe löschen?';
+  (function(){const _el=document.getElementById('confirm-title');if(_el)_el.textContent='Merkmalsgruppe löschen?';}());
   document.getElementById('confirm-body').innerHTML = paramCount > 0
     ? `<div style="background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--err)">
         ⚠ Die Gruppe <strong>${g.code} – ${g.name}</strong> enthält noch <strong>${paramCount} Merkmale</strong>. Diese werden der Gruppe <em>ZZ – Sonstige</em> zugewiesen.

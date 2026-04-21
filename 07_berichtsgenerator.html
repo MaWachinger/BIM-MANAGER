@@ -275,8 +275,8 @@ let autoReport=false, editProtId=null;
 function init(){
   try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};
     const name=s.name||'BIM Manager';
-    document.getElementById('nav-name').textContent=name;
-    document.getElementById('nav-avatar').textContent=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    (function(){const _el=document.getElementById('nav-name');if(_el)_el.textContent=name;}());
+    (function(){const _el=document.getElementById('nav-avatar');if(_el)_el.textContent=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}());
   }catch(e){}
   try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
   try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
@@ -302,8 +302,8 @@ const today=()=>new Date().toISOString().slice(0,10);
 
 function updateNavBadges(){
   const mpCount=Object.values(tmData).flat().length;
-  document.getElementById('nb-mp').textContent=mpCount;
-  document.getElementById('tb-prot').textContent=protokolle.length;
+  (function(){const _el=document.getElementById('nb-mp');if(_el)_el.textContent=mpCount;}());
+  (function(){const _el=document.getElementById('tb-prot');if(_el)_el.textContent=protokolle.length;}());
 }
 
 // ─── TABS ─────────────────────────────────────────────────────────────
@@ -311,8 +311,8 @@ function setTab(tab){
   currentTab=tab;
   ['berichte','protokoll'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===tab));
   const ta=document.getElementById('topbar-action');
-  if(tab==='berichte'){ta.textContent='↓ Bericht generieren';ta.onclick=generateReport;document.getElementById('topbar-title').textContent='Berichtsgenerator';}
-  else{ta.textContent='+ Neues Protokoll';ta.onclick=()=>openProtModal();document.getElementById('topbar-title').textContent='Protokollierung';}
+  if(tab==='berichte'){ta.textContent='↓ Bericht generieren';ta.onclick=generateReport;(function(){const _el=document.getElementById('topbar-title');if(_el)_el.textContent='Berichtsgenerator';}());}
+  else{ta.textContent='+ Neues Protokoll';ta.onclick=()=>openProtModal();(function(){const _el=document.getElementById('topbar-title');if(_el)_el.textContent='Protokollierung';}());}
   render();
 }
 function render(){
@@ -714,7 +714,7 @@ function renderProtDetail(p){
 // ─── PROTOKOLL CRUD ───────────────────────────────────────────────────
 function openProtModal(id=null){
   editProtId=id;
-  document.getElementById('prot-modal-title').textContent=id?'Protokoll bearbeiten':'Neues Protokoll';
+  (function(){const _el=document.getElementById('prot-modal-title');if(_el)_el.textContent=id?'Protokoll bearbeiten':'Neues Protokoll';}());
   const src=id?protokolle.find(p=>p.id===id):null;
   document.getElementById('pm-title').value=src?.title||'';
   document.getElementById('pm-type').value=src?.type||'besprechung';

@@ -542,9 +542,9 @@ function saveSettings() {
 }
 function applySettings() {
   const n=settings.name||'Profil einrichten →';
-  document.getElementById('user-name-sb').textContent=n;
+  (function(){const _el=document.getElementById('user-name-sb');if(_el)_el.textContent=n;}());
   const ini=n.split(' ').filter(w=>w[0]).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?';
-  document.getElementById('user-avatar-sb').textContent=ini;
+  (function(){const _el=document.getElementById('user-avatar-sb');if(_el)_el.textContent=ini;}());
 }
 function openSettings() {
   document.getElementById('settings-name').value=settings.name;
@@ -604,13 +604,13 @@ function updateStats() {
   const mine=projects.filter(p=>settings.name&&p.bimManager===settings.name).length;
   const firms=new Set();
   projects.forEach(p=>{ BETEILIGTE_KAT.forEach(k=>{ const b=p.beteiligte?.[k.id]; if(b&&b.firma) firms.add(b.firma.trim().toLowerCase()); }); });
-  document.getElementById('stat-total').textContent=total;
+  (function(){const _el=document.getElementById('stat-total');if(_el)_el.textContent=total;}());
   document.getElementById('stat-total-sub').textContent=total===1?'1 Projekt erfasst':`${total} Projekte erfasst`;
-  document.getElementById('stat-active').textContent=active;
-  document.getElementById('stat-mine').textContent=mine;
+  (function(){const _el=document.getElementById('stat-active');if(_el)_el.textContent=active;}());
+  (function(){const _el=document.getElementById('stat-mine');if(_el)_el.textContent=mine;}());
   document.getElementById('stat-mine-sub').textContent=settings.name?`Zugewiesen an ${settings.name.split(' ')[0]}`:'Profil noch nicht eingerichtet';
-  document.getElementById('stat-firms').textContent=firms.size;
-  document.getElementById('nav-count').textContent=total;
+  (function(){const _el=document.getElementById('stat-firms');if(_el)_el.textContent=firms.size;}());
+  (function(){const _el=document.getElementById('nav-count');if(_el)_el.textContent=total;}());
 }
 
 function getFiltered() {
@@ -800,8 +800,8 @@ function setBeteiligteData(bet){
 
 function openModal(id=null){
   editingId=id; switchTab(0);
-  document.getElementById('modal-title').textContent=id?'Projekt bearbeiten':'Neues Projekt anlegen';
-  document.getElementById('save-btn').textContent=id?'Änderungen speichern':'Projekt speichern';
+  (function(){const _el=document.getElementById('modal-title');if(_el)_el.textContent=id?'Projekt bearbeiten':'Neues Projekt anlegen';}());
+  (function(){const _el=document.getElementById('save-btn');if(_el)_el.textContent=id?'Änderungen speichern':'Projekt speichern';}());
   if(id){
     const p=projects.find(x=>x.id===id); if(!p) return;
     document.getElementById('f-name').value=p.name||'';
@@ -896,33 +896,45 @@ function seedBIMManagerTestdata() {
   const projects = [
     {
       id: PID1, number: 'PRJ-2024-001', name: 'Neubau Verwaltungsgebäude Nord',
-      client: 'Stadtwerke München', location: 'München, Bayern',
-      lp: 'LP3', status: 'aktiv', budget: '18.500.000',
-      start: '2024-01-15', end: '2026-12-31',
-      bimLevel: 'BIM Level 2', ifc: 'IFC 4',
-      description: 'Neubau eines 6-geschossigen Verwaltungsgebäudes mit 8.400 m² BGF.',
-      participants: [
-        { role: 'Auftraggeber', name: 'Stadtwerke München', contact: 'Dr. K. Hofmann' },
-        { role: 'Architekt', name: 'Architektur Schneider GmbH', contact: 'M. Schneider' },
-        { role: 'Tragwerksplanung', name: 'Ing. Bauer & Partner', contact: 'P. Bauer' },
-        { role: 'TGA', name: 'Haustechnik Müller GmbH', contact: 'S. Müller' },
-        { role: 'BIM Manager', name: 'TMM Group', contact: 'T. Müller' }
-      ],
-      phases: { LP1: true, LP2: true, LP3: true, LP4: false, LP5: false }
+      bimManager: 'Thomas Müller',
+      desc: 'Neubau eines 6-geschossigen Verwaltungsgebäudes mit 8.400 m² BGF. BIM-Koordination aller Fachgewerke.',
+      software: 'Revit 2024, Navisworks, Solibri, BIMcollab',
+      lod: 'LOD 300', status: 'aktiv', phases: ['lp2','lp3','lp4'],
+      beteiligte: {
+        ag:        { firma: 'Stadtwerke München',        person: 'Dr. K. Hofmann',  notes: '' },
+        architekt: { firma: 'Architektur Schneider GmbH', person: 'M. Schneider',    notes: '' },
+        tragwerk:  { firma: 'Ing. Bauer & Partner',       person: 'P. Bauer',         notes: '' },
+        tga:       { firma: 'Haustechnik Müller GmbH',    person: 'S. Müller',        notes: 'Sorgfältige Modellpflege' },
+        elt: '', brandsch: '', bauphys: '', freianl: '', geotechnik: '',
+        cde: { firma: 'BIMcollab Cloud', person: '', notes: '' }, sonstige: ''
+      },
+      created: new Date().toISOString()
     },
     {
-      id: PID2, number: 'PRJ-2024-002', name: 'Wohnquartier Westpark – Bauabschnitt 2',
-      client: 'WBG Bayern', location: 'Augsburg, Bayern',
-      lp: 'LP2', status: 'aktiv', budget: '24.200.000',
-      start: '2024-03-01', end: '2027-06-30',
-      bimLevel: 'BIM Level 2', ifc: 'IFC 4',
-      description: 'Wohnquartier mit 4 Gebäuden, 156 Wohneinheiten und Tiefgarage.',
-      participants: [
-        { role: 'Auftraggeber', name: 'WBG Bayern', contact: 'H. Wagner' },
-        { role: 'Architekt', name: 'Studio Roth Architekten', contact: 'A. Roth' },
-        { role: 'BIM Manager', name: 'TMM Group', contact: 'T. Müller' }
-      ],
-      phases: { LP1: true, LP2: true, LP3: false, LP4: false, LP5: false }
+      id: PID2, number: 'PRJ-2024-002', name: 'Wohnquartier Westpark – BA 2',
+      bimManager: 'Thomas Müller',
+      desc: 'Wohnquartier mit 4 Gebäuden, 156 Wohneinheiten und Tiefgarage.',
+      software: 'Revit 2024, Solibri',
+      lod: 'LOD 200', status: 'aktiv', phases: ['lp2','lp3'],
+      beteiligte: {
+        ag:        { firma: 'WBG Bayern',               person: 'H. Wagner', notes: '' },
+        architekt: { firma: 'Studio Roth Architekten',  person: 'A. Roth',   notes: '' },
+        tga: '', tragwerk: '', elt: '', brandsch: '', bauphys: '', freianl: '', geotechnik: '', cde: '', sonstige: ''
+      },
+      created: new Date().toISOString()
+    },
+    {
+      id: 'prj_verwaltung_nord_3', number: 'PRJ-2026-003', name: 'Wachi\'s Bude',
+      bimManager: 'Thomas Müller',
+      desc: 'Testprojekt für den BIM Manager.',
+      software: 'Revit 2025, BIMcollab',
+      lod: 'LOD 200', status: 'aktiv', phases: ['lp2'],
+      beteiligte: {
+        ag: { firma: 'Test AG', person: 'Test Person', notes: '' },
+        architekt: '', tga: '', tragwerk: '', elt: '', brandsch: '', bauphys: '',
+        freianl: '', geotechnik: '', cde: '', sonstige: ''
+      },
+      created: new Date().toISOString()
     }
   ];
   localStorage.setItem('bim_projects_v2', JSON.stringify(projects));
@@ -933,16 +945,24 @@ function seedBIMManagerTestdata() {
   // ─── MEILENSTEINE ─────────────────────────────────────────────────
   const milestones = {};
   milestones[PID1] = [
-    { id: uid(), type: 'Datadrop', name: 'DD-01 LP2 Vorentwurf', date: '2024-03-15', disciplines: ['ARK','TW'], status: 'done', desc: 'Alle Fachmodelle LP2' },
-    { id: uid(), type: 'Meilenstein', name: 'Entwurfsfreigabe LP3', date: '2024-05-30', disciplines: ['ARK','TW','TGA'], status: 'done', desc: 'Freigabe durch AG' },
-    { id: uid(), type: 'Datadrop', name: 'DD-02 LP3 Entwurf', date: '2024-07-01', disciplines: ['ARK','TW','TGA','ELT','SAN'], status: 'active', desc: 'Koordinationsmodell LP3' },
-    { id: uid(), type: 'Meilenstein', name: 'Genehmigungsplanung', date: '2024-09-15', disciplines: ['ARK'], status: 'future', desc: 'Einreichung Bauantrag' },
-    { id: uid(), type: 'Datadrop', name: 'DD-03 LP4 Genehmigung', date: '2024-10-01', disciplines: ['ARK','TW'], status: 'future', desc: 'Genehmigungsmodell' },
-    { id: uid(), type: 'Meilenstein', name: 'Ausführungsplanung Start', date: '2025-01-15', disciplines: ['ARK','TW','TGA','ELT','SAN','HZG','LFT'], status: 'future', desc: 'LP5 Beginn' },
+    { id: uid(), typ: 'datadrop',    name: 'DD-01 LP2 Vorentwurf',      datum: '2024-03-15', disziplinen: ['ARK','TW'],                        status: 'abgeschlossen', desc: 'Alle Fachmodelle LP2', frist: '', recurring: false },
+    { id: uid(), typ: 'meilenstein', name: 'Entwurfsfreigabe LP3',       datum: '2024-05-30', disziplinen: ['ARK','TW','TGA'],                  status: 'abgeschlossen', desc: 'Freigabe durch AG', frist: '', recurring: false },
+    { id: uid(), typ: 'datadrop',    name: 'DD-02 LP3 Entwurf',          datum: '2024-07-01', disziplinen: ['ARK','TW','TGA','ELT','SAN'],      status: 'offen', desc: 'Koordinationsmodell LP3', frist: '2024-07-01', recurring: false },
+    { id: uid(), typ: 'meilenstein', name: 'Genehmigungsplanung',        datum: '2024-09-15', disziplinen: ['ARK'],                             status: 'offen', desc: 'Einreichung Bauantrag', frist: '', recurring: false },
+    { id: uid(), typ: 'datadrop',    name: 'DD-03 LP4 Genehmigung',      datum: '2024-10-01', disziplinen: ['ARK','TW'],                        status: 'offen', desc: 'Genehmigungsmodell', frist: '', recurring: false },
+    { id: uid(), typ: 'meilenstein', name: 'Ausführungsplanung Start',   datum: '2025-01-15', disziplinen: ['ARK','TW','TGA','ELT','SAN'],      status: 'offen', desc: 'LP5 Beginn', frist: '', recurring: false },
   ];
   milestones[PID2] = [
-    { id: uid(), type: 'Datadrop', name: 'DD-01 Bestandsaufnahme', date: '2024-04-01', disciplines: ['ARK'], status: 'done', desc: 'Bestandsmodell' },
-    { id: uid(), type: 'Meilenstein', name: 'Vorentwurf Freigabe', date: '2024-06-15', disciplines: ['ARK'], status: 'future', desc: 'AG-Freigabe LP2' },
+    { id: uid(), typ: 'datadrop',    name: 'DD-01 Bestandsaufnahme', datum: '2024-04-01', disziplinen: ['ARK'], status: 'abgeschlossen', desc: 'Bestandsmodell', frist: '', recurring: false },
+    { id: uid(), typ: 'meilenstein', name: 'Vorentwurf Freigabe',    datum: '2024-06-15', disziplinen: ['ARK'], status: 'offen',         desc: 'AG-Freigabe LP2', frist: '', recurring: false },
+  ];
+  
+  // Milestones for Wachi's Bude
+  const _pid3 = 'prj_verwaltung_nord_3';
+  milestones[_pid3] = [
+    { id: uid(), typ: 'meilenstein', name: 'Projektstart',      datum: '2026-01-15', disziplinen: ['alle'], status: 'abgeschlossen', desc: 'Kickoff Meeting', frist: '', recurring: false },
+    { id: uid(), typ: 'datadrop',    name: 'DD-01 Konzept',     datum: '2026-03-01', disziplinen: ['ARK'],  status: 'offen',         desc: 'Konzeptmodell ARK', frist: '2026-03-01', recurring: false },
+    { id: uid(), typ: 'meilenstein', name: 'Vorentwurfsfreigabe', datum: '2026-06-30', disziplinen: ['alle'], status: 'offen',       desc: 'AG-Freigabe', frist: '', recurring: false },
   ];
   localStorage.setItem('bim_milestones_v1', JSON.stringify(milestones));
 

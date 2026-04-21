@@ -407,7 +407,7 @@ let cdeSlots=[];
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 function init(){
-  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};document.getElementById('sb-user').textContent=s.name||'BIM Manager';}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};(function(){const _el=document.getElementById('sb-user');if(_el)_el.textContent=s.name||'BIM Manager';}());}catch(e){}
   try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
   try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
   try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
@@ -454,14 +454,14 @@ function renderTopbar(){
     <button class="btn btn-secondary btn-sm" onclick="openTM()">+ Teilmodell</button>
     <button class="btn btn-secondary btn-sm" onclick="openFM()">+ Fachmodell</button>
     <button class="btn btn-primary btn-sm" onclick="openKM()">+ Koordinationsmodell</button>`:'';
-  document.getElementById('nav-badge').textContent=(tmData[pid]||[]).length;
+  (function(){const _el=document.getElementById('nav-badge');if(_el)_el.textContent=(tmData[pid]||[]).length;}());
 }
 function renderHostBar(){
   const bar=document.getElementById('host-bar');
   if(!pid){bar.style.display='none';return;}
   bar.style.display='flex';
   const hc=hostConfig[pid];
-  document.getElementById('host-path-label').textContent=hc?.path||'Kein Modellhost konfiguriert – ⚙ klicken';
+  (function(){const _el=document.getElementById('host-path-label');if(_el)_el.textContent=hc?.path||'Kein Modellhost konfiguriert – ⚙ klicken';}());
   const badge=document.getElementById('host-status-badge');
   if(hc?.cdes?.length){badge.style.display='';badge.className='host-status host-ok';badge.textContent=`${hc.cdes.length} CDE konfiguriert`;}
   else{badge.style.display='none';}
@@ -483,8 +483,8 @@ function renderWorkspace(){
     <div class="right-panel" id="right-panel">${renderDetailPanel()}</div>
   </div>`;
 }
-function refreshTree(){document.getElementById('tree-scroll').innerHTML=renderTree();}
-function refreshDetail(){document.getElementById('right-panel').innerHTML=renderDetailPanel();}
+function refreshTree(){(function(){const _el=document.getElementById('tree-scroll');if(_el)_el.innerHTML=renderTree();}());}
+function refreshDetail(){(function(){const _el=document.getElementById('right-panel');if(_el)_el.innerHTML=renderDetailPanel();}());}
 
 // ─── TREE ─────────────────────────────────────────────────────────────
 function renderTree(){
@@ -950,7 +950,7 @@ function saveHostConfig(){
 // ─── KM CRUD ─────────────────────────────────────────────────────────
 function openKM(id=null){
   editKMId=id;
-  document.getElementById('km-title').textContent=id?'Koordinationsmodell bearbeiten':'Koordinationsmodell anlegen';
+  (function(){const _el=document.getElementById('km-title');if(_el)_el.textContent=id?'Koordinationsmodell bearbeiten':'Koordinationsmodell anlegen';}());
   const km=id?(kmData[pid]||[]).find(k=>k.id===id):null;
   document.getElementById('km-name').value=km?.name||'';
   document.getElementById('km-desc').value=km?.desc||'';
@@ -975,7 +975,7 @@ function deleteKM(id){if(!confirm('Koordinationsmodell löschen?'))return;kmData
 // ─── FM CRUD ─────────────────────────────────────────────────────────
 function openFM(id=null){
   editFMId=id;
-  document.getElementById('fm-title').textContent=id?'Fachmodell bearbeiten':'Fachmodell anlegen';
+  (function(){const _el=document.getElementById('fm-title');if(_el)_el.textContent=id?'Fachmodell bearbeiten':'Fachmodell anlegen';}());
   const fm=id?(fmData[pid]||[]).find(f=>f.id===id):null;
   document.getElementById('fm-name').value=fm?.name||'';
   document.getElementById('fm-disc').value=fm?.disc||'';
@@ -1004,7 +1004,7 @@ function deleteFM(id){
 // ─── TM CRUD ─────────────────────────────────────────────────────────
 function openTM(){
   pendingParsed=null; pendingFile=null;
-  document.getElementById('ifc-drop-label').textContent='IFC-Datei ablegen oder klicken';
+  (function(){const _el=document.getElementById('ifc-drop-label');if(_el)_el.textContent='IFC-Datei ablegen oder klicken';}());
   document.getElementById('tm-ok').disabled=true;
   document.getElementById('tm-datadrop').value='';
   document.getElementById('tm-note').value='';
@@ -1084,7 +1084,7 @@ function exportKMProtokoll(kmId){
 // ─── UTILS ────────────────────────────────────────────────────────────
 function onProjChange(){pid=document.getElementById('psel')?.value||null;setCurrentProject(pid||'');selNode=null;activeTab='uebersicht';nodePos={};graphSel=null;render();}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function showParse(msg,sub){document.getElementById('parse-ol').classList.add('open');document.getElementById('parse-msg').textContent=msg;document.getElementById('parse-sub').textContent=sub;}
+function showParse(msg,sub){document.getElementById('parse-ol').classList.add('open');(function(){const _el=document.getElementById('parse-msg');if(_el)_el.textContent=msg;}());(function(){const _el=document.getElementById('parse-sub');if(_el)_el.textContent=sub;}());}
 function hideParse(){document.getElementById('parse-ol').classList.remove('open');}
 function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return d;}}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}

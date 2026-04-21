@@ -410,7 +410,7 @@ let editRuleId=null, editRuleScope=null, confirmCb=null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 function init(){
-  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};document.getElementById('sb-user').textContent=s.name||'BIM Manager';}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};(function(){const _el=document.getElementById('sb-user');if(_el)_el.textContent=s.name||'BIM Manager';}());}catch(e){}
   try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
   try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
   try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
@@ -456,12 +456,12 @@ function render(){
 }
 function setMode(m){mode=m;['stamm','checkset','result'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===m));render();}
 function updateBadges(){
-  document.getElementById('tb-stamm').textContent=stammRules.length;
-  document.getElementById('tb-checkset').textContent=pid?(checksets[pid]||[]).length:0;
+  (function(){const _e=document.getElementById('tb-stamm');if(_e)_e.textContent=stammRules.length;}());
+  (function(){const _e=document.getElementById('tb-checkset');if(_e)_e.textContent=pid?(checksets[pid]||[]).length:0;}());
   const res=pid?pruefResults[pid]:{};
   const totalRuns=res?Object.values(res).flatMap(tm=>Object.values(tm)).length:0;
-  document.getElementById('tb-result').textContent=totalRuns>0?totalRuns:'—';
-  document.getElementById('nav-badge').textContent=stammRules.length;
+  (function(){const _e=document.getElementById('tb-result');if(_e)_e.textContent=totalRuns>0?totalRuns:'—';}());
+  (function(){const _e=document.getElementById('nav-badge');if(_e)_e.textContent=stammRules.length;}());
 }
 function renderProjBar(){
   document.getElementById('proj-bar-wrap').innerHTML=`
@@ -1095,7 +1095,7 @@ function cloneRule(ruleId){
 
 // ─── IMPORT REGELN ────────────────────────────────────────────────────
 let importedRules=[];
-function openImport(){importedRules=[];document.getElementById('imp-preview').innerHTML='';document.getElementById('imp-ok').disabled=true;document.getElementById('import-ol').classList.add('open');}
+function openImport(){importedRules=[];(function(){const _el=document.getElementById('imp-preview');if(_el)_el.innerHTML='';}());document.getElementById('imp-ok').disabled=true;document.getElementById('import-ol').classList.add('open');}
 function closeImport(){document.getElementById('import-ol').classList.remove('open');}
 function handleImportFile(file){
   if(!file) return;
@@ -1167,11 +1167,11 @@ function updateRuleTypeUI(){
   sel.innerHTML=types.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
   updateRuleParamUI();
 }
-function updateRuleParamUI(){const type=document.getElementById('r-type')?.value||'';document.getElementById('r-param-ui').innerHTML=TYPE_PARAM_UIS[type]||'';}
+function updateRuleParamUI(){const type=document.getElementById('r-type')?.value||'';(function(){const _el=document.getElementById('r-param-ui');if(_el)_el.innerHTML=TYPE_PARAM_UIS[type]||'';}());}
 function openRuleModal(id=null,scope='stamm'){
   editRuleId=id;editRuleScope=scope;
-  document.getElementById('rule-modal-title').textContent=id?'Regel bearbeiten':'Neue Prüfregel';
-  document.getElementById('rule-save-btn').textContent=id?'Speichern':'Anlegen';
+  (function(){const _el=document.getElementById('rule-modal-title');if(_el)_el.textContent=id?'Regel bearbeiten':'Neue Prüfregel';}());
+  (function(){const _el=document.getElementById('rule-save-btn');if(_el)_el.textContent=id?'Speichern':'Anlegen';}());
   const src=id?stammRules.find(r=>r.id===id):null;
   if(src){document.getElementById('r-name').value=src.name||'';document.getElementById('r-desc').value=src.desc||'';document.getElementById('r-cat').value=src.cat||'S';document.getElementById('r-sev').value=src.sev||'error';document.getElementById('r-earliest').value=src.earliest||'lp3';}
   else{['r-name','r-desc'].forEach(i=>document.getElementById(i).value='');document.getElementById('r-cat').value='S';document.getElementById('r-sev').value='error';document.getElementById('r-earliest').value='lp3';}
@@ -1196,7 +1196,7 @@ function saveRule(){
 }
 function confirmDelRule(id,scope){
   const r=stammRules.find(x=>x.id===id);if(!r) return;
-  document.getElementById('confirm-title').textContent='Prüfregel löschen?';
+  (function(){const _el=document.getElementById('confirm-title');if(_el)_el.textContent='Prüfregel löschen?';}());
   document.getElementById('confirm-body').innerHTML=`<strong>${r.name}</strong> wird dauerhaft entfernt.`;
   confirmCb=()=>{stammRules=stammRules.filter(x=>x.id!==id);Object.keys(checksets).forEach(ppid=>{checksets[ppid]=(checksets[ppid]||[]).filter(x=>x!==id);});saveStamm();saveChecksets();if(selRuleId===id)selRuleId=null;closeConfirm();render();showToast('Gelöscht');};
   document.getElementById('confirm-btn').onclick=confirmCb;

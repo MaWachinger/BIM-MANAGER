@@ -197,10 +197,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
-// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
-function goTo(href) { window.location.href = href; }
-function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
-function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
 </script>
 <script src="bim_sync.js"></script>
@@ -360,6 +356,11 @@ function getCurrentProject() { return localStorage.getItem('bim_current_project'
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── CROSS-MODULE NAVIGATION ─────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+
 // ─── STORAGE ──────────────────────────────────────────────────────────
 const PROJ_KEY      = 'bim_projects_v2';
 const ASSIGN_KEY    = 'bim_obj_assignments_v1';

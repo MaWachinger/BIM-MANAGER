@@ -447,13 +447,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 </div>
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
-// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+
+</script>
+<script>
+// ─── CROSS-MODULE NAVIGATION ─────────────────────────────────────────
 function goTo(href) { window.location.href = href; }
 function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
 function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
-</script>
-<script>
 const PROJ_KEY='bim_projects_v2',AWF_KEY='bim_awf_v1',STAMM_KEY='bim_awf_stamm_v1',SET_KEY='bim_settings_v1';
 const LP_LIST=['LP1','LP2','LP3','LP4','LP5','LP6','LP7','LP8','LP9'];
 const AWF_COLORS=['#3b82f6','#00c9a7','#8b5cf6','#f59e0b','#ef4444','#10b981','#ec4899','#f97316','#0ea5e9','#6366f1'];

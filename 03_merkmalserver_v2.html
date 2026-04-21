@@ -470,13 +470,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
-// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+
+</script>
+<script>
+// ─── CROSS-MODULE NAVIGATION ─────────────────────────────────────────
 function goTo(href) { window.location.href = href; }
 function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
 function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
-</script>
-<script>
 // ─── STORAGE KEYS ─────────────────────────────────────────────────────
 const PROJ_KEY   = 'bim_projects_v2';
 const GLOBAL_KEY = 'bim_global_params_v2';

@@ -638,6 +638,12 @@ function statusBadge(s){
   const [c,l]=m[s]||['status-pending',s]; return `<span class="status-badge ${c}">${l}</span>`;
 }
 
+
+function isActiveProject(pid) {
+  if (getCurrentProject() !== pid) return '';
+  return '<span style="font-size:10px;font-family:monospace;padding:3px 8px;background:#00c9a715;color:#00c9a7;border-radius:4px;margin-left:4px">● Aktiv</span>';
+}
+
 function renderProjects(){
   updateStats();
   const list=getFiltered(), container=document.getElementById('projects-container');
@@ -669,7 +675,7 @@ function renderProjects(){
           </div>
           <div style="display:flex;gap:6px;margin-top:8px">
             <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:11px" onclick="event.stopPropagation();activateProject('${p.id}')">▶ Öffnen</button>
-            ${getCurrentProject()===p.id?'<span style=\'font-size:10px;font-family:var(--mono);padding:3px 8px;background:var(--accent-dim);color:var(--accent);border-radius:4px;display:flex;align-items:center\'>● Aktiv</span>':''}
+            ${isActiveProject(p.id)}
           </div>
         </div>
       </div>`;
@@ -1148,6 +1154,17 @@ function goTo(href) { window.location.href = href; }
 function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
 function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
+
+// Safety re-render: if project list is empty after init, reload data once
+setTimeout(function() {
+  try {
+    var container = document.getElementById('projects-container');
+    if (container && container.querySelectorAll('.project-card').length === 0 && projects.length === 0) {
+      console.info('[BIM] No projects in DOM – reloading data');
+      if (typeof init === 'function') init();
+    }
+  } catch(e) { console.warn('[BIM] Safety re-render:', e.message); }
+}, 800);
 </script>
 </body>
 </html>

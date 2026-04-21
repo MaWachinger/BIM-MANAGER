@@ -405,7 +405,7 @@ const LP_LABELS = {lp1:'LP1',lp2:'LP2',lp3:'LP3',lp4:'LP4',lp5:'LP5',lp6:'LP6',l
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects=[], assignments={}, projParams={}, globalParams=[], tmData={}, fmData={}, milestones={};
 let stammRules=[], checksets={}, pruefResults={};
-let mode='stamm', pid=null, selRuleId=null, selResultRuleId=null;
+let mode='stamm', pid=getCurrentProject()||null, selRuleId=null, selResultRuleId=null;
 let editRuleId=null, editRuleScope=null, confirmCb=null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────
@@ -471,7 +471,18 @@ function renderProjBar(){
       ${projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('')}
     </select>
     ${pid&&mode!=='stamm'?`<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${(tmData[pid]||[]).length} Modelle · ${(checksets[pid]||[]).length} Regeln aktiv</span>`:''}`;
-  if(pid) setTimeout(()=>{const s=document.getElementById('psel');if(s)s.value=pid;},0);
+  if(pid) setTimeout(()=>{
+    const s=document.getElementById('psel');
+    if(s){
+      const _ap=getCurrentProject();
+      if(_ap&&!pid&&s.querySelector('option[value="'+_ap+'"]')){
+        s.value=_ap;
+        onProjChange();
+      } else if(pid) {
+        s.value=pid;
+      }
+    }
+  },0);
 }
 function renderTopbar(){
   const el=document.getElementById('topbar-right');
@@ -1218,6 +1229,24 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function comingSoon(){showToast('Modul wird in Kürze entwickelt');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeRuleModal();closeConfirm();closeImport();}});
 init();
+
+// Safety re-render: if workspace is empty after init, reload data and re-render
+setTimeout(function() {
+  try {
+    var ws = document.getElementById('workspace') ||
+             document.getElementById('main-content') ||
+             document.getElementById('page') ||
+             document.getElementById('projects-container') ||
+             document.getElementById('main-area');
+    if (ws && (!ws.innerHTML || ws.innerHTML.trim() === '')) {
+      console.info('[BIM] Empty workspace – reloading data from localStorage and re-rendering');
+      // Re-run init to pick up any data that arrived after page load
+      if (typeof init === 'function') { init(); return; }
+      if (typeof render === 'function') render();
+      else if (typeof renderProjects === 'function') renderProjects();
+    }
+  } catch(e) { console.warn('[BIM] Safety re-render failed:', e.message); }
+}, 800);
 </script>
 </body>
 </html>

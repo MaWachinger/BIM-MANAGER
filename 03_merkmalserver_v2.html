@@ -1718,6 +1718,24 @@ document.addEventListener('keydown',e=>{
 });
 
 init();
+
+// Safety re-render: if workspace is empty after init, reload data and re-render
+setTimeout(function() {
+  try {
+    var ws = document.getElementById('workspace') ||
+             document.getElementById('main-content') ||
+             document.getElementById('page') ||
+             document.getElementById('projects-container') ||
+             document.getElementById('main-area');
+    if (ws && (!ws.innerHTML || ws.innerHTML.trim() === '')) {
+      console.info('[BIM] Empty workspace – reloading data from localStorage and re-rendering');
+      // Re-run init to pick up any data that arrived after page load
+      if (typeof init === 'function') { init(); return; }
+      if (typeof render === 'function') render();
+      else if (typeof renderProjects === 'function') renderProjects();
+    }
+  } catch(e) { console.warn('[BIM] Safety re-render failed:', e.message); }
+}, 800);
 </script>
 </body>
 </html>

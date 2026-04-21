@@ -759,9 +759,9 @@ function updateBadges(){
 }
 function setMode(m){
   mode=m;
-  document.getElementById('tab-global').classList.toggle('active',m==='global');
-  document.getElementById('tab-proj').classList.toggle('active',m==='proj');
-  document.getElementById('tab-global').classList.toggle('g',true);
+  (document.getElementById('tab-global')||{}).classList.toggle('active',m==='global');
+  (document.getElementById('tab-proj')||{}).classList.toggle('active',m==='proj');
+  (document.getElementById('tab-global')||{}).classList.toggle('g',true);
   render();
 }
 function renderTopbarRight(){
@@ -785,7 +785,7 @@ function renderGlobal(){
   const cats=['alle',...PARAM_GROUPS.map(g=>g.code)];
   const list=globalParams.filter(p=>glibCat==='alle'||p.grp===glibCat);
 
-  document.getElementById('workspace').innerHTML=`
+  (document.getElementById('workspace')||{}).innerHTML=`
   <div class="glib-layout">
     <div class="glib-side">
       <div style="padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -855,7 +855,7 @@ function copyToProject(gid){
 // ═══════════════════════════════════════════════════
 function renderProject(){
   const awfList=pid?(awfData[pid]||[]):[];
-  document.getElementById('proj-bar-wrap').innerHTML=`
+  (document.getElementById('proj-bar-wrap')||{}).innerHTML=`
     <div class="proj-bar">
       <label>Projekt:</label>
       <select class="psel" id="psel" onchange="onProjChange()">
@@ -870,7 +870,7 @@ function renderProject(){
   if(pid) setTimeout(()=>{const s=document.getElementById('psel');if(s) s.value=pid;},0);
 
   if(!pid){
-    document.getElementById('workspace').innerHTML=`<div class="no-project"><div class="no-project-inner"><div class="ei">🏗️</div><div class="et">Kein Projekt ausgewählt</div><div style="font-size:12px">Wähle oben ein Projekt um Merkmale zu konfigurieren</div></div></div>`;
+    (document.getElementById('workspace')||{}).innerHTML=`<div class="no-project"><div class="no-project-inner"><div class="ei">🏗️</div><div class="et">Kein Projekt ausgewählt</div><div style="font-size:12px">Wähle oben ein Projekt um Merkmale zu konfigurieren</div></div></div>`;
     return;
   }
 
@@ -880,7 +880,7 @@ function renderProject(){
   const assignedGlobalIds=new Set();
   Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedGlobalIds.add(a.globalRef); }));
 
-  document.getElementById('workspace').innerHTML=`
+  (document.getElementById('workspace')||{}).innerHTML=`
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
     <div style="display:flex;flex:1;overflow:hidden">
 
@@ -1002,8 +1002,8 @@ function renderTree(node, depth){
   const nodeHtml=`<div class="tnode ${isSelected?'selected':''}" id="tnode-${node.id}"
     style="padding-left:${indent}px"
     onclick="selectNode('${node.id}')"
-    ondragover="event.preventDefault();document.getElementById('tnode-${node.id}').classList.add('drop-over')"
-    ondragleave="document.getElementById('tnode-${node.id}').classList.remove('drop-over')"
+    ondragover="event.preventDefault();(document.getElementById('tnode-${node.id}')||{}).classList.add('drop-over')"
+    ondragleave="(document.getElementById('tnode-${node.id}')||{}).classList.remove('drop-over')"
     ondrop="onDrop(event,'${node.id}')">
     <div class="tnode-inner">
       <span class="tnode-toggle ${hasChildren?(isOpen?'open':''):('leaf')}"
@@ -1323,8 +1323,8 @@ function openGlobalPicker(){
   const available=globalParams.filter(p=>!alreadyRefs.includes(p.id));
   if(!available.length){showToast('Alle globalen Merkmale bereits im Projekt');return;}
   (function(){const _el=document.getElementById('import-title');if(_el)_el.textContent='Aus Globaler Bibliothek übernehmen';}());
-  document.getElementById('import-ol').classList.add('open');
-  document.getElementById('import-body-inner').innerHTML=`
+  (document.getElementById('import-ol')||{}).classList.add('open');
+  (document.getElementById('import-body-inner')||{}).innerHTML=`
     <div class="info-purple" style="margin-bottom:12px">Wähle Merkmale für <strong>${projects.find(p=>p.id===pid)?.name||''}</strong>. Das Projekt erhält eigene Kopien.</div>
     <div style="display:flex;gap:6px;margin-bottom:8px">
       <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.gpick').forEach(c=>c.checked=true)">Alle</button>
@@ -1357,7 +1357,7 @@ function openGlobalPicker(){
 
 // ─── PARAM MODAL ─────────────────────────────────────────────────────
 function buildIfcSelector(){
-  document.getElementById('ifc-sel-wrap').innerHTML=IFC_GROUPS_MODAL.map(g=>`
+  (document.getElementById('ifc-sel-wrap')||{}).innerHTML=IFC_GROUPS_MODAL.map(g=>`
     <div class="ifc-g">
       <div class="ifc-g-label">${g.label}</div>
       ${g.types.map(t=>`<div class="ifc-opt" id="io-${t}" onclick="toggleIfc('${t}')">
@@ -1370,14 +1370,14 @@ function toggleIfc(t){
   if(selectedIfcTypes.includes(t)) selectedIfcTypes=selectedIfcTypes.filter(x=>x!==t);
   else selectedIfcTypes.push(t);
   IFC_GROUPS_MODAL.flatMap(g=>g.types).forEach(x=>{
-    document.getElementById('ic-'+x)&&(document.getElementById('ic-'+x).checked=selectedIfcTypes.includes(x));
+    document.getElementById('ic-'+x)&&((document.getElementById('ic-'+x)||{}).checked=selectedIfcTypes.includes(x));
     document.getElementById('io-'+x)?.classList.toggle('sel',selectedIfcTypes.includes(x));
   });
 }
 function syncIfcCbs(){IFC_GROUPS_MODAL.flatMap(g=>g.types).forEach(t=>{const cb=document.getElementById('ic-'+t);const opt=document.getElementById('io-'+t);if(cb) cb.checked=selectedIfcTypes.includes(t);if(opt) opt.classList.toggle('sel',selectedIfcTypes.includes(t));});}
 
 function buildPhaseGridModal(){
-  document.getElementById('phase-grid-modal').innerHTML=LP_LIST.map(lp=>`<div class="ph ${selectedPhases.includes(lp)?'on':''}" id="ph-${lp}" onclick="togglePh('${lp}')">${lp}</div>`).join('');
+  (document.getElementById('phase-grid-modal')||{}).innerHTML=LP_LIST.map(lp=>`<div class="ph ${selectedPhases.includes(lp)?'on':''}" id="ph-${lp}" onclick="togglePh('${lp}')">${lp}</div>`).join('');
 }
 function togglePh(lp){
   if(selectedPhases.includes(lp)) selectedPhases=selectedPhases.filter(x=>x!==lp);
@@ -1393,56 +1393,56 @@ function openParamModal(id=null, scope='global'){
   const list=scope==='global'?globalParams:(projParams[pid]||[]);
   const src=id?list.find(p=>p.id===id):null;
   if(src){
-    document.getElementById('p-name').value=src.name||'';
-    document.getElementById('p-desc').value=src.desc||'';
-    document.getElementById('p-pset').value=src.pset||'';
-    document.getElementById('p-attr').value=src.attr||'';
-    document.getElementById('p-dtype').value=src.dtype||'IfcLabel';
-    document.getElementById('p-grp').value=src.grp||'001';
+    (document.getElementById('p-name')||{}).value=src.name||'';
+    (document.getElementById('p-desc')||{}).value=src.desc||'';
+    (document.getElementById('p-pset')||{}).value=src.pset||'';
+    (document.getElementById('p-attr')||{}).value=src.attr||'';
+    (document.getElementById('p-dtype')||{}).value=src.dtype||'IfcLabel';
+    (document.getElementById('p-grp')||{}).value=src.grp||'001';
     selectedIfcTypes=[...(src.ifcTypes||[])];
     selectedPhases=[...(src.phases||[])];
     // Validation / Wertebereich
     const v=src.validation;
     const vt=v?.type||'';
-    if(document.getElementById('p-valtype')) document.getElementById('p-valtype').value=vt;
-    if(vt==='enum'&&document.getElementById('p-enum')) document.getElementById('p-enum').value=(v.values||[]).join(', ');
-    if(vt==='range'){if(document.getElementById('p-min'))document.getElementById('p-min').value=v.min!=null?v.min:'';if(document.getElementById('p-max'))document.getElementById('p-max').value=v.max!=null?v.max:'';if(document.getElementById('p-unit'))document.getElementById('p-unit').value=v.unit||'';}
-    if(vt==='regex'){if(document.getElementById('p-regex'))document.getElementById('p-regex').value=v.pattern||'';if(document.getElementById('p-regex-example'))document.getElementById('p-regex-example').value=v.example||'';}
+    if(document.getElementById('p-valtype')) (document.getElementById('p-valtype')||{}).value=vt;
+    if(vt==='enum'&&document.getElementById('p-enum')) (document.getElementById('p-enum')||{}).value=(v.values||[]).join(', ');
+    if(vt==='range'){if(document.getElementById('p-min'))(document.getElementById('p-min')||{}).value=v.min!=null?v.min:'';if(document.getElementById('p-max'))(document.getElementById('p-max')||{}).value=v.max!=null?v.max:'';if(document.getElementById('p-unit'))(document.getElementById('p-unit')||{}).value=v.unit||'';}
+    if(vt==='regex'){if(document.getElementById('p-regex'))(document.getElementById('p-regex')||{}).value=v.pattern||'';if(document.getElementById('p-regex-example'))(document.getElementById('p-regex-example')||{}).value=v.example||'';}
     updateWertUI();
   } else {
-    ['p-name','p-desc','p-pset','p-attr'].forEach(i=>document.getElementById(i).value='');
-    document.getElementById('p-dtype').value='IfcLabel';
-    document.getElementById('p-grp').value='001';
-    if(document.getElementById('p-valtype')) document.getElementById('p-valtype').value='';
+    ['p-name','p-desc','p-pset','p-attr'].forEach(i=>(document.getElementById(i)||{}).value='');
+    (document.getElementById('p-dtype')||{}).value='IfcLabel';
+    (document.getElementById('p-grp')||{}).value='001';
+    if(document.getElementById('p-valtype')) (document.getElementById('p-valtype')||{}).value='';
     updateWertUI();
     selectedIfcTypes=[]; selectedPhases=[];
   }
   syncIfcCbs(); syncPhases();
-  document.getElementById('param-ol').classList.add('open');
-  setTimeout(()=>document.getElementById('p-name').focus(),200);
+  (document.getElementById('param-ol')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById('p-name')||{}).focus(),200);
 }
-function closeParamModal(){document.getElementById('param-ol').classList.remove('open');editParamId=null;}
+function closeParamModal(){(document.getElementById('param-ol')||{}).classList.remove('open');editParamId=null;}
 function updateWertUI(){
   const vt=document.getElementById('p-valtype')?.value||'';
-  document.getElementById('wert-ui-enum').style.display=vt==='enum'?'':'none';
-  document.getElementById('wert-ui-range').style.display=vt==='range'?'':'none';
-  document.getElementById('wert-ui-regex').style.display=vt==='regex'?'':'none';
+  (document.getElementById('wert-ui-enum')||{}).style.display=vt==='enum'?'':'none';
+  (document.getElementById('wert-ui-range')||{}).style.display=vt==='range'?'':'none';
+  (document.getElementById('wert-ui-regex')||{}).style.display=vt==='regex'?'':'none';
 }
 function saveParam(){
-  const name=document.getElementById('p-name').value.trim();
-  const pset=document.getElementById('p-pset').value.trim();
-  const attr=document.getElementById('p-attr').value.trim();
+  const name=(document.getElementById('p-name')||{}).value.trim();
+  const pset=(document.getElementById('p-pset')||{}).value.trim();
+  const attr=(document.getElementById('p-attr')||{}).value.trim();
   if(!name||!pset||!attr){showToast('Name, PSet und Attribut erforderlich');return;}
   const valtype=document.getElementById('p-valtype')?.value||'';
   let validation=null;
-  if(valtype==='enum'){const vals=document.getElementById('p-enum').value.split(',').map(v=>v.trim()).filter(Boolean);if(vals.length)validation={type:'enum',values:vals};}
-  else if(valtype==='range'){const mn=document.getElementById('p-min').value,mx=document.getElementById('p-max').value;validation={type:'range',min:mn!==''?parseFloat(mn):null,max:mx!==''?parseFloat(mx):null,unit:document.getElementById('p-unit').value.trim()};}
-  else if(valtype==='regex'){validation={type:'regex',pattern:document.getElementById('p-regex').value.trim(),example:document.getElementById('p-regex-example').value.trim()};}
+  if(valtype==='enum'){const vals=(document.getElementById('p-enum')||{}).value.split(',').map(v=>v.trim()).filter(Boolean);if(vals.length)validation={type:'enum',values:vals};}
+  else if(valtype==='range'){const mn=(document.getElementById('p-min')||{}).value,mx=(document.getElementById('p-max')||{}).value;validation={type:'range',min:mn!==''?parseFloat(mn):null,max:mx!==''?parseFloat(mx):null,unit:(document.getElementById('p-unit')||{}).value.trim()};}
+  else if(valtype==='regex'){validation={type:'regex',pattern:(document.getElementById('p-regex')||{}).value.trim(),example:(document.getElementById('p-regex-example')||{}).value.trim()};}
   else if(valtype==='notempty'){validation={type:'notempty'};}
   const data={id:editParamId||uid(),name,pset,attr,
-    desc:document.getElementById('p-desc').value.trim(),
-    dtype:document.getElementById('p-dtype').value,
-    grp:document.getElementById('p-grp').value,
+    desc:(document.getElementById('p-desc')||{}).value.trim(),
+    dtype:(document.getElementById('p-dtype')||{}).value,
+    grp:(document.getElementById('p-grp')||{}).value,
     ifcTypes:[...selectedIfcTypes],phases:[...selectedPhases],
     validation,
     updated:new Date().toISOString()};
@@ -1464,7 +1464,7 @@ function confirmDelParam(id,scope){
     const p=globalParams.find(x=>x.id===id);if(!p) return;
     const usedIn=Object.entries(projParams).filter(([_,list])=>list.find(x=>x.globalRef===id)).map(([ppid])=>projects.find(x=>x.id===ppid)?.name||ppid).filter(Boolean);
     (function(){const _el=document.getElementById('confirm-title');if(_el)_el.textContent='Globales Merkmal löschen?';}());
-    document.getElementById('confirm-body').innerHTML=`
+    (document.getElementById('confirm-body')||{}).innerHTML=`
       <div style="background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--err)">
         ⚠ Du löschst ein <strong>globales Merkmal</strong> aus der Bibliothek. Es muss danach neu erfasst werden – Projektkopien bleiben erhalten, aber der Bezug zur Bibliothek geht verloren.
       </div>
@@ -1475,8 +1475,8 @@ function confirmDelParam(id,scope){
       globalParams=globalParams.filter(x=>x.id!==id);
       saveGlobal();closeConfirm();render();showToast('Globales Merkmal gelöscht');
     };
-    document.getElementById('confirm-btn').onclick=confirmCb;
-    document.getElementById('confirm-ol').classList.add('open');
+    (document.getElementById('confirm-btn')||{}).onclick=confirmCb;
+    (document.getElementById('confirm-ol')||{}).classList.add('open');
   } else {
     // Project param: remove instantly – no confirmation needed
     projParams[pid]=(projParams[pid]||[]).filter(x=>x.id!==id);
@@ -1492,27 +1492,27 @@ function openImport(scope){
   importScope=scope; importRows=[]; importTab2='csv';
   (function(){const _el=document.getElementById('import-title');if(_el)_el.textContent=scope==='global'?'In Bibliothek importieren':'In Projekt importieren';}());
   setImportTab('csv');
-  document.getElementById('import-ok').disabled=true;
-  document.getElementById('import-ok').onclick=doImport;
-  document.getElementById('import-ol').classList.add('open');
+  (document.getElementById('import-ok')||{}).disabled=true;
+  (document.getElementById('import-ok')||{}).onclick=doImport;
+  (document.getElementById('import-ol')||{}).classList.add('open');
 }
-function closeImport(){document.getElementById('import-ol').classList.remove('open');importRows=[];}
+function closeImport(){(document.getElementById('import-ol')||{}).classList.remove('open');importRows=[];}
 function setImportTab(t){
   importTab2=t;
-  ['csv','excel','ids'].forEach(x=>document.getElementById('itab-'+x).classList.toggle('active',x===t));
+  ['csv','excel','ids'].forEach(x=>(document.getElementById('itab-'+x)||{}).classList.toggle('active',x===t));
   const bd=document.getElementById('import-body-inner');
   if(t==='csv'){bd.innerHTML=`<div class="info-blue" style="margin-bottom:10px">Spalten: <code>Name, PSet, Attribut, Datentyp, Gruppe, Leistungsphasen, Beschreibung</code></div>
-    <div class="drop-zone" onclick="document.getElementById('f-csv').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'csv')">
+    <div class="drop-zone" onclick="(document.getElementById('f-csv')||{}).click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'csv')">
       <input type="file" id="f-csv" accept=".csv,.txt" onchange="handleFile(this.files[0],'csv')">
       <div style="font-size:28px">📄</div><div style="font-weight:600;color:var(--text2);margin-bottom:4px">CSV ablegen oder klicken</div><div style="font-size:11px;color:var(--text3)">.csv</div>
     </div><div id="prev"></div>`;}
   else if(t==='excel'){bd.innerHTML=`<div class="info-blue" style="margin-bottom:10px">Gleiche Spaltenstruktur wie CSV. Erste Zeile = Kopfzeile.</div>
-    <div class="drop-zone" onclick="document.getElementById('f-xl').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'excel')">
+    <div class="drop-zone" onclick="(document.getElementById('f-xl')||{}).click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'excel')">
       <input type="file" id="f-xl" accept=".xlsx,.xls" onchange="handleFile(this.files[0],'excel')">
       <div style="font-size:28px">📊</div><div style="font-weight:600;color:var(--text2);margin-bottom:4px">Excel ablegen oder klicken</div><div style="font-size:11px;color:var(--text3)">.xlsx / .xls</div>
     </div><div id="prev"></div>`;}
   else{bd.innerHTML=`<div class="info-blue" style="margin-bottom:10px">IDS-Dateien (.ids XML) nach buildingSMART-Standard.</div>
-    <div class="drop-zone" onclick="document.getElementById('f-ids').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'ids')">
+    <div class="drop-zone" onclick="(document.getElementById('f-ids')||{}).click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');handleFile(event.dataTransfer.files[0],'ids')">
       <input type="file" id="f-ids" accept=".ids,.xml" onchange="handleFile(this.files[0],'ids')">
       <div style="font-size:28px">📋</div><div style="font-weight:600;color:var(--text2);margin-bottom:4px">IDS ablegen oder klicken</div><div style="font-size:11px;color:var(--text3)">.ids / .xml</div>
     </div><div id="prev"></div>`;}
@@ -1564,7 +1564,7 @@ function mapImportRow(row){
 function showPreview(){
   const el=document.getElementById('prev');if(!el) return;
   if(!importRows.length){el.innerHTML=`<div style="padding:10px;color:var(--err);font-size:12px">Keine gültigen Merkmale erkannt.</div>`;return;}
-  document.getElementById('import-ok').disabled=false;
+  (document.getElementById('import-ok')||{}).disabled=false;
   el.innerHTML=`<div style="font-size:11px;color:var(--text2);margin:10px 0 6px">${importRows.length} Merkmale erkannt:</div>
     <div style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
@@ -1590,7 +1590,7 @@ let editingGrpCode = null;
 let grpColor = GRP_COLORS[0];
 
 function buildGrpColorSwatches(){
-  document.getElementById('grp-color-swatches').innerHTML = GRP_COLORS.map(c=>
+  (document.getElementById('grp-color-swatches')||{}).innerHTML = GRP_COLORS.map(c=>
     `<div class="cswatch ${c===grpColor?'sel':''}" style="background:${c}" data-c="${c}" onclick="pickGrpColor('${c}')"></div>`
   ).join('');
 }
@@ -1605,37 +1605,37 @@ function openGrpModal(code=null){
   (function(){const _el=document.getElementById('grp-save');if(_el)_el.textContent=code ? 'Änderungen speichern' : 'Anlegen';}());
   if(code){
     const g=GRP_MAP[code];
-    document.getElementById('g-code').value  = g?.code  || '';
-    document.getElementById('g-name').value  = g?.name  || '';
-    document.getElementById('g-scope').value = g?.scope || '';
+    (document.getElementById('g-code')||{}).value  = g?.code  || '';
+    (document.getElementById('g-name')||{}).value  = g?.name  || '';
+    (document.getElementById('g-scope')||{}).value = g?.scope || '';
     grpColor = g?.color || GRP_COLORS[0];
     // Lock code field when editing
-    document.getElementById('g-code').readOnly = true;
-    document.getElementById('g-code').style.opacity = '0.5';
+    (document.getElementById('g-code')||{}).readOnly = true;
+    (document.getElementById('g-code')||{}).style.opacity = '0.5';
   } else {
-    document.getElementById('g-code').value  = '';
-    document.getElementById('g-name').value  = '';
-    document.getElementById('g-scope').value = '';
+    (document.getElementById('g-code')||{}).value  = '';
+    (document.getElementById('g-name')||{}).value  = '';
+    (document.getElementById('g-scope')||{}).value = '';
     grpColor = GRP_COLORS[Math.floor(Math.random()*GRP_COLORS.length)];
-    document.getElementById('g-code').readOnly = false;
-    document.getElementById('g-code').style.opacity = '1';
+    (document.getElementById('g-code')||{}).readOnly = false;
+    (document.getElementById('g-code')||{}).style.opacity = '1';
   }
   buildGrpColorSwatches();
-  document.getElementById('grp-ol').classList.add('open');
-  setTimeout(()=>document.getElementById(code?'g-name':'g-code').focus(), 200);
+  (document.getElementById('grp-ol')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById(code?'g-name':'g-code')||{}).focus(), 200);
 }
-function closeGrpModal(){ document.getElementById('grp-ol').classList.remove('open'); editingGrpCode=null; }
+function closeGrpModal(){ (document.getElementById('grp-ol')||{}).classList.remove('open'); editingGrpCode=null; }
 
 function saveGrp(){
-  const code = document.getElementById('g-code').value.trim().replace(/\s+/g,'-');
-  const name = document.getElementById('g-name').value.trim();
+  const code = (document.getElementById('g-code')||{}).value.trim().replace(/\s+/g,'-');
+  const name = (document.getElementById('g-name')||{}).value.trim();
   if(!code || !name){ showToast('Code und Name sind Pflichtfelder'); return; }
   if(!editingGrpCode && GRP_MAP[code]){ showToast(`Code „${code}" ist bereits vergeben`); return; }
   if(editingGrpCode){
     const i=PARAM_GROUPS.findIndex(g=>g.code===editingGrpCode);
-    if(i>-1) PARAM_GROUPS[i]={ code:editingGrpCode, name, color:grpColor, scope:document.getElementById('g-scope').value.trim() };
+    if(i>-1) PARAM_GROUPS[i]={ code:editingGrpCode, name, color:grpColor, scope:(document.getElementById('g-scope')||{}).value.trim() };
   } else {
-    PARAM_GROUPS.push({ code, name, color:grpColor, scope:document.getElementById('g-scope').value.trim() });
+    PARAM_GROUPS.push({ code, name, color:grpColor, scope:(document.getElementById('g-scope')||{}).value.trim() });
   }
   saveGroups(); closeGrpModal(); renderGlobal();
   showToast(editingGrpCode ? `✓ Gruppe „${name}" aktualisiert` : `✓ Gruppe „${name}" angelegt`);
@@ -1645,7 +1645,7 @@ function confirmDelGrp(code){
   const g=GRP_MAP[code]; if(!g) return;
   const paramCount=globalParams.filter(p=>p.grp===code).length;
   (function(){const _el=document.getElementById('confirm-title');if(_el)_el.textContent='Merkmalsgruppe löschen?';}());
-  document.getElementById('confirm-body').innerHTML = paramCount > 0
+  (document.getElementById('confirm-body')||{}).innerHTML = paramCount > 0
     ? `<div style="background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--err)">
         ⚠ Die Gruppe <strong>${g.code} – ${g.name}</strong> enthält noch <strong>${paramCount} Merkmale</strong>. Diese werden der Gruppe <em>ZZ – Sonstige</em> zugewiesen.
        </div>`
@@ -1661,8 +1661,8 @@ function confirmDelGrp(code){
     closeConfirm(); renderGlobal();
     showToast(paramCount>0 ? `Gruppe gelöscht – ${paramCount} Merkmale nach ZZ verschoben` : 'Gruppe gelöscht');
   };
-  document.getElementById('confirm-btn').onclick=confirmCb;
-  document.getElementById('confirm-ol').classList.add('open');
+  (document.getElementById('confirm-btn')||{}).onclick=confirmCb;
+  (document.getElementById('confirm-ol')||{}).classList.add('open');
 }
 
 // ─── IDS EXPORT ──────────────────────────────────────────────────────
@@ -1706,7 +1706,7 @@ function exportGlobalCSV(){
 }
 
 // ─── CONFIRM ─────────────────────────────────────────────────────────
-function closeConfirm(){document.getElementById('confirm-ol').classList.remove('open');confirmCb=null;}
+function closeConfirm(){(document.getElementById('confirm-ol')||{}).classList.remove('open');confirmCb=null;}
 
 // ─── UTILS ───────────────────────────────────────────────────────────
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}

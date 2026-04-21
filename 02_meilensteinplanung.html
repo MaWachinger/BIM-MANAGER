@@ -433,7 +433,7 @@ function init() {
 
   buildDzChips();
   populateSelect();
-  document.getElementById('del-btn').addEventListener('click', doDelete);
+  (document.getElementById('del-btn')||{}).addEventListener('click', doDelete);
 }
 
 // ─── PROJECT SELECT ───────────────────────────────────────────────────
@@ -458,18 +458,18 @@ function populateSelect() {
 }
 
 function onProjectChange() {
-  currentPid = document.getElementById('proj-sel').value || null;
+  currentPid = (document.getElementById('proj-sel')||{}).value || null;
   setCurrentProject(currentPid||'');
-  document.getElementById('btn-new').disabled = !currentPid;
+  (document.getElementById('btn-new')||{}).disabled = !currentPid;
   if (currentPid) {
     const p = projects.find(x=>x.id===currentPid);
-    document.getElementById('page-sub').textContent = `${p?.name||''} · Klicke auf einen Eintrag zum Bearbeiten`;
+    (document.getElementById('page-sub')||{}).textContent = `${p?.name||''} · Klicke auf einen Eintrag zum Bearbeiten`;
     if (!milestones[currentPid]) milestones[currentPid] = [];
-    document.getElementById('stats-row').style.display = 'grid';
+    (document.getElementById('stats-row')||{}).style.display = 'grid';
     render();
   } else {
     (function(){const _el=document.getElementById('page-sub');if(_el)_el.textContent='Wähle ein Projekt um Meilensteine zu verwalten';}());
-    document.getElementById('stats-row').style.display = 'none';
+    (document.getElementById('stats-row')||{}).style.display = 'none';
     (function(){const _el=document.getElementById('main-area');if(_el)_el.innerHTML=noProject();}());
   }
 }
@@ -515,11 +515,11 @@ function updateStats() {
   if (upcoming.length) {
     const d = new Date(upcoming[0].datum);
     (function(){const _el=document.getElementById('st-next');if(_el)_el.textContent=d.toLocaleDateString('de-DE',{day:'2-digit',month:'short'});}());
-    document.getElementById('st-next').style.color      = (d-today)<14*864e5 ? 'var(--warn)' : 'var(--text)';
+    (document.getElementById('st-next')||{}).style.color      = (d-today)<14*864e5 ? 'var(--warn)' : 'var(--text)';
     (function(){const _el=document.getElementById('st-next-name');if(_el)_el.textContent=upcoming[0].name.slice(0,24);}());
   } else {
     (function(){const _el=document.getElementById('st-next');if(_el)_el.textContent='—';}());
-    document.getElementById('st-next').style.color      = 'var(--text3)';
+    (document.getElementById('st-next')||{}).style.color      = 'var(--text3)';
     (function(){const _el=document.getElementById('st-next-name');if(_el)_el.textContent='Kein offener Termin';}());
   }
 }
@@ -533,8 +533,8 @@ function render() {
 
 function setView(v) {
   currentView = v;
-  document.getElementById('vbtn-gantt').classList.toggle('active', v==='gantt');
-  document.getElementById('vbtn-timeline').classList.toggle('active', v==='timeline');
+  (document.getElementById('vbtn-gantt')||{}).classList.toggle('active', v==='gantt');
+  (document.getElementById('vbtn-timeline')||{}).classList.toggle('active', v==='timeline');
   render();
 }
 
@@ -782,7 +782,7 @@ function noProject() {
 
 // ─── DZ CHIPS ─────────────────────────────────────────────────────────
 function buildDzChips() {
-  document.getElementById('dz-wrap').innerHTML = DISZIPLINEN.map(d=>
+  (document.getElementById('dz-wrap')||{}).innerHTML = DISZIPLINEN.map(d=>
     `<div class="dz-chip" id="dz-${d.id}" onclick="toggleDz('${d.id}')">${d.label}</div>`).join('');
 }
 function toggleDz(id) {
@@ -797,13 +797,13 @@ function setDz(arr) {
 
 // ─── FORM LOGIC ───────────────────────────────────────────────────────
 function onTypChange() {
-  const isDD = document.getElementById('f-typ').value === 'datadrop';
-  document.getElementById('recurring-section').style.display = isDD ? '' : 'none';
-  if (!isDD) { document.getElementById('f-recurring').checked=false; onRecurringChange(); }
+  const isDD = (document.getElementById('f-typ')||{}).value === 'datadrop';
+  (document.getElementById('recurring-section')||{}).style.display = isDD ? '' : 'none';
+  if (!isDD) { (document.getElementById('f-recurring')||{}).checked=false; onRecurringChange(); }
 }
 function onRecurringChange() {
-  const checked = document.getElementById('f-recurring').checked;
-  document.getElementById('recurring-box').classList.toggle('hidden', !checked);
+  const checked = (document.getElementById('f-recurring')||{}).checked;
+  (document.getElementById('recurring-box')||{}).classList.toggle('hidden', !checked);
 }
 
 // ─── MODAL ────────────────────────────────────────────────────────────
@@ -815,52 +815,52 @@ function openModal(id=null) {
 
   if (id) {
     const m=(milestones[currentPid]||[]).find(x=>x.id===id); if(!m) return;
-    document.getElementById('f-name').value   = m.name||'';
-    document.getElementById('f-typ').value    = m.typ||'datadrop';
-    document.getElementById('f-status').value = m.status||'offen';
-    document.getElementById('f-datum').value  = m.datum||'';
-    document.getElementById('f-frist').value  = m.frist||'';
-    document.getElementById('f-desc').value   = m.desc||'';
-    document.getElementById('f-recurring').checked = !!m.recurring;
-    document.getElementById('f-interval').value    = m.interval||3;
-    document.getElementById('f-unit').value        = m.unit||'weeks';
-    document.getElementById('f-recur-end').value   = m.recurEnd||'';
+    (document.getElementById('f-name')||{}).value   = m.name||'';
+    (document.getElementById('f-typ')||{}).value    = m.typ||'datadrop';
+    (document.getElementById('f-status')||{}).value = m.status||'offen';
+    (document.getElementById('f-datum')||{}).value  = m.datum||'';
+    (document.getElementById('f-frist')||{}).value  = m.frist||'';
+    (document.getElementById('f-desc')||{}).value   = m.desc||'';
+    (document.getElementById('f-recurring')||{}).checked = !!m.recurring;
+    (document.getElementById('f-interval')||{}).value    = m.interval||3;
+    (document.getElementById('f-unit')||{}).value        = m.unit||'weeks';
+    (document.getElementById('f-recur-end')||{}).value   = m.recurEnd||'';
     setDz(m.disziplinen||[]);
   } else {
-    ['f-name','f-datum','f-frist','f-desc','f-recur-end'].forEach(i=>document.getElementById(i).value='');
-    document.getElementById('f-typ').value    = 'datadrop';
-    document.getElementById('f-status').value = 'offen';
-    document.getElementById('f-recurring').checked = false;
-    document.getElementById('f-interval').value    = 3;
-    document.getElementById('f-unit').value        = 'weeks';
+    ['f-name','f-datum','f-frist','f-desc','f-recur-end'].forEach(i=>(document.getElementById(i)||{}).value='');
+    (document.getElementById('f-typ')||{}).value    = 'datadrop';
+    (document.getElementById('f-status')||{}).value = 'offen';
+    (document.getElementById('f-recurring')||{}).checked = false;
+    (document.getElementById('f-interval')||{}).value    = 3;
+    (document.getElementById('f-unit')||{}).value        = 'weeks';
     setDz([]);
   }
   onTypChange(); onRecurringChange();
-  document.getElementById('modal-ol').classList.add('open');
-  setTimeout(()=>document.getElementById('f-name').focus(),200);
+  (document.getElementById('modal-ol')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById('f-name')||{}).focus(),200);
 }
 
-function closeModal() { document.getElementById('modal-ol').classList.remove('open'); editingId=null; }
+function closeModal() { (document.getElementById('modal-ol')||{}).classList.remove('open'); editingId=null; }
 function bgClose(e)   { if(e.target===document.getElementById('modal-ol')) closeModal(); }
 
 function saveMilestone() {
-  const name  = document.getElementById('f-name').value.trim();
-  const datum = document.getElementById('f-datum').value;
+  const name  = (document.getElementById('f-name')||{}).value.trim();
+  const datum = (document.getElementById('f-datum')||{}).value;
   if (!name||!datum) { showToast('Bitte Bezeichnung und Datum ausfüllen.'); return; }
 
-  const isRecur = document.getElementById('f-typ').value==='datadrop' && document.getElementById('f-recurring').checked;
+  const isRecur = (document.getElementById('f-typ')||{}).value==='datadrop' && (document.getElementById('f-recurring')||{}).checked;
 
   const data = {
     id:         editingId||uid(), name,
-    typ:        document.getElementById('f-typ').value,
-    status:     document.getElementById('f-status').value,
-    datum, frist: document.getElementById('f-frist').value||'',
+    typ:        (document.getElementById('f-typ')||{}).value,
+    status:     (document.getElementById('f-status')||{}).value,
+    datum, frist: (document.getElementById('f-frist')||{}).value||'',
     disziplinen:selectedDz.length?selectedDz:['alle'],
-    desc:       document.getElementById('f-desc').value.trim(),
+    desc:       (document.getElementById('f-desc')||{}).value.trim(),
     recurring:  isRecur,
-    interval:   isRecur ? parseInt(document.getElementById('f-interval').value)||3 : null,
-    unit:       isRecur ? document.getElementById('f-unit').value : null,
-    recurEnd:   isRecur ? document.getElementById('f-recur-end').value : null,
+    interval:   isRecur ? parseInt((document.getElementById('f-interval')||{}).value)||3 : null,
+    unit:       isRecur ? (document.getElementById('f-unit')||{}).value : null,
+    recurEnd:   isRecur ? (document.getElementById('f-recur-end')||{}).value : null,
     created:    editingId?((milestones[currentPid]||[]).find(m=>m.id===editingId)?.created||new Date().toISOString()):new Date().toISOString(),
     updated:    new Date().toISOString(),
   };
@@ -878,8 +878,8 @@ function saveMilestone() {
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────
-function confirmDelete(id) { deleteId=id; document.getElementById('confirm-ol').classList.add('open'); }
-function closeConfirm()    { document.getElementById('confirm-ol').classList.remove('open'); deleteId=null; }
+function confirmDelete(id) { deleteId=id; (document.getElementById('confirm-ol')||{}).classList.add('open'); }
+function closeConfirm()    { (document.getElementById('confirm-ol')||{}).classList.remove('open'); deleteId=null; }
 function doDelete() {
   if (!deleteId||!currentPid) return;
   milestones[currentPid]=(milestones[currentPid]||[]).filter(m=>m.id!==deleteId);

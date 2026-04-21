@@ -309,7 +309,7 @@ function updateNavBadges(){
 // ─── TABS ─────────────────────────────────────────────────────────────
 function setTab(tab){
   currentTab=tab;
-  ['berichte','protokoll'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===tab));
+  ['berichte','protokoll'].forEach(t=>(document.getElementById('tab-'+t)||{}).classList.toggle('active',t===tab));
   const ta=document.getElementById('topbar-action');
   if(tab==='berichte'){ta.textContent='↓ Bericht generieren';ta.onclick=generateReport;(function(){const _el=document.getElementById('topbar-title');if(_el)_el.textContent='Berichtsgenerator';}());}
   else{ta.textContent='+ Neues Protokoll';ta.onclick=()=>openProtModal();(function(){const _el=document.getElementById('topbar-title');if(_el)_el.textContent='Protokollierung';}());}
@@ -326,7 +326,7 @@ function render(){
 // ═══════════════════════════════════════════════════════
 function renderBerichte(){
   const proj=projects.find(p=>p.id===selPid);
-  document.getElementById('page').innerHTML=`
+  (document.getElementById('page')||{}).innerHTML=`
     <div style="max-width:1140px;margin:0 auto">
       <div style="margin-bottom:22px">
         <h1 style="font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.03em;margin-bottom:4px">Berichtsgenerator</h1>
@@ -359,7 +359,7 @@ function renderBerichte(){
             <div class="config-card-body">
               <div class="fg">
                 <label>Projekt</label>
-                <select id="cfg-proj" onchange="selPid=this.value;setCurrentProject(selPid);document.getElementById('preview-body').innerHTML=buildReportPreview(selTemplate,selPid)">
+                <select id="cfg-proj" onchange="selPid=this.value;setCurrentProject(selPid);(document.getElementById('preview-body')||{}).innerHTML=buildReportPreview(selTemplate,selPid)">
                   <option value="">— Projekt wählen —</option>
                   ${projects.map(p=>`<option value="${p.id}" ${p.id===selPid?'selected':''}>${p.number} · ${p.name}</option>`).join('')}
                 </select>
@@ -631,7 +631,7 @@ function renderProtokoll(){
   const pid=selPid;
   const filteredProts=protokolle.filter(p=>!pid||p.pid===pid);
   const sel=filteredProts.find(p=>p.id===selProt);
-  document.getElementById('page').innerHTML=`
+  (document.getElementById('page')||{}).innerHTML=`
     <div style="max-width:1140px;margin:0 auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <div>
@@ -716,30 +716,30 @@ function openProtModal(id=null){
   editProtId=id;
   (function(){const _el=document.getElementById('prot-modal-title');if(_el)_el.textContent=id?'Protokoll bearbeiten':'Neues Protokoll';}());
   const src=id?protokolle.find(p=>p.id===id):null;
-  document.getElementById('pm-title').value=src?.title||'';
-  document.getElementById('pm-type').value=src?.type||'besprechung';
-  document.getElementById('pm-date').value=src?.date||today();
-  document.getElementById('pm-location').value=src?.location||'';
-  document.getElementById('pm-participants').value=src?.participants||'';
-  document.getElementById('pm-content').value=src?.content||'';
-  document.getElementById('pm-actions').value=src?.actions||'';
-  document.getElementById('pm-next').value=src?.next||'';
-  document.getElementById('prot-ol').classList.add('open');
-  setTimeout(()=>document.getElementById('pm-title').focus(),200);
+  (document.getElementById('pm-title')||{}).value=src?.title||'';
+  (document.getElementById('pm-type')||{}).value=src?.type||'besprechung';
+  (document.getElementById('pm-date')||{}).value=src?.date||today();
+  (document.getElementById('pm-location')||{}).value=src?.location||'';
+  (document.getElementById('pm-participants')||{}).value=src?.participants||'';
+  (document.getElementById('pm-content')||{}).value=src?.content||'';
+  (document.getElementById('pm-actions')||{}).value=src?.actions||'';
+  (document.getElementById('pm-next')||{}).value=src?.next||'';
+  (document.getElementById('prot-ol')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById('pm-title')||{}).focus(),200);
 }
-function closeProtModal(){document.getElementById('prot-ol').classList.remove('open');editProtId=null;}
+function closeProtModal(){(document.getElementById('prot-ol')||{}).classList.remove('open');editProtId=null;}
 function saveProtokoll(){
-  const title=document.getElementById('pm-title').value.trim();
+  const title=(document.getElementById('pm-title')||{}).value.trim();
   if(!title){showToast('Titel erforderlich');return;}
   const prot={
     id:editProtId||uid(), pid:selPid||'',
-    title, type:document.getElementById('pm-type').value,
-    date:document.getElementById('pm-date').value,
-    location:document.getElementById('pm-location').value.trim(),
-    participants:document.getElementById('pm-participants').value.trim(),
-    content:document.getElementById('pm-content').value.trim(),
-    actions:document.getElementById('pm-actions').value.trim(),
-    next:document.getElementById('pm-next').value,
+    title, type:(document.getElementById('pm-type')||{}).value,
+    date:(document.getElementById('pm-date')||{}).value,
+    location:(document.getElementById('pm-location')||{}).value.trim(),
+    participants:(document.getElementById('pm-participants')||{}).value.trim(),
+    content:(document.getElementById('pm-content')||{}).value.trim(),
+    actions:(document.getElementById('pm-actions')||{}).value.trim(),
+    next:(document.getElementById('pm-next')||{}).value,
     created:editProtId?protokolle.find(p=>p.id===editProtId)?.created||new Date().toISOString():new Date().toISOString(),
     updated:new Date().toISOString()
   };

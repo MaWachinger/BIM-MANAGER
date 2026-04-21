@@ -535,8 +535,8 @@ function setSoftwareFromString(str) {
   renderSoftwareChips();
 }
 function saveSettings() {
-  settings.name=document.getElementById('settings-name').value.trim();
-  settings.org=document.getElementById('settings-org').value.trim();
+  settings.name=(document.getElementById('settings-name')||{}).value.trim();
+  settings.org=(document.getElementById('settings-org')||{}).value.trim();
   localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
   applySettings(); closeSettings(); renderProjects(); showToast('✓ Profil gespeichert');
 }
@@ -547,11 +547,11 @@ function applySettings() {
   (function(){const _el=document.getElementById('user-avatar-sb');if(_el)_el.textContent=ini;}());
 }
 function openSettings() {
-  document.getElementById('settings-name').value=settings.name;
-  document.getElementById('settings-org').value=settings.org;
-  document.getElementById('settings-overlay').classList.add('open');
+  (document.getElementById('settings-name')||{}).value=settings.name;
+  (document.getElementById('settings-org')||{}).value=settings.org;
+  (document.getElementById('settings-overlay')||{}).classList.add('open');
 }
-function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); }
+function closeSettings() { (document.getElementById('settings-overlay')||{}).classList.remove('open'); }
 
 function loadData() {
   try {
@@ -605,10 +605,10 @@ function updateStats() {
   const firms=new Set();
   projects.forEach(p=>{ BETEILIGTE_KAT.forEach(k=>{ const b=p.beteiligte?.[k.id]; if(b&&b.firma) firms.add(b.firma.trim().toLowerCase()); }); });
   (function(){const _el=document.getElementById('stat-total');if(_el)_el.textContent=total;}());
-  document.getElementById('stat-total-sub').textContent=total===1?'1 Projekt erfasst':`${total} Projekte erfasst`;
+  (document.getElementById('stat-total-sub')||{}).textContent=total===1?'1 Projekt erfasst':`${total} Projekte erfasst`;
   (function(){const _el=document.getElementById('stat-active');if(_el)_el.textContent=active;}());
   (function(){const _el=document.getElementById('stat-mine');if(_el)_el.textContent=mine;}());
-  document.getElementById('stat-mine-sub').textContent=settings.name?`Zugewiesen an ${settings.name.split(' ')[0]}`:'Profil noch nicht eingerichtet';
+  (document.getElementById('stat-mine-sub')||{}).textContent=settings.name?`Zugewiesen an ${settings.name.split(' ')[0]}`:'Profil noch nicht eingerichtet';
   (function(){const _el=document.getElementById('stat-firms');if(_el)_el.textContent=firms.size;}());
   (function(){const _el=document.getElementById('nav-count');if(_el)_el.textContent=total;}());
 }
@@ -705,7 +705,7 @@ function showDetail(id){
     </tr>`;
   }).filter(Boolean).join('');
 
-  document.getElementById('detail-content').innerHTML=`
+  (document.getElementById('detail-content')||{}).innerHTML=`
     <div class="detail-header">
       <div class="detail-bar" style="background:${phaseColor(p)}"></div>
       <div class="detail-meta">
@@ -745,15 +745,15 @@ function showDetail(id){
       </div>
     </div>`;
 
-  document.getElementById('view-list').style.display='none';
-  document.getElementById('view-detail').style.display='block';
+  (document.getElementById('view-list')||{}).style.display='none';
+  (document.getElementById('view-detail')||{}).style.display='block';
   window.scrollTo(0,0);
 }
 
-function showListView(){ document.getElementById('view-list').style.display='block'; document.getElementById('view-detail').style.display='none'; window.scrollTo(0,0); }
+function showListView(){ (document.getElementById('view-list')||{}).style.display='block'; (document.getElementById('view-detail')||{}).style.display='none'; window.scrollTo(0,0); }
 
 function buildPhaseCheckboxes(){
-  document.getElementById('phase-checkboxes').innerHTML=LEISTUNGSPHASEN.map(lp=>`
+  (document.getElementById('phase-checkboxes')||{}).innerHTML=LEISTUNGSPHASEN.map(lp=>`
     <div class="phase-option" id="popt-${lp.id}" onclick="togglePhase('${lp.id}')">
       <input type="checkbox" class="phase-cb" id="pcb-${lp.id}" onclick="event.stopPropagation();togglePhase('${lp.id}')">
       <span class="phase-lp">${lp.label}</span>
@@ -769,7 +769,7 @@ function getSelectedPhases(){ return LEISTUNGSPHASEN.filter(lp=>document.getElem
 function setSelectedPhases(phases){ LEISTUNGSPHASEN.forEach(lp=>{ const cb=document.getElementById('pcb-'+lp.id),opt=document.getElementById('popt-'+lp.id); if(cb&&opt){ cb.checked=phases.includes(lp.id); opt.classList.toggle('selected',cb.checked); } }); }
 
 function buildBeteiligteForm(){
-  document.getElementById('beteiligte-form').innerHTML=BETEILIGTE_KAT.map(k=>`
+  (document.getElementById('beteiligte-form')||{}).innerHTML=BETEILIGTE_KAT.map(k=>`
     <div class="bet-card">
       <div class="bet-card-head"><span class="tag ${k.color}">${k.label}</span></div>
       <div class="bet-card-body">
@@ -804,42 +804,42 @@ function openModal(id=null){
   (function(){const _el=document.getElementById('save-btn');if(_el)_el.textContent=id?'Änderungen speichern':'Projekt speichern';}());
   if(id){
     const p=projects.find(x=>x.id===id); if(!p) return;
-    document.getElementById('f-name').value=p.name||'';
-    document.getElementById('f-number').value=p.number||'';
-    document.getElementById('f-bimmanager').value=p.bimManager||'';
-    document.getElementById('f-desc').value=p.desc||'';
-    document.getElementById('f-lod').value=p.lod||'';
-    document.getElementById('f-status').value=p.status||'aktiv';
+    (document.getElementById('f-name')||{}).value=p.name||'';
+    (document.getElementById('f-number')||{}).value=p.number||'';
+    (document.getElementById('f-bimmanager')||{}).value=p.bimManager||'';
+    (document.getElementById('f-desc')||{}).value=p.desc||'';
+    (document.getElementById('f-lod')||{}).value=p.lod||'';
+    (document.getElementById('f-status')||{}).value=p.status||'aktiv';
     setSoftwareFromString(p.software||'');
     setSelectedPhases(p.phases||[]); setBeteiligteData(p.beteiligte||{});
   } else {
-    ['f-name','f-desc'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('f-number').value=autoNumber();
-    document.getElementById('f-bimmanager').value=settings.name||'';
-    document.getElementById('f-lod').value='';
-    document.getElementById('f-status').value='aktiv';
+    ['f-name','f-desc'].forEach(id=>(document.getElementById(id)||{}).value='');
+    (document.getElementById('f-number')||{}).value=autoNumber();
+    (document.getElementById('f-bimmanager')||{}).value=settings.name||'';
+    (document.getElementById('f-lod')||{}).value='';
+    (document.getElementById('f-status')||{}).value='aktiv';
     setSoftwareFromString('');
     setSelectedPhases([]); setBeteiligteData({});
   }
-  document.getElementById('modal-overlay').classList.add('open');
-  setTimeout(()=>document.getElementById('f-name').focus(),200);
+  (document.getElementById('modal-overlay')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById('f-name')||{}).focus(),200);
 }
 
 function autoNumber(){ const y=new Date().getFullYear(),n=projects.length+1; return `PRJ-${y}-${String(n).padStart(3,'0')}`; }
-function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); editingId=null; }
+function closeModal(){ (document.getElementById('modal-overlay')||{}).classList.remove('open'); editingId=null; }
 function closeModalIfBg(e){ if(e.target===document.getElementById('modal-overlay')) closeModal(); }
 function switchTab(i){ document.querySelectorAll('.form-tab').forEach((t,j)=>t.classList.toggle('active',i===j)); document.querySelectorAll('.form-panel').forEach((p,j)=>p.classList.toggle('active',i===j)); }
 
 function saveProject(){
-  const name=document.getElementById('f-name').value.trim(), number=document.getElementById('f-number').value.trim();
+  const name=(document.getElementById('f-name')||{}).value.trim(), number=(document.getElementById('f-number')||{}).value.trim();
   if(!name||!number){ switchTab(0); showToast('Bitte Projektname und -nummer ausfüllen.'); return; }
   const data={
     id:editingId||uid(), name, number,
-    bimManager:document.getElementById('f-bimmanager').value.trim(),
-    desc:document.getElementById('f-desc').value.trim(),
+    bimManager:(document.getElementById('f-bimmanager')||{}).value.trim(),
+    desc:(document.getElementById('f-desc')||{}).value.trim(),
     software:getSoftwareString(),
-    lod:document.getElementById('f-lod').value,
-    status:document.getElementById('f-status').value,
+    lod:(document.getElementById('f-lod')||{}).value,
+    status:(document.getElementById('f-status')||{}).value,
     phases:getSelectedPhases(),
     beteiligte:getBeteiligteData(),
     created:editingId?(projects.find(p=>p.id===editingId)?.created||new Date().toISOString()):new Date().toISOString(),
@@ -851,16 +851,16 @@ function saveProject(){
   if(editingId) showDetail(data.id);
 }
 
-function confirmDelete(id){ deleteId=id; document.getElementById('confirm-overlay').classList.add('open'); }
-function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); deleteId=null; }
-document.getElementById('confirm-delete-btn').addEventListener('click',()=>{
+function confirmDelete(id){ deleteId=id; (document.getElementById('confirm-overlay')||{}).classList.add('open'); }
+function closeConfirm(){ (document.getElementById('confirm-overlay')||{}).classList.remove('open'); deleteId=null; }
+(document.getElementById('confirm-delete-btn')||{}).addEventListener('click',()=>{
   if(!deleteId) return;
   projects=projects.filter(p=>p.id!==deleteId);
   saveData(); closeConfirm(); showListView(); renderProjects(); showToast('Projekt gelöscht'); deleteId=null;
 });
 
 function setFilter(el){ document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); currentFilter=el.dataset.filter; renderProjects(); }
-function setView(v){ currentView=v; document.getElementById('vbtn-grid').classList.toggle('active',v==='grid'); document.getElementById('vbtn-list').classList.toggle('active',v==='list'); renderProjects(); }
+function setView(v){ currentView=v; (document.getElementById('vbtn-grid')||{}).classList.toggle('active',v==='grid'); (document.getElementById('vbtn-list')||{}).classList.toggle('active',v==='list'); renderProjects(); }
 
 function exportData(){
   const rows=[['Nummer','Name','BIM Manager','Auftraggeber','Phasen','LOD','Status','Software']];

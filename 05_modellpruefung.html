@@ -439,7 +439,7 @@ function render(){
 }
 function renderProjBar(){
   const fms=fmData[pid]||[], tms=tmData[pid]||[], kms=kmData[pid]||[];
-  document.getElementById('proj-bar').innerHTML=`
+  (document.getElementById('proj-bar')||{}).innerHTML=`
     <label>Projekt:</label>
     <select class="psel" id="psel" onchange="onProjChange()">
       <option value="">— Projekt wählen —</option>
@@ -449,7 +449,7 @@ function renderProjBar(){
   if(pid) setTimeout(()=>{const s=document.getElementById('psel');if(s)s.value=pid;updateMainBadges();},0);
 }
 function renderTopbar(){
-  document.getElementById('topbar-right').innerHTML=pid?`
+  (document.getElementById('topbar-right')||{}).innerHTML=pid?`
     <button class="btn btn-secondary btn-sm" onclick="openHostConfig()">⚙ Modellhost</button>
     <button class="btn btn-secondary btn-sm" onclick="openTM()">+ Teilmodell</button>
     <button class="btn btn-secondary btn-sm" onclick="openFM()">+ Fachmodell</button>
@@ -468,7 +468,7 @@ function renderHostBar(){
 }
 
 function renderWorkspace(){
-  document.getElementById('main-content').innerHTML=`
+  (document.getElementById('main-content')||{}).innerHTML=`
   <div style="flex:1;display:flex;overflow:hidden">
     <div class="tree-panel">
       <div class="panel-header">
@@ -919,14 +919,14 @@ function merkmalStatus(mk){if(!mk.total)return 'gray';const p=mk.filled/mk.total
 // ─── MODELLHOST CONFIG ────────────────────────────────────────────────
 function openHostConfig(){
   const hc=hostConfig[pid]||{};
-  document.getElementById('host-path-input').value=hc.path||'';
+  (document.getElementById('host-path-input')||{}).value=hc.path||'';
   cdeSlots=[...(hc.cdes||[])];
   renderCDEList();
-  document.getElementById('host-ol').classList.add('open');
+  (document.getElementById('host-ol')||{}).classList.add('open');
 }
 function renderCDEList(){
   const cdeTypes=[{type:'acc',name:'Autodesk ACC / BIM 360',icon:'🟠'},{type:'sharepoint',name:'SharePoint / Teams',icon:'🟦'},{type:'trimble',name:'Trimble Connect',icon:'🔵'},{type:'generic',name:'Generische CDE',icon:'🗄'}];
-  document.getElementById('cde-list').innerHTML=cdeSlots.map((c,i)=>`<div class="cde-card">
+  (document.getElementById('cde-list')||{}).innerHTML=cdeSlots.map((c,i)=>`<div class="cde-card">
     <div class="cde-logo" style="background:var(--surface2)">${cdeTypes.find(t=>t.type===c.type)?.icon||'🗄'}</div>
     <div style="flex:1">
       <div style="font-size:12px;font-weight:500;color:var(--text)">${cdeTypes.find(t=>t.type===c.type)?.name||'CDE'}</div>
@@ -940,7 +940,7 @@ function renderCDEList(){
 function addCDESlot(){cdeSlots.push({type:'generic',url:''});renderCDEList();}
 function saveHostConfig(){
   if(!hostConfig[pid]) hostConfig[pid]={};
-  hostConfig[pid].path=document.getElementById('host-path-input').value.trim();
+  hostConfig[pid].path=(document.getElementById('host-path-input')||{}).value.trim();
   hostConfig[pid].cdes=cdeSlots;
   localStorage.setItem(HOST_KEY,JSON.stringify(hostConfig));
   closeModal('host-ol'); renderHostBar(); renderWorkspace();
@@ -952,22 +952,22 @@ function openKM(id=null){
   editKMId=id;
   (function(){const _el=document.getElementById('km-title');if(_el)_el.textContent=id?'Koordinationsmodell bearbeiten':'Koordinationsmodell anlegen';}());
   const km=id?(kmData[pid]||[]).find(k=>k.id===id):null;
-  document.getElementById('km-name').value=km?.name||'';
-  document.getElementById('km-desc').value=km?.desc||'';
+  (document.getElementById('km-name')||{}).value=km?.name||'';
+  (document.getElementById('km-desc')||{}).value=km?.desc||'';
   const fms=fmData[pid]||[];
-  document.getElementById('km-fm-list').innerHTML=!fms.length
+  (document.getElementById('km-fm-list')||{}).innerHTML=!fms.length
     ?`<div style="padding:12px;color:var(--text3);font-size:12px">Noch keine Fachmodelle vorhanden</div>`
     :fms.map(f=>`<label class="check-item"><input type="checkbox" class="fm-pick" value="${f.id}" ${km?.fmIds?.includes(f.id)?'checked':''}><span style="font-size:12px;font-family:var(--mono);font-weight:600;padding:1px 5px;border-radius:3px;background:${DISC_COLORS[f.disc]||'#8899b0'}22;color:${DISC_COLORS[f.disc]||'#8899b0'}">${f.disc||'—'}</span> <span style="font-size:12px">${f.name}</span></label>`).join('');
-  document.getElementById('km-ol').classList.add('open');
-  setTimeout(()=>document.getElementById('km-name').focus(),200);
+  (document.getElementById('km-ol')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById('km-name')||{}).focus(),200);
 }
 function saveKM(){
-  const name=document.getElementById('km-name').value.trim();
+  const name=(document.getElementById('km-name')||{}).value.trim();
   if(!name){showToast('Name erforderlich');return;}
   const fmIds=[...document.querySelectorAll('.fm-pick:checked')].map(c=>c.value);
   if(!kmData[pid]) kmData[pid]=[];
-  if(editKMId){const i=kmData[pid].findIndex(k=>k.id===editKMId);if(i>-1)kmData[pid][i]={...kmData[pid][i],name,desc:document.getElementById('km-desc').value.trim(),fmIds};}
-  else{const km={id:uid(),name,desc:document.getElementById('km-desc').value.trim(),fmIds};kmData[pid].push(km);expandedKMs.add(km.id);}
+  if(editKMId){const i=kmData[pid].findIndex(k=>k.id===editKMId);if(i>-1)kmData[pid][i]={...kmData[pid][i],name,desc:(document.getElementById('km-desc')||{}).value.trim(),fmIds};}
+  else{const km={id:uid(),name,desc:(document.getElementById('km-desc')||{}).value.trim(),fmIds};kmData[pid].push(km);expandedKMs.add(km.id);}
   save(); closeModal('km-ol'); renderProjBar(); renderWorkspaceAndGraph(); showToast('✓ Koordinationsmodell gespeichert');
 }
 function deleteKM(id){if(!confirm('Koordinationsmodell löschen?'))return;kmData[pid]=(kmData[pid]||[]).filter(k=>k.id!==id);save();selNode=null;renderWorkspace();renderProjBar();showToast('Gelöscht');}
@@ -977,17 +977,17 @@ function openFM(id=null){
   editFMId=id;
   (function(){const _el=document.getElementById('fm-title');if(_el)_el.textContent=id?'Fachmodell bearbeiten':'Fachmodell anlegen';}());
   const fm=id?(fmData[pid]||[]).find(f=>f.id===id):null;
-  document.getElementById('fm-name').value=fm?.name||'';
-  document.getElementById('fm-disc').value=fm?.disc||'';
-  document.getElementById('fm-note').value=fm?.note||'';
-  document.getElementById('fm-ol').classList.add('open');
-  setTimeout(()=>document.getElementById('fm-name').focus(),200);
+  (document.getElementById('fm-name')||{}).value=fm?.name||'';
+  (document.getElementById('fm-disc')||{}).value=fm?.disc||'';
+  (document.getElementById('fm-note')||{}).value=fm?.note||'';
+  (document.getElementById('fm-ol')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById('fm-name')||{}).focus(),200);
 }
 function saveFM(){
-  const name=document.getElementById('fm-name').value.trim();
+  const name=(document.getElementById('fm-name')||{}).value.trim();
   if(!name){showToast('Name erforderlich');return;}
   if(!fmData[pid]) fmData[pid]=[];
-  const fm={id:editFMId||uid(),name,disc:document.getElementById('fm-disc').value,note:document.getElementById('fm-note').value.trim()};
+  const fm={id:editFMId||uid(),name,disc:(document.getElementById('fm-disc')||{}).value,note:(document.getElementById('fm-note')||{}).value.trim()};
   if(editFMId){const i=fmData[pid].findIndex(f=>f.id===editFMId);if(i>-1)fmData[pid][i]=fm;}
   else{fmData[pid].push(fm);expandedFMs.add(fm.id);}
   save(); closeModal('fm-ol'); renderProjBar(); renderWorkspaceAndGraph(); showToast('✓ Fachmodell gespeichert');
@@ -1005,12 +1005,12 @@ function deleteFM(id){
 function openTM(){
   pendingParsed=null; pendingFile=null;
   (function(){const _el=document.getElementById('ifc-drop-label');if(_el)_el.textContent='IFC-Datei ablegen oder klicken';}());
-  document.getElementById('tm-ok').disabled=true;
-  document.getElementById('tm-datadrop').value='';
-  document.getElementById('tm-note').value='';
+  (document.getElementById('tm-ok')||{}).disabled=true;
+  (document.getElementById('tm-datadrop')||{}).value='';
+  (document.getElementById('tm-note')||{}).value='';
   const fms=fmData[pid]||[];
-  document.getElementById('tm-fm-sel').innerHTML=fms.map(f=>`<option value="${f.id}">${f.disc?f.disc+' · ':''} ${f.name}</option>`).join('');
-  document.getElementById('tm-ol').classList.add('open');
+  (document.getElementById('tm-fm-sel')||{}).innerHTML=fms.map(f=>`<option value="${f.id}">${f.disc?f.disc+' · ':''} ${f.name}</option>`).join('');
+  (document.getElementById('tm-ol')||{}).classList.add('open');
 }
 function openTMFor(fmId){
   openTM();
@@ -1018,25 +1018,25 @@ function openTMFor(fmId){
 }
 function handleIFCFile(file){
   if(!file||!file.name.match(/\.ifc$/i)){showToast('Nur .ifc Dateien');return;}
-  document.getElementById('ifc-drop-label').textContent=`⏳ Wird analysiert…`;
+  (document.getElementById('ifc-drop-label')||{}).textContent=`⏳ Wird analysiert…`;
   const reader=new FileReader();
   reader.onload=e=>{
     showParse('IFC analysieren…',file.name);
     setTimeout(()=>{
       try{pendingParsed=parseIFC(e.target.result);pendingFile={name:file.name,size:e.target.result.length};}catch(err){hideParse();showToast('Fehler: '+err.message);return;}
       hideParse();
-      document.getElementById('ifc-drop-label').textContent=`✓ ${file.name} · ${pendingParsed.entities.toLocaleString()} Entities · ${pendingParsed.objectCount} Objekte`;
-      document.getElementById('tm-ok').disabled=false;
+      (document.getElementById('ifc-drop-label')||{}).textContent=`✓ ${file.name} · ${pendingParsed.entities.toLocaleString()} Entities · ${pendingParsed.objectCount} Objekte`;
+      (document.getElementById('tm-ok')||{}).disabled=false;
     },200);
   };
   reader.readAsText(file,'utf-8');
 }
 function saveTM(){
   if(!pendingParsed||!pid){showToast('IFC fehlt');return;}
-  const fmId=document.getElementById('tm-fm-sel').value;
+  const fmId=(document.getElementById('tm-fm-sel')||{}).value;
   if(!fmId){showToast('Fachmodell wählen');return;}
   if(!tmData[pid]) tmData[pid]=[];
-  const tm={id:uid(),name:pendingFile.name,fmId,datadrop:document.getElementById('tm-datadrop').value.trim(),note:document.getElementById('tm-note').value.trim(),parsed:pendingParsed,uploadedAt:new Date().toISOString()};
+  const tm={id:uid(),name:pendingFile.name,fmId,datadrop:(document.getElementById('tm-datadrop')||{}).value.trim(),note:(document.getElementById('tm-note')||{}).value.trim(),parsed:pendingParsed,uploadedAt:new Date().toISOString()};
   tmData[pid].push(tm);
   save(); closeModal('tm-ol'); selNode={type:'tm',id:tm.id}; renderProjBar(); renderWorkspaceAndGraph();
   showToast(`✓ ${tm.name} hinzugefügt`);
@@ -1083,9 +1083,9 @@ function exportKMProtokoll(kmId){
 
 // ─── UTILS ────────────────────────────────────────────────────────────
 function onProjChange(){pid=document.getElementById('psel')?.value||null;setCurrentProject(pid||'');selNode=null;activeTab='uebersicht';nodePos={};graphSel=null;render();}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function showParse(msg,sub){document.getElementById('parse-ol').classList.add('open');(function(){const _el=document.getElementById('parse-msg');if(_el)_el.textContent=msg;}());(function(){const _el=document.getElementById('parse-sub');if(_el)_el.textContent=sub;}());}
-function hideParse(){document.getElementById('parse-ol').classList.remove('open');}
+function closeModal(id){(document.getElementById(id)||{}).classList.remove('open');}
+function showParse(msg,sub){(document.getElementById('parse-ol')||{}).classList.add('open');(function(){const _el=document.getElementById('parse-msg');if(_el)_el.textContent=msg;}());(function(){const _el=document.getElementById('parse-sub');if(_el)_el.textContent=sub;}());}
+function hideParse(){(document.getElementById('parse-ol')||{}).classList.remove('open');}
 function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return d;}}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 function comingSoon(){showToast('Modul wird in Kürze entwickelt');}

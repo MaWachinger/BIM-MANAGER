@@ -454,7 +454,7 @@ function render(){
   else if(mode==='checkset') renderCheckset();
   else renderResults();
 }
-function setMode(m){mode=m;['stamm','checkset','result'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===m));render();}
+function setMode(m){mode=m;['stamm','checkset','result'].forEach(t=>(document.getElementById('tab-'+t)||{}).classList.toggle('active',t===m));render();}
 function updateBadges(){
   (function(){const _e=document.getElementById('tb-stamm');if(_e)_e.textContent=stammRules.length;}());
   (function(){const _e=document.getElementById('tb-checkset');if(_e)_e.textContent=pid?(checksets[pid]||[]).length:0;}());
@@ -464,7 +464,7 @@ function updateBadges(){
   (function(){const _e=document.getElementById('nav-badge');if(_e)_e.textContent=stammRules.length;}());
 }
 function renderProjBar(){
-  document.getElementById('proj-bar-wrap').innerHTML=`
+  (document.getElementById('proj-bar-wrap')||{}).innerHTML=`
     <label>Projekt:</label>
     <select class="psel" id="psel" onchange="onProjChange()">
       <option value="">— Projekt wählen —</option>
@@ -497,7 +497,7 @@ function renderTopbar(){
 function renderStamm(){
   const cats=['S','G','F'];
   const selRule=stammRules.find(r=>r.id===selRuleId);
-  document.getElementById('workspace').innerHTML=`
+  (document.getElementById('workspace')||{}).innerHTML=`
   <div style="flex:1;display:flex;overflow:hidden">
     <div class="left-panel">
       <div class="panel-header">
@@ -589,14 +589,14 @@ function renderRuleDetail(r, scope){
 // ═══════════════════════════════════════════════════════
 function renderCheckset(){
   if(!pid){
-    document.getElementById('workspace').innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt ausgewählt</div></div></div>`;
+    (document.getElementById('workspace')||{}).innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt ausgewählt</div></div></div>`;
     return;
   }
   const cs=checksets[pid]||[];
   const activeRules=stammRules.filter(r=>cs.includes(r.id));
   const availRules=stammRules.filter(r=>!cs.includes(r.id));
   const cats=['S','G','F'];
-  document.getElementById('workspace').innerHTML=`
+  (document.getElementById('workspace')||{}).innerHTML=`
   <div style="flex:1;display:flex;overflow:hidden">
     <div class="left-panel">
       <div class="panel-header">
@@ -690,14 +690,14 @@ function renderReifegrad(){
 // ═══════════════════════════════════════════════════════
 function renderResults(){
   if(!pid){
-    document.getElementById('workspace').innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt ausgewählt</div></div></div>`;
+    (document.getElementById('workspace')||{}).innerHTML=`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--text3)"><div style="font-size:36px;margin-bottom:10px">🏗️</div><div style="font-size:15px;font-weight:600;color:var(--text2)">Kein Projekt ausgewählt</div></div></div>`;
     return;
   }
   const cs=checksets[pid]||[];
   const tms=tmData[pid]||[];
   const res=pruefResults[pid]||{};
   const selRule=cs.length?stammRules.find(r=>r.id===selResultRuleId):null;
-  document.getElementById('workspace').innerHTML=`
+  (document.getElementById('workspace')||{}).innerHTML=`
   <div class="result-split">
     <div class="result-list-panel">
       <div class="panel-header">
@@ -1095,8 +1095,8 @@ function cloneRule(ruleId){
 
 // ─── IMPORT REGELN ────────────────────────────────────────────────────
 let importedRules=[];
-function openImport(){importedRules=[];(function(){const _el=document.getElementById('imp-preview');if(_el)_el.innerHTML='';}());document.getElementById('imp-ok').disabled=true;document.getElementById('import-ol').classList.add('open');}
-function closeImport(){document.getElementById('import-ol').classList.remove('open');}
+function openImport(){importedRules=[];(function(){const _el=document.getElementById('imp-preview');if(_el)_el.innerHTML='';}());(document.getElementById('imp-ok')||{}).disabled=true;(document.getElementById('import-ol')||{}).classList.add('open');}
+function closeImport(){(document.getElementById('import-ol')||{}).classList.remove('open');}
 function handleImportFile(file){
   if(!file) return;
   const reader=new FileReader();
@@ -1139,7 +1139,7 @@ function parseImportCSV(text){
 function showImportPreview(){
   const el=document.getElementById('imp-preview');
   if(!importedRules.length){el.innerHTML=`<div style="padding:10px;color:var(--err);font-size:12px">Keine Regeln erkannt.</div>`;return;}
-  document.getElementById('imp-ok').disabled=false;
+  (document.getElementById('imp-ok')||{}).disabled=false;
   el.innerHTML=`<div style="font-size:11px;color:var(--text2);margin:10px 0 6px">${importedRules.length} Regeln erkannt:</div>
     <div style="border:1px solid var(--border);border-radius:var(--r);max-height:200px;overflow-y:auto">
       ${importedRules.map(r=>`<div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;display:flex;align-items:center;gap:10px">
@@ -1173,23 +1173,23 @@ function openRuleModal(id=null,scope='stamm'){
   (function(){const _el=document.getElementById('rule-modal-title');if(_el)_el.textContent=id?'Regel bearbeiten':'Neue Prüfregel';}());
   (function(){const _el=document.getElementById('rule-save-btn');if(_el)_el.textContent=id?'Speichern':'Anlegen';}());
   const src=id?stammRules.find(r=>r.id===id):null;
-  if(src){document.getElementById('r-name').value=src.name||'';document.getElementById('r-desc').value=src.desc||'';document.getElementById('r-cat').value=src.cat||'S';document.getElementById('r-sev').value=src.sev||'error';document.getElementById('r-earliest').value=src.earliest||'lp3';}
-  else{['r-name','r-desc'].forEach(i=>document.getElementById(i).value='');document.getElementById('r-cat').value='S';document.getElementById('r-sev').value='error';document.getElementById('r-earliest').value='lp3';}
+  if(src){(document.getElementById('r-name')||{}).value=src.name||'';(document.getElementById('r-desc')||{}).value=src.desc||'';(document.getElementById('r-cat')||{}).value=src.cat||'S';(document.getElementById('r-sev')||{}).value=src.sev||'error';(document.getElementById('r-earliest')||{}).value=src.earliest||'lp3';}
+  else{['r-name','r-desc'].forEach(i=>(document.getElementById(i)||{}).value='');(document.getElementById('r-cat')||{}).value='S';(document.getElementById('r-sev')||{}).value='error';(document.getElementById('r-earliest')||{}).value='lp3';}
   updateRuleTypeUI();
-  if(src){setTimeout(()=>{if(src.type)document.getElementById('r-type').value=src.type;updateRuleParamUI();if(src.params?.discA&&document.getElementById('rp-discA'))document.getElementById('rp-discA').value=src.params.discA;if(src.params?.discB&&document.getElementById('rp-discB'))document.getElementById('rp-discB').value=src.params.discB;if(src.params?.expectedStoreys&&document.getElementById('rp-storeys'))document.getElementById('rp-storeys').value=src.params.expectedStoreys;},100);}
-  document.getElementById('rule-ol').classList.add('open');
-  setTimeout(()=>document.getElementById('r-name').focus(),200);
+  if(src){setTimeout(()=>{if(src.type)(document.getElementById('r-type')||{}).value=src.type;updateRuleParamUI();if(src.params?.discA&&document.getElementById('rp-discA'))(document.getElementById('rp-discA')||{}).value=src.params.discA;if(src.params?.discB&&document.getElementById('rp-discB'))(document.getElementById('rp-discB')||{}).value=src.params.discB;if(src.params?.expectedStoreys&&document.getElementById('rp-storeys'))(document.getElementById('rp-storeys')||{}).value=src.params.expectedStoreys;},100);}
+  (document.getElementById('rule-ol')||{}).classList.add('open');
+  setTimeout(()=>(document.getElementById('r-name')||{}).focus(),200);
 }
-function closeRuleModal(){document.getElementById('rule-ol').classList.remove('open');editRuleId=null;}
+function closeRuleModal(){(document.getElementById('rule-ol')||{}).classList.remove('open');editRuleId=null;}
 function saveRule(){
-  const name=document.getElementById('r-name').value.trim();if(!name){showToast('Name erforderlich');return;}
-  const cat=document.getElementById('r-cat').value,type=document.getElementById('r-type').value;
-  const discArr=[...document.getElementById('r-disc').selectedOptions].map(o=>o.value);
+  const name=(document.getElementById('r-name')||{}).value.trim();if(!name){showToast('Name erforderlich');return;}
+  const cat=(document.getElementById('r-cat')||{}).value,type=(document.getElementById('r-type')||{}).value;
+  const discArr=[...(document.getElementById('r-disc')||{}).selectedOptions].map(o=>o.value);
   const params={};
-  if(document.getElementById('rp-discA'))params.discA=document.getElementById('rp-discA').value;
-  if(document.getElementById('rp-discB'))params.discB=document.getElementById('rp-discB').value;
-  if(document.getElementById('rp-storeys'))params.expectedStoreys=document.getElementById('rp-storeys').value.trim();
-  const rule={id:editRuleId||uid(),name,cat,type,sev:document.getElementById('r-sev').value,desc:document.getElementById('r-desc').value.trim(),earliest:document.getElementById('r-earliest').value,disciplines:discArr,params,updated:new Date().toISOString(),created:editRuleId?(stammRules.find(r=>r.id===editRuleId)?.created||new Date().toISOString()):new Date().toISOString()};
+  if(document.getElementById('rp-discA'))params.discA=(document.getElementById('rp-discA')||{}).value;
+  if(document.getElementById('rp-discB'))params.discB=(document.getElementById('rp-discB')||{}).value;
+  if(document.getElementById('rp-storeys'))params.expectedStoreys=(document.getElementById('rp-storeys')||{}).value.trim();
+  const rule={id:editRuleId||uid(),name,cat,type,sev:(document.getElementById('r-sev')||{}).value,desc:(document.getElementById('r-desc')||{}).value.trim(),earliest:(document.getElementById('r-earliest')||{}).value,disciplines:discArr,params,updated:new Date().toISOString(),created:editRuleId?(stammRules.find(r=>r.id===editRuleId)?.created||new Date().toISOString()):new Date().toISOString()};
   if(editRuleId){const i=stammRules.findIndex(r=>r.id===editRuleId);if(i>-1)stammRules[i]=rule;showToast('✓ Aktualisiert');}
   else{stammRules.push(rule);selRuleId=rule.id;showToast('✓ Angelegt');}
   saveStamm();closeRuleModal();render();
@@ -1197,10 +1197,10 @@ function saveRule(){
 function confirmDelRule(id,scope){
   const r=stammRules.find(x=>x.id===id);if(!r) return;
   (function(){const _el=document.getElementById('confirm-title');if(_el)_el.textContent='Prüfregel löschen?';}());
-  document.getElementById('confirm-body').innerHTML=`<strong>${r.name}</strong> wird dauerhaft entfernt.`;
+  (document.getElementById('confirm-body')||{}).innerHTML=`<strong>${r.name}</strong> wird dauerhaft entfernt.`;
   confirmCb=()=>{stammRules=stammRules.filter(x=>x.id!==id);Object.keys(checksets).forEach(ppid=>{checksets[ppid]=(checksets[ppid]||[]).filter(x=>x!==id);});saveStamm();saveChecksets();if(selRuleId===id)selRuleId=null;closeConfirm();render();showToast('Gelöscht');};
-  document.getElementById('confirm-btn').onclick=confirmCb;
-  document.getElementById('confirm-ol').classList.add('open');
+  (document.getElementById('confirm-btn')||{}).onclick=confirmCb;
+  (document.getElementById('confirm-ol')||{}).classList.add('open');
 }
 
 // ─── CHECKSET MANAGEMENT ──────────────────────────────────────────────
@@ -1212,7 +1212,7 @@ function addAllToCheckset(){if(!pid) return;if(!checksets[pid])checksets[pid]=[]
 // ─── UTILS ────────────────────────────────────────────────────────────
 function onProjChange(){pid=document.getElementById('psel')?.value||null;setCurrentProject(pid||'');selRuleId=null;selResultRuleId=null;render();}
 function selCheckpoint(msId){showToast(`Prüfzeitpunkt: ${msId}`);}
-function closeConfirm(){document.getElementById('confirm-ol').classList.remove('open');confirmCb=null;}
+function closeConfirm(){(document.getElementById('confirm-ol')||{}).classList.remove('open');confirmCb=null;}
 function exportReport(){
   if(!pid) return;
   const cs=checksets[pid]||[],tms=tmData[pid]||[],res=pruefResults[pid]||{};

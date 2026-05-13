@@ -214,14 +214,14 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .tp-bar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .tp-bar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .tp-type-toggle{display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-.tp-type-btn{padding:5px 12px;background:var(--surface);cursor:pointer;border:none;color:var(--text3);font-size:12px;font-family:var(--sans);font-weight:500;transition:all 0.15s;border-right:1px solid var(--border)}
+.tp-type-btn{padding:5px 12px;background:var(--surface);cursor:pointer;border:none;color:var(--text3);font-size:12px;font-family:var(--sans);font-weight:500;transition:all .15s;border-right:1px solid var(--border)}
 .tp-type-btn:last-child{border-right:none}
 .tp-type-btn.active{background:var(--nav-bg);color:var(--accent)}
 .tp-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;flex-shrink:0}
 .tp-dot.connected{background:var(--ok)}
 .lp-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px 24px;margin-bottom:14px}
 .lp-table{width:100%;border-collapse:collapse;font-size:13px}
-.lp-table th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left}
+.lp-table th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-family:var(--mono);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left}
 .lp-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
 .lp-table tr:last-child td{border-bottom:none}
 .lp-table tr:hover td{background:var(--surface2)}
@@ -231,6 +231,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .lp-src{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px}
 .lp-src.pdf{background:#eff6ff;color:#1e40af}
 .lp-src.manual{background:var(--surface2);color:var(--text3)}
+.lp-src.sug{background:#fef3c7;color:#92400e}
 .lp-lp1{background:#eef2ff;color:#4338ca}.lp-lp2{background:#f5f3ff;color:#7c3aed}
 .lp-lp3{background:#fdf4ff;color:#9333ea}.lp-lp4{background:#fdf2f8;color:#c026d3}
 .lp-lp5{background:#fff0f9;color:#db2777}.lp-lp6{background:#fff1f2;color:#e11d48}
@@ -242,10 +243,11 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .derive-cb{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
 .delta-pos{color:var(--err);font-family:var(--mono);font-size:11px;font-weight:600}
 .delta-neg{color:var(--ok);font-family:var(--mono);font-size:11px;font-weight:600}
-.slabel{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:8px;margin-top:16px}
+.slabel{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:8px;margin-top:16px}
 .slabel:first-child{margin-top:0}
 .date-grid{display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow-y:auto;padding:2px 0}
 .date-chip{padding:3px 9px;border-radius:5px;font-size:11px;font-family:var(--mono);border:1px solid var(--border);background:var(--surface);color:var(--text2)}
+.sug-chip{padding:3px 9px;border-radius:5px;font-size:11px;font-family:var(--mono);border:1px solid #fbbf24;background:#fef3c7;color:#92400e}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -319,7 +321,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
           <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
             <div>
               <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">Rahmentermine LP 1&#8211;8</div>
-              <div style="font-size:11px;color:var(--text3)">Direkt eingeben oder per PDF einlesen.</div>
+              <div style="font-size:11px;color:var(--text3)">Direkt eingeben oder per PDF einlesen. Vorschl&auml;ge aus PDF werden gelb markiert.</div>
             </div>
             <div style="display:flex;gap:8px;flex-shrink:0">
               <button class="btn btn-secondary btn-sm" onclick="selectPdfFromFolder()">&#128196; PDF einlesen</button>
@@ -1053,16 +1055,17 @@ function toggleLpTable(){const wrap=document.getElementById('lp-wrap'),btn=docum
 function renderLpTable(){
   const tbody=document.getElementById('lp-tbody');if(!tbody)return;
   const lp=(terminplanData[currentPid]||{}).lp||{};
-  tbody.innerHTML=LP_PHASEN.map(ph=>{const d=lp[ph.id]||{};const src=d.source==='pdf'?'<span class="lp-src pdf">PDF</span>':(d.start||d.end?'<span class="lp-src manual">Manuell</span>':'<span style="font-size:11px;color:var(--text3)">-</span>');
-    return '<tr><td><span class="lp-badge '+ph.cls+'">'+ph.label+'</span></td><td style="font-size:12px;color:var(--text2)">'+ph.name+'</td><td><input type="date" class="lp-date-inp" id="lp-s-'+ph.id+'" value="'+(d.start||'')+'"></td><td><input type="date" class="lp-date-inp" id="lp-e-'+ph.id+'" value="'+(d.end||'')+'"></td><td>'+src+'</td></tr>';}).join('');
+  tbody.innerHTML=LP_PHASEN.map(ph=>{const d=lp[ph.id]||{};const srcLbl=d.source==='pdf'?'<span class="lp-src pdf">PDF</span>':d.source==='suggestion'?'<span class="lp-src sug">Vorschlag</span>':(d.start||d.end?'<span class="lp-src manual">Manuell</span>':'<span style="font-size:11px;color:var(--text3)">-</span>');
+    return '<tr><td><span class="lp-badge '+ph.cls+'">'+ph.label+'</span></td><td style="font-size:12px;color:var(--text2)">'+ph.name+'</td><td><input type="date" class="lp-date-inp" id="lp-s-'+ph.id+'" value="'+(d.start||'')+'"'+(d.source==='suggestion'?' style="border-color:#f59e0b;background:#fffbeb"':'')+'></td><td><input type="date" class="lp-date-inp" id="lp-e-'+ph.id+'" value="'+(d.end||'')+'"'+(d.source==='suggestion'?' style="border-color:#f59e0b;background:#fffbeb"':'')+'></td><td>'+srcLbl+'</td></tr>';}).join('');
 }
 function saveLpDates(){
   if(!currentPid)return;
   if(!terminplanData[currentPid])terminplanData[currentPid]={lp:{},type:'rahmentermine',version:1,loadedAt:new Date().toISOString()};
   const tp=terminplanData[currentPid];if(!tp.lp)tp.lp={};
-  LP_PHASEN.forEach(ph=>{const s=(document.getElementById('lp-s-'+ph.id)||{}).value||'';const e=(document.getElementById('lp-e-'+ph.id)||{}).value||'';tp.lp[ph.id]={start:s,end:e,source:(tp.lp[ph.id]||{}).source||'manual'};});
+  LP_PHASEN.forEach(ph=>{const s=(document.getElementById('lp-s-'+ph.id)||{}).value||'';const e=(document.getElementById('lp-e-'+ph.id)||{}).value||'';const old=tp.lp[ph.id]||{};tp.lp[ph.id]={start:s,end:e,source:s||e?(old.source==='pdf'?'pdf':'manual'):''}; });
   saveTerminplan();renderTpPanel();showToast('Rahmentermine gespeichert');
 }
+
 async function connectFolder(){
   if(!('showDirectoryPicker' in window)){showToast('Nur Chrome/Edge - direkt PDF laden');selectPdfFromFolder();return;}
   try{dirHandle=await window.showDirectoryPicker({mode:'read'});showToast('Verbunden: '+dirHandle.name);renderTpPanel();await scanFolder();}
@@ -1096,60 +1099,304 @@ function pickFromList(pdfs){
     document.body.appendChild(el);
   });
 }
+
+// ═══ PDF PARSING — smart multi-format extraction (v2) ═══
+const _QTR={1:{s:'01-01',e:'03-31'},2:{s:'04-01',e:'06-30'},3:{s:'07-01',e:'09-30'},4:{s:'10-01',e:'12-31'}};
+const _MO={'januar':1,'februar':2,'maerz':3,'april':4,'mai':5,'juni':6,'juli':7,'august':8,'september':9,'oktober':10,'november':11,'dezember':12};
+const _MO_ABBR={'jan':1,'feb':2,'mär':3,'mar':3,'mae':3,'apr':4,'mai':5,'jun':6,'jul':7,'aug':8,'sep':9,'okt':10,'nov':11,'dez':12};
+function _moNum(s){const k=s.toLowerCase().replace(/ä/g,'ae').replace(/\./g,'').trim();return _MO[k]||_MO_ABBR[k.slice(0,3)]||0;}
+const _MO_RE='Januar|Februar|M(?:ä|ae)rz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember';
+const _MO_RE_ABBR='Jan\\.?|Feb\\.?|M(?:ä|ae)r\\.?|Apr\\.?|Jun\\.?|Jul\\.?|Aug\\.?|Sep\\.?|Okt\\.?|Nov\\.?|Dez\\.?';
+
+// LP phase name → id mapping for duration/name-based terminplans
+const _LP_NAMES={
+  'grundlagenermittlung':'lp1','grundlagen':'lp1',
+  'vorplanung':'lp2',
+  'entwurfsplanung':'lp3','entwurf':'lp3',
+  'genehmigungsplanung':'lp4','genehmigung':'lp4',
+  'ausf(?:ü|ue)hrungsplanung':'lp5','ausf(?:ü|ue)hrung':'lp5',
+  'vorbereitung der vergabe':'lp6','vergabevorbereitung':'lp6','vergabe':'lp6',
+  'mitwirkung bei der vergabe':'lp7',
+  'objektbetreuung':'lp8','bauleitung':'lp8','objektüberwachung':'lp8'
+};
+
+function _parseDatesFromText(txt){
+  const found=[];let m;
+  // DD.MM.YYYY
+  const r1=/\b(\d{1,2})\.[ ]?(\d{1,2})\.[ ]?(\d{2,4})\b/g;
+  while((m=r1.exec(txt))!==null){const dy=m[1].padStart(2,'0'),mo=m[2].padStart(2,'0'),yr=m[3].length===2?'20'+m[3]:m[3];if(+yr>=2020&&+yr<=2040&&+mo>=1&&+mo<=12&&+dy>=1&&+dy<=31)found.push(yr+'-'+mo+'-'+dy);}
+  // "01. März 2024"
+  const r2=new RegExp('\\b(\\d{1,2})\\.\\s*('+_MO_RE+')\\s+(\\d{4})\\b','gi');
+  while((m=r2.exec(txt))!==null){const dy=m[1].padStart(2,'0'),mn=_moNum(m[2]),mo=String(mn).padStart(2,'0'),yr=m[3];if(mn&&+yr>=2020&&+yr<=2040)found.push(yr+'-'+mo+'-'+dy);}
+  // "März 2024"
+  const r3=new RegExp('\\b('+_MO_RE+')\\s+(\\d{4})\\b','gi');
+  while((m=r3.exec(txt))!==null){const mn=_moNum(m[1]),mo=String(mn).padStart(2,'0'),yr=m[2];if(mn&&+yr>=2020&&+yr<=2040)found.push(yr+'-'+mo+'-01');}
+  // "Jan. 25" or "Jan 2025" abbreviated
+  const r3b=new RegExp('\\b('+_MO_RE_ABBR+')\\s*(\\d{2,4})\\b','gi');
+  while((m=r3b.exec(txt))!==null){const mn=_moNum(m[1]),yr=+m[2]<100?'20'+m[2]:m[2];const mo=String(mn).padStart(2,'0');if(mn&&+yr>=2020&&+yr<=2040)found.push(yr+'-'+mo+'-01');}
+  // ISO YYYY-MM-DD
+  const r4=/\b(\d{4})-(\d{2})-(\d{2})\b/g;
+  while((m=r4.exec(txt))!==null){const[,yr,mo,dy]=m;if(+yr>=2020&&+yr<=2040&&+mo>=1&&+mo<=12&&+dy>=1&&+dy<=31)found.push(yr+'-'+mo+'-'+dy);}
+  // MM/YYYY (03/2025)
+  const r4b=/\b(0?[1-9]|1[0-2])\/(\d{4})\b/g;
+  while((m=r4b.exec(txt))!==null){const mo=m[1].padStart(2,'0'),yr=m[2];if(+yr>=2020&&+yr<=2040)found.push(yr+'-'+mo+'-01');}
+  // KW XX/YYYY
+  const r5=/\bKW\s*(\d{1,2})[\/\s]+(\d{4})\b/gi;
+  while((m=r5.exec(txt))!==null){const kw=parseInt(m[1]),yr=parseInt(m[2]);if(kw>=1&&kw<=53&&yr>=2020&&yr<=2040){const d=new Date(yr,0,1+((kw-1)*7));const dow=d.getDay();d.setDate(d.getDate()+(dow<=4?1-dow:8-dow));found.push(d.toISOString().slice(0,10));}}
+  // Q1/2025 or 2025/Q1 or Q1-2025
+  const r6=/\bQ([1-4])[\/\.\-\s]+(\d{4})\b|\b(\d{4})[\/\.\-\s]+Q([1-4])\b/gi;
+  while((m=r6.exec(txt))!==null){const q=parseInt(m[1]||m[4]),yr=m[2]||m[3];if(q>=1&&q<=4&&+yr>=2020&&+yr<=2040){found.push(yr+'-'+_QTR[q].s);found.push(yr+'-'+_QTR[q].e);}}
+  // "1. Quartal 2025" / "III. Quartal 2025" (Roman numerals)
+  const r7=/\b([1-4]|I{1,3}V?|IV)\.\s*Quartal\s+(\d{4})\b/gi;
+  while((m=r7.exec(txt))!==null){const qMap={'1':1,'i':1,'ii':2,'iii':3,'iv':4,'2':2,'3':3,'4':4};const q=qMap[(m[1]||'').toLowerCase()];const yr=m[2];if(q&&+yr>=2020&&+yr<=2040){found.push(yr+'-'+_QTR[q].s);found.push(yr+'-'+_QTR[q].e);}}
+  // H1/2025 or "1. Halbjahr 2025"
+  const r8=/\bH([12])[\/\.\-]+(\d{4})\b|\b([12])\.\s*Halbjahr\s+(\d{4})\b/gi;
+  while((m=r8.exec(txt))!==null){const h=parseInt(m[1]||m[3]),yr=m[2]||m[4];if(+yr>=2020&&+yr<=2040){found.push(yr+(h===1?'-01-01':'-07-01'));found.push(yr+(h===1?'-06-30':'-12-31'));}}
+  return found;
+}
+
+// ── FORMAT DETECTION ──────────────────────────────────────────────────────────
+function _detectFormat(text){
+  const qCount  =(text.match(/\bQ[1-4]\b|[1-4]\.\s*Quartal|\bQuartal\s+\d{4}/gi)||[]).length;
+  const durCount =(text.match(/\b\d+\s*(?:Monate?n?|Wochen?|Tage?n?)\b/gi)||[]).length;
+  const absCount =(text.match(/\b\d{1,2}\.\d{1,2}\.\d{4}\b/g)||[]).length;
+  const isoCount =(text.match(/\b\d{4}-\d{2}-\d{2}\b/g)||[]).length;
+  const kwCount  =(text.match(/\bKW\s*\d{1,2}/gi)||[]).length;
+  const absTotal =absCount+isoCount+kwCount;
+  if(qCount>=3&&qCount>=absTotal)return 'quarterly';
+  if(durCount>=3&&durCount>absTotal*0.5)return 'duration';
+  return 'absolute';
+}
+const _FMT_LABEL={'quarterly':'Quartalsterminplan','duration':'Dauern/Monate','absolute':'Absolute Daten'};
+const _FMT_COLOR={'quarterly':'#1d4ed8','duration':'#7c3aed','absolute':'#047857'};
+
+// ── QUARTER EXTRACTION ────────────────────────────────────────────────────────
+function _extractQtrsFromCtx(txt){
+  const found=[]; let m;
+  const r1=/\bQ([1-4])[\/\.\-\s]+(\d{4})\b|\b(\d{4})[\/\.\-\s]+Q([1-4])\b/gi;
+  while((m=r1.exec(txt))!==null){const q=parseInt(m[1]||m[4]),yr=parseInt(m[2]||m[3]);if(q>=1&&q<=4&&yr>=2020&&yr<=2040)found.push({q,yr});}
+  const r2=/\b([1-4]|I{1,3}V?|IV)\.\s*Quartal\s+(\d{4})\b/gi;
+  const qMap={'1':1,'i':1,'ii':2,'iii':3,'iv':4,'2':2,'3':3,'4':4};
+  while((m=r2.exec(txt))!==null){const q=qMap[(m[1]||'').toLowerCase()];const yr=parseInt(m[2]);if(q&&yr>=2020&&yr<=2040)found.push({q,yr});}
+  return found;
+}
+function _qtrRange(q,yr){return{start:yr+'-'+_QTR[q].s,end:yr+'-'+_QTR[q].e};}
+
+// ── QUARTERLY-BASED SUGGESTIONS ───────────────────────────────────────────────
+function _buildSuggestionsQuarterly(text){
+  const suggestions={};
+  const lpRe=/\b(?:LP|LPH|Leistungsphase)\s*([1-8])\b/gi;
+  const mentions=[]; let m;
+  while((m=lpRe.exec(text))!==null)mentions.push({lp:'lp'+m[1],pos:m.index,endPos:m.index+m[0].length});
+  mentions.forEach(({lp,endPos},idx)=>{
+    if(suggestions[lp])return;
+    const nextPos=idx+1<mentions.length?mentions[idx+1].pos:endPos+700;
+    const ctx=text.slice(endPos,Math.min(nextPos,endPos+700));
+    const qtrs=_extractQtrsFromCtx(ctx);
+    if(!qtrs.length)return;
+    qtrs.sort((a,b)=>a.yr!==b.yr?a.yr-b.yr:a.q-b.q);
+    const first=qtrs[0],last=qtrs[qtrs.length-1];
+    const rng=_qtrRange(first.q,first.yr);
+    const endRng=_qtrRange(last.q,last.yr);
+    const lbl=first.q===last.q&&first.yr===last.yr?'Q'+first.q+'/'+first.yr:'Q'+first.q+'/'+first.yr+' – Q'+last.q+'/'+last.yr;
+    suggestions[lp]={start:rng.start,end:endRng.end,source:'suggestion',fmt:'quarterly',label:lbl};
+  });
+  // Fallback: try LP phase name keywords
+  if(Object.keys(suggestions).length<2){
+    Object.entries(_LP_NAMES).forEach(([nameRe,lpId])=>{
+      if(suggestions[lpId])return;
+      const re=new RegExp('\\b(?:'+nameRe+')\\b','gi'); let nm;
+      while((nm=re.exec(text))!==null){
+        const ctx=text.slice(nm.index+nm[0].length,nm.index+nm[0].length+700);
+        const qtrs=_extractQtrsFromCtx(ctx);if(!qtrs.length)continue;
+        qtrs.sort((a,b)=>a.yr!==b.yr?a.yr-b.yr:a.q-b.q);
+        const first=qtrs[0],last=qtrs[qtrs.length-1];
+        const r1=_qtrRange(first.q,first.yr),r2=_qtrRange(last.q,last.yr);
+        suggestions[lpId]={start:r1.start,end:r2.end,source:'suggestion',fmt:'quarterly',label:'Q'+first.q+'/'+first.yr+(qtrs.length>1?' – Q'+last.q+'/'+last.yr:'')};break;
+      }
+    });
+  }
+  return suggestions;
+}
+
+// ── DURATION-BASED SUGGESTIONS ────────────────────────────────────────────────
+function _buildSuggestionsDuration(text){
+  const suggestions={};
+  // Find anchor/project-start date
+  const anchorRe=/(?:Projektbeginn|Baubeginn|Planungsbeginn|Projektstart|Beginn\s+(?:der\s+)?(?:Planung|Projekt(?:es)?)|Planungsstart|Start\s+(?:LP|LPH)\s*1)\s*[:\-=\s]*(\d{1,2}[\.\/]\d{1,2}[\.\/]\d{2,4}|\d{4}-\d{2}-\d{2}|(?:Januar|Februar|M(?:ä|ae)rz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s+\d{4})/gi;
+  let anchorDate=null; let am;
+  while((am=anchorRe.exec(text))!==null){const p=_parseDatesFromText(am[1]);if(p.length){anchorDate=new Date(p[0]);break;}}
+  if(!anchorDate){const all=_parseDatesFromText(text.slice(0,4000));if(all.length){all.sort();anchorDate=new Date(all[0]);}}
+  if(!anchorDate)return suggestions;
+  const durations={};
+  // "LP 2: 4 Monate" or "LP 2 Vorplanung – 4 Wochen"
+  const lpDurRe=/\b(?:LP|LPH|Leistungsphase)\s*([1-8])\b[^0-9\n]{0,120}?\b(\d+(?:[,\.]\d)?)\s*(Monate?n?|Wochen?|Tage?n?)\b/gi;
+  let m;
+  while((m=lpDurRe.exec(text))!==null){const lp='lp'+m[1],num=parseFloat(m[2].replace(',','.')),unit=m[3].toLowerCase();let days=unit.startsWith('monat')?Math.round(num*30):unit.startsWith('woch')?Math.round(num*7):Math.round(num);if(!durations[lp])durations[lp]=days;}
+  // LP name keywords: "Grundlagenermittlung: 3 Monate"
+  Object.entries(_LP_NAMES).forEach(([nameRe,lpId])=>{
+    if(durations[lpId])return;
+    const re=new RegExp('\\b(?:'+nameRe+')\\b[^0-9\\n]{0,100}?\\b(\\d+(?:[,\\.]\\d)?)\\s*(Monate?n?|Wochen?|Tage?n?)\\b','gi'); let nm;
+    while((nm=re.exec(text))!==null){const num=parseFloat(nm[1].replace(',','.')),unit=nm[2].toLowerCase();let days=unit.startsWith('monat')?Math.round(num*30):unit.startsWith('woch')?Math.round(num*7):Math.round(num);durations[lpId]=days;break;}
+  });
+  // Chain durations sequentially from anchor
+  let cursor=new Date(anchorDate);
+  for(let i=1;i<=8;i++){
+    const lp='lp'+i;if(!durations[lp])continue;
+    const startIso=cursor.toISOString().slice(0,10);
+    const endDate=new Date(cursor);endDate.setDate(endDate.getDate()+durations[lp]-1);
+    const endIso=endDate.toISOString().slice(0,10);
+    const d=durations[lp];const lbl=d>=28?Math.round(d/30)+'M':d>=7?Math.round(d/7)+'W':d+'d';
+    suggestions[lp]={start:startIso,end:endIso,source:'suggestion',fmt:'duration',label:lbl};
+    cursor=new Date(endDate);cursor.setDate(cursor.getDate()+1);
+  }
+  return suggestions;
+}
+
+// ── ABSOLUTE-DATE SUGGESTIONS ─────────────────────────────────────────────────
+function _buildSuggestionsAbsolute(text,allDates){
+  const suggestions={};
+  const lpRe=/\b(?:LP|LPH|Leistungsphase)\s*([1-8])\b/gi;
+  const mentions=[]; let m;
+  while((m=lpRe.exec(text))!==null)mentions.push({lp:'lp'+m[1],pos:m.index,endPos:m.index+m[0].length});
+  mentions.forEach(({lp,endPos},idx)=>{
+    if(suggestions[lp])return;
+    const nextPos=idx+1<mentions.length?mentions[idx+1].pos:endPos+500;
+    const ctx=text.slice(endPos,Math.min(nextPos,endPos+500));
+    const ctxDates=_parseDatesFromText(ctx);if(!ctxDates.length)return;
+    const uniq=[...new Set(ctxDates)].sort();
+    if(uniq.length>=2)suggestions[lp]={start:uniq[0],end:uniq[uniq.length-1],source:'suggestion',fmt:'absolute'};
+    else if(uniq.length===1)suggestions[lp]={start:'',end:uniq[0],source:'suggestion',fmt:'absolute'};
+  });
+  // Fallback: phase name keywords
+  if(Object.keys(suggestions).length<2&&allDates.length){
+    Object.entries(_LP_NAMES).forEach(([nameRe,lpId])=>{
+      if(suggestions[lpId])return;
+      const re=new RegExp('\\b(?:'+nameRe+')\\b','gi'); let nm;
+      while((nm=re.exec(text))!==null){
+        const ctx=text.slice(nm.index+nm[0].length,nm.index+nm[0].length+500);
+        const ctxDates=_parseDatesFromText(ctx);if(!ctxDates.length)continue;
+        const uniq=[...new Set(ctxDates)].sort();
+        if(uniq.length>=2)suggestions[lpId]={start:uniq[0],end:uniq[uniq.length-1],source:'suggestion',fmt:'absolute'};
+        else if(uniq.length===1)suggestions[lpId]={start:'',end:uniq[0],source:'suggestion',fmt:'absolute'};
+        break;
+      }
+    });
+  }
+  return suggestions;
+}
+
+// ── UNIFIED SUGGESTION BUILDER ────────────────────────────────────────────────
+function _buildSuggestions(text,allDates,fmt){
+  if(fmt==='quarterly')return _buildSuggestionsQuarterly(text);
+  if(fmt==='duration') return _buildSuggestionsDuration(text);
+  return _buildSuggestionsAbsolute(text,allDates);
+}
+
 async function parsePdf(file,filename,isUpdate){
   showToast('PDF wird eingelesen...');
-  const{dates,rawText,error}=await extractDates(file);pdfDates=dates;
+  const{dates,suggestions,rawText,error,fmt}=await extractDates(file);pdfDates=dates;
   if(!terminplanData[currentPid])terminplanData[currentPid]={lp:{},type:'rahmentermine',version:0};
   const tp=terminplanData[currentPid];tp.filename=filename;renderTpPanel();
   if(error){showToast('PDF-Fehler: '+error.slice(0,80));document.getElementById('lp-wrap').style.display='';return;}
-  if(!dates.length){showPdfDebugModal(filename,rawText);return;}
-  showPdfModal(dates,filename,isUpdate);
+  if(!dates.length&&!Object.keys(suggestions).length){showPdfDebugModal(filename,rawText);return;}
+  showPdfModal(dates,suggestions,filename,isUpdate,fmt);
 }
-const _MO={'januar':1,'februar':2,'maerz':3,'april':4,'mai':5,'juni':6,'juli':7,'august':8,'september':9,'oktober':10,'november':11,'dezember':12};
-function _moNum(s){const k=s.toLowerCase().replace(/ä/g,'ae').replace(/ae/g,'ae');return _MO[k]||_MO[s.toLowerCase()];}
-const _MO_RE='Januar|Februar|M(?:ä|ae)rz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember';
+
 async function extractDates(file){
   try{
     const lib=window.pdfjsLib||window['pdfjs-dist/build/pdf'];
-    if(!lib)return{dates:[],rawText:'',error:'PDF.js nicht geladen'};
+    if(!lib)return{dates:[],suggestions:{},rawText:'',error:'PDF.js nicht geladen',fmt:'absolute'};
     lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     const buf=await file.arrayBuffer();const pdf=await lib.getDocument({data:buf}).promise;
-    let text='';for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const ct=await pg.getTextContent();text+=ct.items.map(it=>it.str).join(' ')+'\n';}
-    if(!text.trim())return{dates:[],rawText:'',error:'Kein lesbarer Text (gescanntes PDF?)'};
-    const found=new Set();let m;
-    const re1=/\b(\d{1,2})\.[ ]?(\d{1,2})\.[ ]?(\d{2,4})\b/g;
-    while((m=re1.exec(text))!==null){const dy=m[1].padStart(2,'0'),mo=m[2].padStart(2,'0'),yr=m[3].length===2?'20'+m[3]:m[3];if(+yr>=2020&&+yr<=2040&&+mo>=1&&+mo<=12&&+dy>=1&&+dy<=31)found.add(yr+'-'+mo+'-'+dy);}
-    const re2=new RegExp('\\b(\\d{1,2})\\.\\s*('+_MO_RE+')\\s+(\\d{4})\\b','gi');
-    while((m=re2.exec(text))!==null){const dy=m[1].padStart(2,'0'),mn=_moNum(m[2]),mo=String(mn||0).padStart(2,'0'),yr=m[3];if(mn&&+yr>=2020&&+yr<=2040)found.add(yr+'-'+mo+'-'+dy);}
-    const re3=new RegExp('\\b('+_MO_RE+')\\s+(\\d{4})\\b','gi');
-    while((m=re3.exec(text))!==null){const mn=_moNum(m[1]),mo=String(mn||0).padStart(2,'0'),yr=m[2];if(mn&&+yr>=2020&&+yr<=2040)found.add(yr+'-'+mo+'-01');}
-    const re4=/\b(\d{4})-(\d{2})-(\d{2})\b/g;
-    while((m=re4.exec(text))!==null){const[,yr,mo,dy]=m;if(+yr>=2020&&+yr<=2040&&+mo>=1&&+mo<=12&&+dy>=1&&+dy<=31)found.add(yr+'-'+mo+'-'+dy);}
-    const re5=/\bKW\s*(\d{1,2})[\/\s]+(\d{4})\b/gi;
-    while((m=re5.exec(text))!==null){const kw=parseInt(m[1]),yr=parseInt(m[2]);if(kw>=1&&kw<=53&&yr>=2020&&yr<=2040){const d=new Date(yr,0,1+((kw-1)*7));const dow=d.getDay();d.setDate(d.getDate()+(dow<=4?1-dow:8-dow));found.add(d.toISOString().slice(0,10));}}
-    return{dates:Array.from(found).sort(),rawText:text.slice(0,3000),error:null};
-  }catch(e){console.error('[TP]',e);return{dates:[],rawText:'',error:e.message};}
+    let text='';
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i);
+      const ct=await pg.getTextContent();
+      // Join with spaces between items; preserve line breaks across y-position jumps
+      let prevY=null;
+      text+=ct.items.map(it=>{
+        const gap=(prevY!==null&&Math.abs(it.transform[5]-prevY)>5)?' \n ':' ';
+        prevY=it.transform[5];return gap+it.str;
+      }).join('')+'\n';
+    }
+    if(!text.trim())return{dates:[],suggestions:{},rawText:'',error:'Kein lesbarer Text (gescanntes PDF?)',fmt:'absolute'};
+    const fmt=_detectFormat(text);
+    const allDates=_parseDatesFromText(text);
+    const found=[...new Set(allDates)].sort();
+    const suggestions=_buildSuggestions(text,found,fmt);
+    // Synthesise date list from suggestions if PDF had no direct absolute dates
+    const synth=found.length?found:[...new Set(Object.values(suggestions).flatMap(s=>[s.start,s.end].filter(Boolean)))].sort();
+    return{dates:synth,suggestions,rawText:text.slice(0,3000),error:null,fmt};
+  }catch(e){console.error('[TP]',e);return{dates:[],suggestions:{},rawText:'',error:e.message,fmt:'absolute'};}
 }
+
 function showPdfDebugModal(filename,rawText){
-  const preview=rawText?rawText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'(kein Text - gescanntes PDF?)';
-  const hint=rawText?'PDF-Text extrahiert, aber keine Datumsangaben erkannt (DD.MM.YYYY, Monat YYYY, KW XX/YYYY). Vorschau:':'Kein Text extrahierbar.';
-  document.getElementById('pdf-info').innerHTML='<strong>'+filename+'</strong> - 0 Datumswerte.<br><span style="color:var(--warn);font-size:12px">'+hint+'</span>';
+  const preview=rawText?rawText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'(kein Text – gescanntes PDF?)';
+  const hint=rawText?'Kein erkanntes Datumsformat. Unterstützt: DD.MM.YYYY · Monat YYYY · Q1/YYYY · 1. Quartal YYYY · KW XX/YYYY · ISO YYYY-MM-DD · MM/YYYY · 3 Monate (Dauer)':'Kein Text extrahierbar – bitte OCR-Version des PDFs verwenden.';
+  document.getElementById('pdf-info').innerHTML='<strong>'+filename+'</strong> – 0 Datumswerte erkannt.<br><span style="color:var(--warn);font-size:12px">⚠ '+hint+'</span>';
   document.getElementById('pdf-content').innerHTML='<pre style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-size:11px;color:var(--text2);white-space:pre-wrap;line-height:1.5">'+preview+'</pre><div style="margin-top:12px;font-size:12px;color:var(--text3)">Rahmentermine bitte manuell eingeben.</div><div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="closePdfModal();document.getElementById(\'lp-wrap\').style.display=\'\'">Manuell eingeben</button></div>';
   const ol=document.getElementById('pdf-modal-ol');ol.dataset.isUpdate='0';ol.classList.add('open');
 }
-function showPdfModal(dates,filename,isUpdate){
+
+function _dateLabelForFmt(iso,fmt,sug){
+  // For quarterly suggestions use the stored quarter label; otherwise show DE date
+  if((fmt==='quarterly'||sug?.fmt==='quarterly')&&sug?.label)return sug.label;
+  if(!iso)return '';
+  // Detect if date is a quarter boundary and show as Q label
+  const [yr,mo,dy]=iso.split('-');
+  const qBounds={'01-01':'Q1','03-31':'Q1','04-01':'Q2','06-30':'Q2','07-01':'Q3','09-30':'Q3','10-01':'Q4','12-31':'Q4'};
+  const key=mo+'-'+dy;
+  if(fmt==='quarterly'&&qBounds[key])return qBounds[key]+'/'+yr;
+  return fmtDE(iso);
+}
+function showPdfModal(dates,suggestions,filename,isUpdate,fmt){
+  fmt=fmt||'absolute';
   const existing=(terminplanData[currentPid]||{}).lp||{};
-  document.getElementById('pdf-info').innerHTML='<strong>'+filename+'</strong> - <strong>'+dates.length+'</strong> Datum/Daten gefunden. Weise jeder LP-Phase Start und Ende zu.';
-  const chip=dates.map(d=>'<span class="date-chip">'+fmtDE(d)+'</span>').join('');
-  const eo='<option value="">-</option>';
-  const rows=LP_PHASEN.map(ph=>{const ex=existing[ph.id]||{};
-    return '<tr><td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge '+ph.cls+'">'+ph.label+'</span></td>'+
-      '<td style="padding:7px 8px;border-bottom:1px solid var(--border)"><select class="lp-date-inp" id="pms-'+ph.id+'">'+eo+dates.map(d=>'<option value="'+d+'"'+(d===ex.start?' selected':'')+'>'+fmtDE(d)+'</option>').join('')+'</select></td>'+
-      '<td style="padding:7px 8px;border-bottom:1px solid var(--border)"><select class="lp-date-inp" id="pme-'+ph.id+'">'+eo+dates.map(d=>'<option value="'+d+'"'+(d===ex.end?' selected':'')+'>'+fmtDE(d)+'</option>').join('')+'</select></td></tr>';}).join('');
-  document.getElementById('pdf-content').innerHTML='<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Gefundene Daten</div><div class="date-grid">'+chip+'</div></div><div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Zuweisung LP-Phasen</div><table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Phase</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Beginn</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Ende</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  const hasSug=Object.keys(suggestions).length>0;
+  const fmtBadge='<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:600;background:'+(_FMT_COLOR[fmt]||'#444')+'22;color:'+(_FMT_COLOR[fmt]||'#444')+';border:1px solid '+(_FMT_COLOR[fmt]||'#444')+'44;margin-left:8px">'+(_FMT_LABEL[fmt]||fmt)+'</span>';
+  const sugMsg=hasSug?(' <span style="color:var(--warn);font-size:12px">⚡ '+Object.keys(suggestions).length+' LP-Phasen erkannt – bitte prüfen &amp; bestätigen.</span>'):'';
+  document.getElementById('pdf-info').innerHTML='<strong>'+filename+'</strong>'+fmtBadge+' – <strong>'+dates.length+'</strong> Datumswerte.'+sugMsg;
+  const eo='<option value="">–</option>';
+  const rows=LP_PHASEN.map(ph=>{
+    const ex=existing[ph.id]||{},sug=suggestions[ph.id]||{};
+    const sv=ex.start||sug.start||'',ev=ex.end||sug.end||'';
+    const isSug=!ex.start&&!ex.end&&(sug.start||sug.end);
+    const rowStyle=isSug?'background:#fffbeb':'';
+    const inpStyle=isSug?'border-color:#f59e0b;background:#fffbeb':'';
+    const badge=isSug?'<span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;margin-left:5px;font-family:var(--mono)">'+(sug.label||'Vorschlag')+'</span>':'';
+    // For quarterly/duration: show text inputs pre-filled (since dates are synthesised from suggestions)
+    const useInput=(fmt==='quarterly'||fmt==='duration');
+    const mkCell=(val,id)=>useInput
+      ?'<input type="date" class="lp-date-inp" id="'+id+'" value="'+val+'" style="'+inpStyle+';padding:4px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:var(--mono)">'
+      :'<select class="lp-date-inp" id="'+id+'" style="'+inpStyle+'">'+eo+dates.map(d=>'<option value="'+d+'"'+(d===val?' selected':'')+'>'+_dateLabelForFmt(d,fmt,sug)+'</option>').join('')+'</select>';
+    return '<tr style="'+rowStyle+'">'+
+      '<td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge '+ph.cls+'">'+ph.label+'</span>'+badge+'</td>'+
+      '<td style="padding:7px 8px;border-bottom:1px solid var(--border)">'+mkCell(sv,'pms-'+ph.id)+'</td>'+
+      '<td style="padding:7px 8px;border-bottom:1px solid var(--border)">'+mkCell(ev,'pme-'+ph.id)+'</td>'+
+    '</tr>';
+  }).join('');
+  // Date chip display — for quarterly show Q labels
+  const chip=dates.map(d=>{
+    const [yr,mo,dy]=d.split('-');
+    const qBounds={'01-01':'Q1','03-31':'Q1','04-01':'Q2','06-30':'Q2','07-01':'Q3','09-30':'Q3','10-01':'Q4','12-31':'Q4'};
+    const lbl=(fmt==='quarterly'&&qBounds[mo+'-'+dy])?qBounds[mo+'-'+dy]+'/'+yr:fmtDE(d);
+    return '<span class="date-chip">'+lbl+'</span>';
+  }).join('');
+  const fmtHint=fmt==='quarterly'?'<div style="font-size:11px;color:var(--info);margin-bottom:10px">📅 Quartalsterminplan erkannt – Beginn/Ende jeder Phase als erstes/letztes Datum des Quartals gesetzt.</div>':fmt==='duration'?'<div style="font-size:11px;color:var(--info);margin-bottom:10px">⏱ Dauern erkannt – Phasendaten aus Projektbeginn + Monatsdauern berechnet.</div>':'';
+  document.getElementById('pdf-content').innerHTML=
+    fmtHint+
+    '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Gefundene Datumswerte</div><div class="date-grid">'+chip+'</div></div>'+
+    '<div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Zuweisung LP-Phasen</div>'+
+    '<table style="width:100%;border-collapse:collapse"><thead><tr>'+
+      '<th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Phase</th>'+
+      '<th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Beginn</th>'+
+      '<th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Ende</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>';
   const ol=document.getElementById('pdf-modal-ol');ol.dataset.isUpdate=isUpdate?'1':'0';ol.classList.add('open');
 }
 function closePdfModal(){document.getElementById('pdf-modal-ol').classList.remove('open');}
+
 function applyPdfDates(){
   if(!currentPid)return;if(!terminplanData[currentPid])terminplanData[currentPid]={lp:{},type:'rahmentermine',version:0};
   const tp=terminplanData[currentPid],isUpdate=document.getElementById('pdf-modal-ol').dataset.isUpdate==='1';
@@ -1157,7 +1404,7 @@ function applyPdfDates(){
   LP_PHASEN.forEach(ph=>{const s=(document.getElementById('pms-'+ph.id)||{}).value||'';const e=(document.getElementById('pme-'+ph.id)||{}).value||'';tp.lp[ph.id]={start:s,end:e,source:'pdf'};});
   tp.loadedAt=new Date().toISOString();tp.version=(tp.version||0)+1;
   saveTerminplan();closePdfModal();renderTpPanel();
-  if(isUpdate&&oldLp){const deltas=calcDeltas(oldLp,tp.lp),aff=countAffected(deltas);if(!Object.keys(deltas).length)showToast('Terminplan aktualisiert - unveraendert');else if(aff>0)showUpdateModal(deltas);else showToast('Terminplan aktualisiert - keine Termine betroffen');}
+  if(isUpdate&&oldLp){const deltas=calcDeltas(oldLp,tp.lp),aff=countAffected(deltas);if(!Object.keys(deltas).length)showToast('Terminplan aktualisiert');else if(aff>0)showUpdateModal(deltas);else showToast('Terminplan aktualisiert - keine Termine betroffen');}
   else showToast('Termine aus PDF uebernommen');
 }
 function calcDeltas(oldLp,newLp){const d={};LP_PHASEN.forEach(ph=>{const oe=(oldLp[ph.id]||{}).end,ne=(newLp[ph.id]||{}).end;if(oe&&ne){const days=Math.round((new Date(ne)-new Date(oe))/864e5);if(days!==0)d[ph.id]={days,oldEnd:oe,newEnd:ne,label:ph.label,name:ph.name};}});return d;}
@@ -1228,7 +1475,7 @@ setTimeout(function() {
 </script>
 
 <div class="modal-overlay" id="pdf-modal-ol" onclick="if(event.target===this)closePdfModal()">
-  <div class="modal" style="max-width:640px;max-height:85vh;display:flex;flex-direction:column">
+  <div class="modal" style="max-width:680px;max-height:88vh;display:flex;flex-direction:column">
     <div class="modal-header"><div class="modal-title">Terminplan aus PDF</div><button class="modal-close" onclick="closePdfModal()">&times;</button></div>
     <div class="modal-body" style="overflow-y:auto;flex:1"><div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="pdf-info"></div><div id="pdf-content"></div></div>
     <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
@@ -1238,7 +1485,7 @@ setTimeout(function() {
   </div>
 </div>
 <div class="modal-overlay" id="derive-modal-ol" onclick="if(event.target===this)closeDeriveModal()">
-  <div class="modal" style="max-width:780px;max-height:85vh;display:flex;flex-direction:column">
+  <div class="modal" style="max-width:780px;max-height:88vh;display:flex;flex-direction:column">
     <div class="modal-header"><div class="modal-title">BIM-Termine ableiten</div><button class="modal-close" onclick="closeDeriveModal()">&times;</button></div>
     <div class="modal-body" style="overflow-y:auto;flex:1"><div style="font-size:12px;color:var(--text3);margin-bottom:14px">BIM-Termine aus Rahmenterminen berechnet.</div><div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-secondary btn-sm" onclick="selectAllDerived(true)">Alle w&auml;hlen</button><button class="btn btn-secondary btn-sm" onclick="selectAllDerived(false)">Keine</button></div><div id="derive-content"></div></div>
     <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
@@ -1248,7 +1495,7 @@ setTimeout(function() {
   </div>
 </div>
 <div class="modal-overlay" id="update-modal-ol" onclick="if(event.target===this)closeUpdateModal()">
-  <div class="modal" style="max-width:680px;max-height:85vh;display:flex;flex-direction:column">
+  <div class="modal" style="max-width:680px;max-height:88vh;display:flex;flex-direction:column">
     <div class="modal-header"><div class="modal-title">Terminplan-Update</div><button class="modal-close" onclick="closeUpdateModal()">&times;</button></div>
     <div class="modal-body" style="overflow-y:auto;flex:1"><div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="update-intro"></div><div id="update-content"></div></div>
     <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">

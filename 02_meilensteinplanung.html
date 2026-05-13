@@ -92,32 +92,54 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .sb-verzoegert{background:var(--err-bg);color:#dc2626}
 .sb-abgeschlossen{background:#f3f4f6;color:#6b7280}
 
-/* GANTT */
+/* ═══════════════════════════════════════════════════
+   GANTT  –  correct approach:
+   label column (sticky) + ONE colspan track cell
+═══════════════════════════════════════════════════ */
 .gantt-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
 .gantt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
 .gtable{border-collapse:collapse;table-layout:fixed}
+
+/* Header row */
 .gh-corner{background:var(--surface2);border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:12}
 .gh-month-cell{background:var(--surface2);border-bottom:1px solid var(--border);border-right:1px dashed var(--border);padding:8px 0;text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;overflow:hidden}
 .gh-month-cell.today-month{color:var(--accent);font-weight:600}
 .gh-month-cell:last-child{border-right:1px solid var(--border)}
+
+/* Label column */
 .glabel-cell{background:var(--surface);border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:5;vertical-align:middle;padding:0;cursor:pointer}
 .glabel-cell:hover .gl-inner{background:var(--surface2)}
 .gl-inner{padding:10px 14px}
 .gl-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
 .gl-sub{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+
+/* Track cell – spans ALL month columns */
 .gtrack-cell{border-bottom:1px solid var(--border);padding:0;height:52px;position:relative;vertical-align:top}
+
+/* Gantt bar */
 .gbar{position:absolute;top:50%;transform:translateY(-50%);height:22px;border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;cursor:pointer;transition:filter 0.15s,box-shadow 0.15s;z-index:2}
 .gbar:hover{filter:brightness(0.88);box-shadow:0 2px 8px rgba(0,0,0,0.18)}
 .gbar-label{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.9);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Milestone diamond */
 .gdiamond{position:absolute;top:50%;width:14px;height:14px;border-radius:2px;transform:translateY(-50%) rotate(45deg);cursor:pointer;z-index:2;transition:filter 0.15s}
 .gdiamond:hover{filter:brightness(0.85)}
+
+/* Recurring dots */
 .gdot{position:absolute;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;cursor:pointer;z-index:2;border:2px solid var(--surface)}
 .gdot:hover{transform:translateY(-50%) scale(1.3)}
+
+/* Recurring range line */
 .grange-line{position:absolute;top:50%;transform:translateY(-50%);height:3px;border-radius:2px;opacity:0.25;z-index:1;pointer-events:none}
+
+/* Today line */
 .gtoday{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:0.7;z-index:3;pointer-events:none}
+
+/* Month divider */
 .gmonth-div{position:absolute;top:0;bottom:0;width:1px;background:var(--border);opacity:0.6;z-index:1;pointer-events:none}
 
-/* TIMELINE */
+/* ── TIMELINE ── */
 .tl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:24px;margin-bottom:20px}
 .tl-group-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--mono);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .tl-group{margin-bottom:28px}
@@ -136,7 +158,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .tl-actions{display:flex;gap:6px;margin-top:8px;opacity:0;transition:opacity 0.15s}
 .tl-item:hover .tl-actions{opacity:1}
 
-/* MODAL */
+/* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--surface);border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
@@ -157,19 +179,27 @@ input[type=text],input[type=date],input[type=number],select,textarea{padding:9px
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
 textarea{resize:vertical;min-height:64px;line-height:1.6}
 .form-hint{font-size:11px;color:var(--text3)}
+
+/* Recurring section */
 .recurring-box{background:var(--info-bg);border:1px solid #bfdbfe;border-radius:var(--r);padding:14px;margin-top:2px}
 .recurring-box.hidden{display:none}
 .recurring-grid{display:grid;grid-template-columns:80px 1fr 1fr;gap:10px;margin-top:10px}
+
+/* Disziplin chips */
 .dz-wrap{display:flex;flex-wrap:wrap;gap:6px}
 .dz-chip{padding:4px 10px;border-radius:20px;font-size:12px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all 0.15s;user-select:none}
 .dz-chip:hover{border-color:var(--accent);color:var(--accent)}
 .dz-chip.sel{background:var(--accent);color:#0f1623;border-color:var(--accent);font-weight:500}
+
+/* Confirm */
 .confirm-box{background:var(--surface);border-radius:var(--rl);padding:28px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
 .modal-overlay.open .confirm-box{transform:translateY(0)}
 
-/* Legend / Empty */
+/* Legend */
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text3);margin-top:6px;padding:0 4px}
 .legend-item{display:flex;align-items:center;gap:5px}
+
+/* Empty / No project */
 .empty-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:56px;text-align:center;color:var(--text3)}
 .empty-box .ei{font-size:40px;margin-bottom:12px}
 .empty-box .et{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px}
@@ -179,9 +209,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--nav-bg);color:#e2e8f0;padding:12px 18px;border-radius:var(--r);font-size:13px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
 
-/* ══════════════════════════════════════════════
-   TERMINPLAN PANEL
-══════════════════════════════════════════════ */
+/* TERMINPLAN PANEL */
 .tp-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .tp-bar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .tp-bar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
@@ -191,10 +219,6 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .tp-type-btn.active{background:var(--nav-bg);color:var(--accent)}
 .tp-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;flex-shrink:0}
 .tp-dot.connected{background:var(--ok)}
-.tp-dot.updated{background:var(--warn);animation:tp-blink 1.5s infinite}
-@keyframes tp-blink{0%,100%{opacity:1}50%{opacity:0.3}}
-
-/* LP TABLE */
 .lp-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px 24px;margin-bottom:14px}
 .lp-table{width:100%;border-collapse:collapse;font-size:13px}
 .lp-table th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left}
@@ -207,18 +231,10 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .lp-src{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px}
 .lp-src.pdf{background:#eff6ff;color:#1e40af}
 .lp-src.manual{background:var(--surface2);color:var(--text3)}
-
-/* LP phase colours */
-.lp-lp1{background:#eef2ff;color:#4338ca}
-.lp-lp2{background:#f5f3ff;color:#7c3aed}
-.lp-lp3{background:#fdf4ff;color:#9333ea}
-.lp-lp4{background:#fdf2f8;color:#c026d3}
-.lp-lp5{background:#fff0f9;color:#db2777}
-.lp-lp6{background:#fff1f2;color:#e11d48}
-.lp-lp7{background:#fff7ed;color:#ea580c}
-.lp-lp8{background:#fefce8;color:#ca8a04}
-
-/* Derive + update modals shared */
+.lp-lp1{background:#eef2ff;color:#4338ca}.lp-lp2{background:#f5f3ff;color:#7c3aed}
+.lp-lp3{background:#fdf4ff;color:#9333ea}.lp-lp4{background:#fdf2f8;color:#c026d3}
+.lp-lp5{background:#fff0f9;color:#db2777}.lp-lp6{background:#fff1f2;color:#e11d48}
+.lp-lp7{background:#fff7ed;color:#ea580c}.lp-lp8{background:#fefce8;color:#ca8a04}
 .dtable{width:100%;border-collapse:collapse;font-size:12px}
 .dtable th{font-size:11px;font-weight:500;color:var(--text3);padding:5px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);text-align:left}
 .dtable td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
@@ -228,13 +244,11 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .delta-neg{color:var(--ok);font-family:var(--mono);font-size:11px;font-weight:600}
 .slabel{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:8px;margin-top:16px}
 .slabel:first-child{margin-top:0}
-
-/* PDF date chips */
 .date-grid{display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow-y:auto;padding:2px 0}
 .date-chip{padding:3px 9px;border-radius:5px;font-size:11px;font-family:var(--mono);border:1px solid var(--border);background:var(--surface);color:var(--text2)}
 </style>
-<script src="bim_sync.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="bim_sync.js"></script>
 </head>
 <body>
 
@@ -246,7 +260,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   <nav class="nav">
     <div class="nav-section">Module</div>
     <div class="nav-item" onclick="goTo('index.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2H2zm5 2v10M2 8h16"/></svg>Projektverwaltung</div>
-    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung<span class="nav-badge" id="nav-count">0</span></div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplanung</div>
     <div class="nav-item" onclick="goTo('04_anwendungsfaelle.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 4v4l3 3"/></svg>Anwendungsfälle</div>
     <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5h16v3H2zM2 10h16v3H2zM2 15h10v3H2z"/></svg>Merkmalserver</div>
     <div class="nav-item" onclick="goTo('05_modellpruefung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung</div>
@@ -267,22 +281,21 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
     </select>
     <div class="topbar-right">
       <div class="view-toggle">
-        <button class="view-btn active" id="vbtn-gantt"    onclick="setView('gantt')">Gantt</button>
-        <button class="view-btn"        id="vbtn-timeline" onclick="setView('timeline')">Timeline</button>
+        <button class="view-btn active" id="vbtn-gantt"     onclick="setView('gantt')">Gantt</button>
+        <button class="view-btn"        id="vbtn-timeline"  onclick="setView('timeline')">Timeline</button>
       </div>
       <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export</button>
       <button class="btn btn-primary" id="btn-new" onclick="openModal()" disabled>+ Meilenstein</button>
-      <button onclick="goTo('08_hilfe.html')" title="Hilfe" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
+    
+      <button onclick="goTo('08_hilfe.html')" title="Hilfe &amp; Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
     </div>
   </div>
 
   <div class="content">
     <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:4px">Meilensteinplanung</div>
-    <div style="font-size:13px;color:var(--text3);margin-bottom:20px" id="page-sub">Wähle ein Projekt um Meilensteine zu verwalten</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:24px" id="page-sub">Wähle ein Projekt um Meilensteine zu verwalten</div>
 
-    <!-- ══ TERMINPLAN PANEL ══ -->
     <div id="tp-panel" style="display:none">
-
       <div class="tp-bar">
         <div class="tp-bar-left">
           <div class="tp-type-toggle">
@@ -291,44 +304,35 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
           </div>
           <span class="tp-dot" id="tp-dot"></span>
           <span id="tp-folder-lbl" style="font-size:12px;color:var(--text3)">Kein Ordner verbunden</span>
-          <span id="tp-sep"  style="font-size:12px;color:var(--border);display:none">·</span>
+          <span id="tp-sep" style="font-size:12px;color:var(--border);display:none">&middot;</span>
           <span id="tp-file-lbl" style="font-size:12px;font-family:var(--mono);color:var(--accent);display:none"></span>
-          <span id="tp-ver-tag"  class="tag tag-blue" style="display:none"></span>
+          <span id="tp-ver-tag" class="tag tag-blue" style="display:none"></span>
         </div>
         <div class="tp-bar-right">
-          <button class="btn btn-secondary btn-sm" id="tp-lp-btn" onclick="toggleLpTable()">📅 Rahmentermine</button>
-          <button class="btn btn-secondary btn-sm" onclick="connectFolder()">📁 Ordner verbinden</button>
-          <button class="btn btn-primary btn-sm" id="tp-derive-btn" onclick="showDeriveModal()" disabled>⚡ BIM-Termine ableiten</button>
+          <button class="btn btn-secondary btn-sm" id="tp-lp-btn" onclick="toggleLpTable()">&#128197; Rahmentermine</button>
+          <button class="btn btn-secondary btn-sm" onclick="connectFolder()">&#128193; Ordner verbinden</button>
+          <button class="btn btn-primary btn-sm" id="tp-derive-btn" onclick="showDeriveModal()" disabled>&#9889; BIM-Termine ableiten</button>
         </div>
       </div>
-
-      <!-- LP Rahmentermine table -->
       <div id="lp-wrap" style="display:none">
         <div class="lp-panel">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
             <div>
-              <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">Rahmentermine LP 1–8</div>
-              <div style="font-size:11px;color:var(--text3)">Direkt eingeben oder per PDF einlesen. BIM-Termine werden relativ zu diesen Phasen abgeleitet.</div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">Rahmentermine LP 1&#8211;8</div>
+              <div style="font-size:11px;color:var(--text3)">Direkt eingeben oder per PDF einlesen.</div>
             </div>
             <div style="display:flex;gap:8px;flex-shrink:0">
-              <button class="btn btn-secondary btn-sm" onclick="selectPdfFromFolder()">📄 PDF einlesen</button>
-              <button class="btn btn-primary btn-sm" onclick="saveLpDates()">✓ Speichern</button>
+              <button class="btn btn-secondary btn-sm" onclick="selectPdfFromFolder()">&#128196; PDF einlesen</button>
+              <button class="btn btn-primary btn-sm" onclick="saveLpDates()">&#10003; Speichern</button>
             </div>
           </div>
           <table class="lp-table">
-            <thead><tr>
-              <th style="width:68px">Phase</th>
-              <th>Bezeichnung</th>
-              <th style="width:150px">Beginn</th>
-              <th style="width:150px">Ende</th>
-              <th style="width:80px">Quelle</th>
-            </tr></thead>
+            <thead><tr><th style="width:68px">Phase</th><th>Bezeichnung</th><th style="width:150px">Beginn</th><th style="width:150px">Ende</th><th style="width:80px">Quelle</th></tr></thead>
             <tbody id="lp-tbody"></tbody>
           </table>
         </div>
       </div>
-
-    </div><!-- /tp-panel -->
+    </div>
 
     <div class="stats-row" id="stats-row" style="display:none">
       <div class="stat-card"><div class="stat-label">Gesamt</div><div class="stat-value" id="st-total" style="color:var(--accent)">0</div><div class="stat-sub">Einträge</div></div>
@@ -344,7 +348,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   </div>
 </main>
 
-<!-- ══ MILESTONE MODAL ══ -->
+<!-- ══ MODAL ══ -->
 <div class="modal-overlay" id="modal-ol" onclick="bgClose(event)">
   <div class="modal">
     <div class="modal-header">
@@ -353,10 +357,12 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
     </div>
     <div class="modal-body">
       <div class="form-grid">
+
         <div class="fg full">
           <label>Bezeichnung *</label>
           <input type="text" id="f-name" placeholder="z. B. Datadrop 002 – Koordinationsmodell LPH 3">
         </div>
+
         <div class="fg">
           <label>Typ</label>
           <select id="f-typ" onchange="onTypChange()">
@@ -368,6 +374,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
             <option value="sonstiges">· Sonstiges</option>
           </select>
         </div>
+
         <div class="fg">
           <label>Status</label>
           <select id="f-status">
@@ -379,15 +386,19 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
             <option value="abgeschlossen">Abgeschlossen</option>
           </select>
         </div>
+
         <div class="fg">
           <label>Datum (Soll) *</label>
           <input type="date" id="f-datum">
         </div>
+
         <div class="fg">
           <label>Harte Frist (Deadline)</label>
           <input type="date" id="f-frist">
           <span class="form-hint">Optional – wenn abweichend vom Solldatum</span>
         </div>
+
+        <!-- RECURRING – only visible for datadrop -->
         <div class="fg full" id="recurring-section">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="f-recurring" onchange="onRecurringChange()" style="width:15px;height:15px;accent-color:var(--accent)">
@@ -395,23 +406,38 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
           </label>
           <div class="recurring-box hidden" id="recurring-box">
             <div style="font-size:12px;color:#1d4ed8;margin-bottom:10px;line-height:1.5">
-              Zyklische Datadrops werden als <strong>eine Zeile</strong> im Gantt dargestellt – mit einer Markierung je Termin.
+              Zyklische Datadrops werden als <strong>eine Zeile</strong> im Gantt dargestellt – mit einer Markierung je Termin. Änderungen am Zyklus gelten für alle zukünftigen Termine.
             </div>
             <div class="recurring-grid">
-              <div class="fg"><label>Intervall</label><input type="number" id="f-interval" min="1" max="52" value="3" style="width:100%"></div>
-              <div class="fg"><label>Einheit</label><select id="f-unit"><option value="weeks">Wochen</option><option value="months">Monate</option></select></div>
-              <div class="fg"><label>Ende des Zyklus</label><input type="date" id="f-recur-end"></div>
+              <div class="fg">
+                <label>Intervall</label>
+                <input type="number" id="f-interval" min="1" max="52" value="3" style="width:100%">
+              </div>
+              <div class="fg">
+                <label>Einheit</label>
+                <select id="f-unit">
+                  <option value="weeks">Wochen</option>
+                  <option value="months">Monate</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label>Ende des Zyklus</label>
+                <input type="date" id="f-recur-end">
+              </div>
             </div>
           </div>
         </div>
+
         <div class="fg full">
           <label>Verknüpfte Disziplinen</label>
           <div class="dz-wrap" id="dz-wrap"></div>
         </div>
+
         <div class="fg full">
           <label>Beschreibung / Lieferumfang</label>
           <textarea id="f-desc" placeholder="Was wird geliefert? Welche Anforderungen gelten?"></textarea>
         </div>
+
       </div>
     </div>
     <div class="modal-footer">
@@ -421,7 +447,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   </div>
 </div>
 
-<!-- ══ CONFIRM DELETE ══ -->
+<!-- CONFIRM DELETE -->
 <div class="modal-overlay" id="confirm-ol" onclick="if(event.target===this)closeConfirm()">
   <div class="confirm-box">
     <div style="font-size:17px;font-weight:600;color:var(--text);margin-bottom:10px">Meilenstein löschen?</div>
@@ -433,76 +459,15 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   </div>
 </div>
 
-<!-- ══ PDF DATE PICKER MODAL ══ -->
-<div class="modal-overlay" id="pdf-modal-ol" onclick="if(event.target===this)closePdfModal()">
-  <div class="modal" style="max-width:700px">
-    <div class="modal-header">
-      <div class="modal-title">Termine aus PDF zuweisen</div>
-      <button class="modal-close" onclick="closePdfModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6" id="pdf-info"></div>
-      <div id="pdf-content"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closePdfModal()">Abbrechen</button>
-      <button class="btn btn-primary" onclick="applyPdfDates()">✓ Termine übernehmen</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ DERIVE BIM-TERMINE MODAL ══ -->
-<div class="modal-overlay" id="derive-modal-ol" onclick="if(event.target===this)closeDeriveModal()">
-  <div class="modal" style="max-width:760px">
-    <div class="modal-header">
-      <div class="modal-title">BIM-Termine ableiten</div>
-      <button class="modal-close" onclick="closeDeriveModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">
-        Basierend auf den Rahmenterminplan werden folgende BIM-Termine vorgeschlagen. Wähle die gewünschten Termine aus.
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <button class="btn btn-secondary btn-sm" onclick="selectAllDerived(true)">Alle auswählen</button>
-        <button class="btn btn-secondary btn-sm" onclick="selectAllDerived(false)">Alle abwählen</button>
-      </div>
-      <div id="derive-content"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeDeriveModal()">Abbrechen</button>
-      <button class="btn btn-primary" onclick="applyDerivedTermine()">✓ Ausgewählte übernehmen</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ AUTO-SHIFT UPDATE MODAL ══ -->
-<div class="modal-overlay" id="update-modal-ol" onclick="if(event.target===this)closeUpdateModal()">
-  <div class="modal" style="max-width:660px">
-    <div class="modal-header">
-      <div class="modal-title">Neuer Terminplan – Aktualisierung</div>
-      <button class="modal-close" onclick="closeUpdateModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6" id="update-intro"></div>
-      <div id="update-content"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeUpdateModal()">Abbrechen</button>
-      <button class="btn btn-primary" onclick="applyAutoShift()">⚡ Auto-Shift anwenden</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────────
-const TP_KEY    = 'bim_terminplan_v1';
 const PROJ_KEY  = 'bim_projects_v2';
 const MS_KEY    = 'bim_milestones_v1';
 const SET_KEY   = 'bim_settings_v1';
-const LABEL_W   = 220;
-const COL_W     = 90;
+const LABEL_W   = 220;   // px – label column width
+const COL_W     = 90;    // px – each month column width
 
 const DISZIPLINEN = [
   {id:'alle', label:'Alle'},
@@ -533,68 +498,74 @@ const ST = {
   abgeschlossen:{cls:'sb-abgeschlossen', label:'Abgeschlossen'},
 };
 
-// ─── LEISTUNGSPHASEN ──────────────────────────────────────────────────
-const LP_PHASEN = [
-  { id:'lp1', label:'LP 1', name:'Grundlagenermittlung',  cls:'lp-lp1' },
-  { id:'lp2', label:'LP 2', name:'Vorplanung',            cls:'lp-lp2' },
-  { id:'lp3', label:'LP 3', name:'Entwurfsplanung',       cls:'lp-lp3' },
-  { id:'lp4', label:'LP 4', name:'Genehmigungsplanung',   cls:'lp-lp4' },
-  { id:'lp5', label:'LP 5', name:'Ausführungsplanung',    cls:'lp-lp5' },
-  { id:'lp6', label:'LP 6', name:'Vorbereitung Vergabe',  cls:'lp-lp6' },
-  { id:'lp7', label:'LP 7', name:'Mitwirkung Vergabe',    cls:'lp-lp7' },
-  { id:'lp8', label:'LP 8', name:'Bauüberwachung',        cls:'lp-lp8' },
-];
-
-// Standard BIM deliverables – offset relative to LP start or end date.
-const BIM_TERMINE_TEMPLATES = [
-  { lp:'lp1', name:'BIM-Abwicklungsplan (BAP) v1',              typ:'freigabe',    offsetDays: 21,  from:'start', disziplinen:['alle'],                desc:'BAP v1 erstellt und freigegeben. Koordinationsvereinbarungen und LOD-Matrix festgelegt.' },
-  { lp:'lp2', name:'IFC-Modell Vorplanung (LOD 200)',            typ:'datadrop',    offsetDays:-14,  from:'end',   disziplinen:['ark','tw'],             desc:'Vorplanungsmodelle LOD 100/200 an CDE abgegeben.' },
-  { lp:'lp2', name:'Koordinationsmodell LP 2',                   typ:'meilenstein', offsetDays:  0,  from:'end',   disziplinen:['koord'],                desc:'Koordiniertes Modell LP 2 abgestimmt und freigegeben.' },
-  { lp:'lp3', name:'IFC-Modell Entwurfsplanung (LOD 300)',       typ:'datadrop',    offsetDays:-14,  from:'end',   disziplinen:['ark','tw','tga'],        desc:'Entwurfsmodelle LOD 200/300 an CDE abgegeben.' },
-  { lp:'lp3', name:'Clash-Detection LP 3',                       typ:'pruefung',    offsetDays: -7,  from:'end',   disziplinen:['koord'],                desc:'Kollisionsprüfung Koordinationsmodell LP 3 – Bericht erstellt.' },
-  { lp:'lp3', name:'Datadrop LP 3 – Koordinationsmodell',        typ:'datadrop',    offsetDays:  0,  from:'end',   disziplinen:['alle'],                 desc:'Koordinationsmodell LP 3 Final an CDE übergeben.' },
-  { lp:'lp4', name:'Mengenermittlung aus BIM-Modell LP 4',       typ:'datadrop',    offsetDays:-21,  from:'end',   disziplinen:['ark','tw'],             desc:'Modellbasierte Mengenermittlung für Kostenschätzung LP 4.' },
-  { lp:'lp4', name:'IFC-Modell Genehmigungsplanung (LOD 300)',   typ:'datadrop',    offsetDays: -7,  from:'end',   disziplinen:['ark','tw','tga'],        desc:'Genehmigungsmodell LOD 300 an CDE abgegeben.' },
-  { lp:'lp4', name:'Datadrop LP 4 – Bauantrag',                  typ:'meilenstein', offsetDays:  0,  from:'end',   disziplinen:['alle'],                 desc:'BIM-Abgabe Genehmigungsplanung – Bauantrag eingereicht.' },
-  { lp:'lp5', name:'Ausführungsmodelle (LOD 400)',                typ:'datadrop',    offsetDays:-14,  from:'end',   disziplinen:['ark','tw','tga','elt'],  desc:'Ausführungsplanung LOD 400 an CDE abgegeben.' },
-  { lp:'lp5', name:'Clash-Detection LP 5',                       typ:'pruefung',    offsetDays: -7,  from:'end',   disziplinen:['koord'],                desc:'Finaler Clash-Bericht LP 5 – Ergebnis protokolliert.' },
-  { lp:'lp5', name:'Datadrop LP 5 – Ausführung Final',           typ:'datadrop',    offsetDays:  0,  from:'end',   disziplinen:['alle'],                 desc:'Ausführungsmodell Final für Ausschreibung / Vergabe.' },
-  { lp:'lp6', name:'LV-Erstellung aus BIM-Modell',               typ:'datadrop',    offsetDays: 14,  from:'start', disziplinen:['ark','tw'],             desc:'Leistungsverzeichnis aus BIM-Modell generiert.' },
-  { lp:'lp7', name:'Modellübergabe an Ausführende',              typ:'meilenstein', offsetDays:  0,  from:'end',   disziplinen:['alle'],                 desc:'BIM-Modell LP 5 an ausführende Firmen übergeben und eingewiesen.' },
-  { lp:'lp8', name:'As-Built Modell – Zwischenstand',            typ:'datadrop',    offsetDays: 90,  from:'start', disziplinen:['ark','tw','tga'],        desc:'Zwischenabgabe As-Built-Modell – Stand Rohbau / HLS.' },
-  { lp:'lp8', name:'As-Built Modell – Final',                    typ:'meilenstein', offsetDays:-28,  from:'end',   disziplinen:['alle'],                 desc:'Finales As-Built-Modell an Bauherrn übergeben.' },
-];
-
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects = [], milestones = {}, currentPid = null, editingId = null, deleteId = null;
 let currentView = 'gantt', selectedDz = [];
-let terminplanData = {};   // { [pid]: { type, version, filename, loadedAt, lp:{lp1:{start,end,source},...}, history:[] } }
-let dirHandle = null;      // FileSystemDirectoryHandle – session only
-let pdfDates  = [];        // ISO date strings found in last parsed PDF
+
+const TP_KEY = 'bim_terminplan_v1';
+const LP_PHASEN = [
+  {id:'lp1',label:'LP 1',name:'Grundlagenermittlung', cls:'lp-lp1'},
+  {id:'lp2',label:'LP 2',name:'Vorplanung',           cls:'lp-lp2'},
+  {id:'lp3',label:'LP 3',name:'Entwurfsplanung',      cls:'lp-lp3'},
+  {id:'lp4',label:'LP 4',name:'Genehmigungsplanung',  cls:'lp-lp4'},
+  {id:'lp5',label:'LP 5',name:'Ausfuehrungsplanung',  cls:'lp-lp5'},
+  {id:'lp6',label:'LP 6',name:'Vorbereitung Vergabe', cls:'lp-lp6'},
+  {id:'lp7',label:'LP 7',name:'Mitwirkung Vergabe',   cls:'lp-lp7'},
+  {id:'lp8',label:'LP 8',name:'Bauueberwachung',      cls:'lp-lp8'},
+];
+const BIM_TERMINE_TEMPLATES = [
+  {lp:'lp1',name:'BIM-Abwicklungsplan (BAP) v1',         typ:'freigabe',    offsetDays:21, from:'start',disziplinen:['alle'],desc:'Erster BAP'},
+  {lp:'lp1',name:'Koordinationsmodell LP1 (LOD 100)',    typ:'datadrop',   offsetDays:-7, from:'end',  disziplinen:['alle'],desc:'Erstes Koordinationsmodell'},
+  {lp:'lp2',name:'BAP v2 - Aktualisierung LP2',          typ:'freigabe',   offsetDays:14, from:'start',disziplinen:['alle'],desc:'BAP Update LP2'},
+  {lp:'lp2',name:'Datadrop LP2 - Vorplanung (LOD 200)',  typ:'datadrop',   offsetDays:-14,from:'end',  disziplinen:['ark','tw','tga'],desc:'Vorplanungsmodelle'},
+  {lp:'lp2',name:'BIM-Koordinationsbesprechung LP2',     typ:'meilenstein',offsetDays:-21,from:'end',  disziplinen:['alle'],desc:'Koordination Vorplanung'},
+  {lp:'lp3',name:'IFC-Modell Entwurfsplanung (LOD 300)', typ:'datadrop',   offsetDays:-14,from:'end',  disziplinen:['ark','tw','tga'],desc:'Entwurfsmodelle LP3'},
+  {lp:'lp3',name:'Kollisionsbericht LP3',                typ:'pruefbericht',offsetDays:-7,from:'end',  disziplinen:['alle'],desc:'Clash-Detection Bericht'},
+  {lp:'lp3',name:'Datadrop LP3 - Koordinationsmodell',   typ:'datadrop',   offsetDays:0,  from:'end',  disziplinen:['alle'],desc:'Finales Koordinationsmodell LP3'},
+  {lp:'lp4',name:'Datadrop LP4 - Bauantrag',             typ:'meilenstein',offsetDays:0,  from:'end',  disziplinen:['alle'],desc:'Bauantragsmodell'},
+  {lp:'lp4',name:'BAP v3 - Ausfuehrungsplanung',         typ:'freigabe',   offsetDays:14, from:'start',disziplinen:['alle'],desc:'BAP Update LP4'},
+  {lp:'lp5',name:'IFC-Modell Ausfuehrung (LOD 400)',     typ:'datadrop',   offsetDays:-21,from:'end',  disziplinen:['ark','tw','tga','str'],desc:'Ausfuehrungsmodelle'},
+  {lp:'lp5',name:'Kollisionsbericht LP5 - Final',        typ:'pruefbericht',offsetDays:-14,from:'end', disziplinen:['alle'],desc:'Finale Clash-Detection'},
+  {lp:'lp6',name:'BIM-Leistungsverzeichnis (LV)',        typ:'meilenstein',offsetDays:0,  from:'end',  disziplinen:['alle'],desc:'LV aus Modell abgeleitet'},
+  {lp:'lp7',name:'Datadrop LP7 - Vergabeunterlagen',    typ:'datadrop',   offsetDays:-7, from:'end',  disziplinen:['alle'],desc:'Vergabemodelle'},
+  {lp:'lp8',name:'Baufortschrittsmodell (monatlich)',    typ:'meilenstein',offsetDays:0,  from:'start',disziplinen:['alle'],desc:'Monatlicher As-Built Stand'},
+  {lp:'lp8',name:'As-Built Modell - Final',              typ:'meilenstein',offsetDays:-28,from:'end',  disziplinen:['alle'],desc:'Finales As-Built Modell'},
+];
+let terminplanData = {};
+let dirHandle = null;
+let pdfDates  = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 function init() {
   try { const s=JSON.parse(localStorage.getItem(SET_KEY))||{}; (function(){const _el=document.getElementById('sb-user');if(_el)_el.textContent=s.name||'BIM Manager';}()); } catch(e){}
   try { projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[]; } catch(e){ projects=[]; }
+  // Restore active project
   const _activePid = getCurrentProject();
   if(_activePid) { setTimeout(()=>{ const s=document.getElementById('proj-sel'); if(s&&_activePid){ s.value=_activePid; if(s.value) onProjectChange(); }},200); }
   try { milestones=JSON.parse(localStorage.getItem(MS_KEY))||{}; } catch(e){ milestones={}; }
   try { terminplanData=JSON.parse(localStorage.getItem(TP_KEY))||{}; } catch(e){ terminplanData={}; }
+
   buildDzChips();
   populateSelect();
   (document.getElementById('del-btn')||{}).addEventListener('click', doDelete);
 }
 
-function saveTerminplan() { localStorage.setItem(TP_KEY, JSON.stringify(terminplanData)); }
-
 // ─── PROJECT SELECT ───────────────────────────────────────────────────
 function populateSelect() {
   const sel = document.getElementById('proj-sel');
-  if (!projects.length) { sel.innerHTML = '<option value="">Keine Projekte in der Projektverwaltung</option>'; return; }
+  if (!projects.length) {
+    sel.innerHTML = '<option value="">Keine Projekte in der Projektverwaltung</option>'; return;
+  }
   sel.innerHTML = '<option value="">— Projekt wählen —</option>' +
     projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('');
+
+  // inject sample data for first project if empty
   const pid = projects[0].id;
-  if (!milestones[pid] || !milestones[pid].length) { milestones[pid] = sampleData(); save(); }
+  if (!milestones[pid] || !milestones[pid].length) {
+    milestones[pid] = sampleData();
+    save();
+  }
+  // Prefer the active project from localStorage
   const activePid = getCurrentProject();
   sel.value = (activePid && projects.find(p=>p.id===activePid)) ? activePid : pid;
   onProjectChange();
@@ -612,10 +583,10 @@ function onProjectChange() {
     renderTpPanel();
     render();
   } else {
-    (document.getElementById('page-sub')||{}).textContent = 'Wähle ein Projekt um Meilensteine zu verwalten';
+    (function(){const _el=document.getElementById('page-sub');if(_el)_el.textContent='Wähle ein Projekt um Meilensteine zu verwalten';}());
     (document.getElementById('stats-row')||{}).style.display = 'none';
-    (document.getElementById('tp-panel')||{}).style.display  = 'none';
-    (document.getElementById('main-area')||{}).innerHTML = noProject();
+    (document.getElementById('tp-panel')||{}).style.display = 'none';
+    (function(){const _el=document.getElementById('main-area');if(_el)_el.innerHTML=noProject();}());
   }
 }
 
@@ -623,46 +594,59 @@ function onProjectChange() {
 function sampleData() {
   const y = new Date().getFullYear();
   return [
-    { id:uid(), name:'Kickoff & BAP',                typ:'meilenstein', status:'abgeschlossen', datum:`${y}-01-10`, frist:'',           disziplinen:['alle'],         desc:'BAP genehmigt, Projektstruktur definiert.',       recurring:false },
-    { id:uid(), name:'Datadrop 001 – Basismodell',   typ:'datadrop',    status:'abgeschlossen', datum:`${y}-02-15`, frist:`${y}-02-15`, disziplinen:['ark','tw'],     desc:'LOD 200 Basismodell an CDE.',                     recurring:false },
-    { id:uid(), name:'Modellaustausch (wöchentlich)',typ:'datadrop',    status:'laufend',       datum:`${y}-02-01`, frist:`${y}-02-01`, disziplinen:['ark','tw','tga'],desc:'Wöchentlicher Modellaustausch.',                  recurring:true, interval:1, unit:'weeks', recurEnd:`${y}-07-31` },
-    { id:uid(), name:'Koordinationsrunde',           typ:'besprechung', status:'laufend',       datum:`${y}-02-10`, frist:'',           disziplinen:['koord'],        desc:'Alle 3 Wochen Koordinationsrunde.',               recurring:true, interval:3, unit:'weeks', recurEnd:`${y}-08-31` },
-    { id:uid(), name:'Datadrop 002 – Koordination', typ:'datadrop',    status:'verzoegert',    datum:`${y}-04-08`, frist:`${y}-04-08`, disziplinen:['ark','tw','tga','elt'],desc:'Koordinationsmodell LPH 3.',              recurring:false },
-    { id:uid(), name:'Freigabe Genehmigungsplanung',typ:'freigabe',    status:'offen',         datum:`${y}-06-30`, frist:`${y}-06-30`, disziplinen:['alle'],         desc:'LPH 4 Unterlagen für Bauantrag.',                 recurring:false },
-    { id:uid(), name:'Datadrop 003 – Ausführung',   typ:'datadrop',    status:'offen',         datum:`${y}-08-15`, frist:`${y}-08-15`, disziplinen:['ark','tw','tga','elt','fre'],desc:'LOD 400 für Ausschreibung.',        recurring:false },
+    { id:uid(), name:'Kickoff & BAP',                typ:'meilenstein', status:'abgeschlossen', datum:`${y}-01-10`, frist:'',            disziplinen:['alle'], desc:'BAP genehmigt, Projektstruktur definiert.',       recurring:false },
+    { id:uid(), name:'Datadrop 001 – Basismodell',   typ:'datadrop',    status:'abgeschlossen', datum:`${y}-02-15`, frist:`${y}-02-15`,  disziplinen:['ark','tw'], desc:'LOD 200 Basismodell an CDE.',               recurring:false },
+    { id:uid(), name:'Modellaustausch (wöchentlich)',typ:'datadrop',    status:'laufend',       datum:`${y}-02-01`, frist:`${y}-02-01`,  disziplinen:['ark','tw','tga'], desc:'Wöchentlicher Modellaustausch.',         recurring:true, interval:1, unit:'weeks',  recurEnd:`${y}-07-31` },
+    { id:uid(), name:'Koordinationsrunde',           typ:'besprechung', status:'laufend',       datum:`${y}-02-10`, frist:'',            disziplinen:['koord'], desc:'Alle 3 Wochen Koordinationsrunde.',              recurring:true, interval:3, unit:'weeks',  recurEnd:`${y}-08-31` },
+    { id:uid(), name:'Datadrop 002 – Koordination',  typ:'datadrop',    status:'verzoegert',    datum:`${y}-04-08`, frist:`${y}-04-08`,  disziplinen:['ark','tw','tga','elt'], desc:'Koordinationsmodell LPH 3.',        recurring:false },
+    { id:uid(), name:'Freigabe Genehmigungsplanung', typ:'freigabe',    status:'offen',         datum:`${y}-06-30`, frist:`${y}-06-30`,  disziplinen:['alle'], desc:'LPH 4 Unterlagen für Bauantrag.',                recurring:false },
+    { id:uid(), name:'Datadrop 003 – Ausführung',    typ:'datadrop',    status:'offen',         datum:`${y}-08-15`, frist:`${y}-08-15`,  disziplinen:['ark','tw','tga','elt','fre'], desc:'LOD 400 für Ausschreibung.', recurring:false },
   ];
 }
 
-function uid()  { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function save() { localStorage.setItem(MS_KEY, JSON.stringify(milestones)); }
 
 // ─── STATS ────────────────────────────────────────────────────────────
 function updateStats() {
-  const list  = milestones[currentPid]||[];
+  const list = milestones[currentPid]||[];
   const today = new Date(); today.setHours(0,0,0,0);
   const done    = list.filter(m=>['abgeschlossen','freigegeben'].includes(m.status)).length;
   const offen   = list.filter(m=>!['abgeschlossen','freigegeben'].includes(m.status)).length;
-  const delayed = list.filter(m=>{ if(['abgeschlossen','freigegeben'].includes(m.status)) return false; return new Date(m.frist||m.datum)<today; }).length;
-  const upcoming= list.filter(m=>{ if(['abgeschlossen','freigegeben'].includes(m.status)) return false; return new Date(m.datum)>=today; }).sort((a,b)=>new Date(a.datum)-new Date(b.datum));
-  (document.getElementById('st-total')||{}).textContent   = list.length;
-  (document.getElementById('st-offen')||{}).textContent   = offen;
-  (document.getElementById('st-delayed')||{}).textContent = delayed;
-  (document.getElementById('st-done')||{}).textContent    = done;
-  (document.getElementById('nav-count')||{}).textContent  = list.length;
+  const delayed = list.filter(m=>{
+    if(['abgeschlossen','freigegeben'].includes(m.status)) return false;
+    const d=new Date(m.frist||m.datum); return d<today;
+  }).length;
+  const upcoming = list.filter(m=>{
+    if(['abgeschlossen','freigegeben'].includes(m.status)) return false;
+    return new Date(m.datum)>=today;
+  }).sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+
+  (function(){const _el=document.getElementById('st-total');if(_el)_el.textContent=list.length;}());
+  (function(){const _el=document.getElementById('st-offen');if(_el)_el.textContent=offen;}());
+  (function(){const _el=document.getElementById('st-delayed');if(_el)_el.textContent=delayed;}());
+  (function(){const _el=document.getElementById('st-done');if(_el)_el.textContent=done;}());
+  (function(){const _el=document.getElementById('nav-count');if(_el)_el.textContent=list.length;}());
+
   if (upcoming.length) {
     const d = new Date(upcoming[0].datum);
-    (document.getElementById('st-next')||{}).textContent      = d.toLocaleDateString('de-DE',{day:'2-digit',month:'short'});
+    (function(){const _el=document.getElementById('st-next');if(_el)_el.textContent=d.toLocaleDateString('de-DE',{day:'2-digit',month:'short'});}());
     (document.getElementById('st-next')||{}).style.color      = (d-today)<14*864e5 ? 'var(--warn)' : 'var(--text)';
-    (document.getElementById('st-next-name')||{}).textContent = upcoming[0].name.slice(0,24);
+    (function(){const _el=document.getElementById('st-next-name');if(_el)_el.textContent=upcoming[0].name.slice(0,24);}());
   } else {
-    (document.getElementById('st-next')||{}).textContent      = '—';
+    (function(){const _el=document.getElementById('st-next');if(_el)_el.textContent='—';}());
     (document.getElementById('st-next')||{}).style.color      = 'var(--text3)';
-    (document.getElementById('st-next-name')||{}).textContent = 'Kein offener Termin';
+    (function(){const _el=document.getElementById('st-next-name');if(_el)_el.textContent='Kein offener Termin';}());
   }
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────
-function render() { if (!currentPid) return; updateStats(); currentView==='gantt' ? renderGantt() : renderTimeline(); }
+function render() {
+  if (!currentPid) return;
+  updateStats();
+  currentView==='gantt' ? renderGantt() : renderTimeline();
+}
+
 function setView(v) {
   currentView = v;
   (document.getElementById('vbtn-gantt')||{}).classList.toggle('active', v==='gantt');
@@ -670,46 +654,113 @@ function setView(v) {
   render();
 }
 
-// ─── GANTT ────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════
+//  GANTT
+// ═════════════════════════════════════════════════════
 function renderGantt() {
-  const list  = milestones[currentPid]||[];
-  const area  = document.getElementById('main-area');
+  const list   = milestones[currentPid]||[];
+  const area   = document.getElementById('main-area');
   if (!list.length) { area.innerHTML = emptyHtml(); return; }
-  const today = new Date(); today.setHours(0,0,0,0);
+
+  const today  = new Date(); today.setHours(0,0,0,0);
   const allDates = [];
-  list.forEach(m=>{ allDates.push(new Date(m.datum)); if(m.recurring&&m.recurEnd) allDates.push(new Date(m.recurEnd)); if(m.frist) allDates.push(new Date(m.frist)); });
-  let rangeStart=new Date(Math.min(...allDates)); let rangeEnd=new Date(Math.max(...allDates));
+
+  // collect all relevant dates (including recurring occurrences)
+  list.forEach(m => {
+    allDates.push(new Date(m.datum));
+    if (m.recurring && m.recurEnd) allDates.push(new Date(m.recurEnd));
+    if (m.frist) allDates.push(new Date(m.frist));
+  });
+
+  // range: 1 month before first, 2 months after last
+  let rangeStart = new Date(Math.min(...allDates));
+  let rangeEnd   = new Date(Math.max(...allDates));
   rangeStart.setDate(1); rangeStart.setMonth(rangeStart.getMonth()-1);
   rangeEnd.setDate(1);   rangeEnd.setMonth(rangeEnd.getMonth()+2);
-  const months=[]; const cur=new Date(rangeStart); while(cur<rangeEnd){months.push(new Date(cur));cur.setMonth(cur.getMonth()+1);}
-  const totalMs=rangeEnd-rangeStart; const trackWidth=months.length*COL_W;
-  const px=d=>Math.round((new Date(d)-rangeStart)/totalMs*trackWidth);
-  const todayPx=px(today); const dividers=months.slice(1).map(m=>px(m));
-  const sortedList=list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
-  const headerCols=months.map(m=>{ const isNow=m.getFullYear()===today.getFullYear()&&m.getMonth()===today.getMonth(); return `<th class="gh-month-cell${isNow?' today-month':''}" style="width:${COL_W}px;min-width:${COL_W}px">${m.toLocaleDateString('de-DE',{month:'short',year:'2-digit'})}</th>`; }).join('');
-  const rows=sortedList.map(m=>{
-    const color=TYP[m.typ]?.color||'#8899b0'; const isDone=['abgeschlossen','freigegeben'].includes(m.status);
-    const delayed=!isDone&&new Date(m.frist||m.datum)<today; const barColor=delayed?'var(--err)':color; const opacity=isDone?0.45:1;
-    let bars='';
-    if(m.recurring&&m.recurEnd){
-      const occurrences=getOccurrences(m); const rStart=px(m.datum); const rEnd=px(new Date(m.recurEnd));
-      bars+=`<div class="grange-line" style="left:${rStart}px;width:${Math.max(0,rEnd-rStart)}px;background:${barColor}"></div>`;
-      occurrences.forEach(d=>{ const x=px(d)-5; const isPast=d<today; const c=isPast&&!isDone?(delayed?'var(--err)':barColor+'99'):barColor; bars+=`<div class="gdot" title="${d.toLocaleDateString('de-DE')}" style="left:${x}px;background:${c};opacity:${opacity}" onclick="openModal('${m.id}')"></div>`; });
-    } else if(m.typ==='meilenstein'){
-      const x=px(m.datum)-7; bars+=`<div class="gdiamond" style="left:${x}px;background:${barColor};opacity:${opacity}" onclick="openModal('${m.id}')" title="${m.name}"></div>`;
+
+  // build months array
+  const months = [];
+  const cur = new Date(rangeStart);
+  while (cur < rangeEnd) { months.push(new Date(cur)); cur.setMonth(cur.getMonth()+1); }
+
+  const totalMs    = rangeEnd - rangeStart;
+  const trackWidth = months.length * COL_W;   // total track px
+
+  // helper: date → px offset within track
+  const px = d => Math.round((new Date(d) - rangeStart) / totalMs * trackWidth);
+  // today px
+  const todayPx = px(today);
+
+  // month divider px positions
+  const dividers = months.slice(1).map(m => px(m));
+
+  // build rows
+  const sortedList = list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+
+  const headerCols = months.map(m=>{
+    const isNow = m.getFullYear()===today.getFullYear() && m.getMonth()===today.getMonth();
+    return `<th class="gh-month-cell${isNow?' today-month':''}" style="width:${COL_W}px;min-width:${COL_W}px">${
+      m.toLocaleDateString('de-DE',{month:'short',year:'2-digit'})
+    }</th>`;
+  }).join('');
+
+  const rows = sortedList.map(m => {
+    const color   = TYP[m.typ]?.color || '#8899b0';
+    const isDone  = ['abgeschlossen','freigegeben'].includes(m.status);
+    const dStart  = new Date(m.datum);
+    const dEnd    = m.frist ? new Date(m.frist) : new Date(m.datum);
+    const delayed = !isDone && new Date(m.frist||m.datum) < today;
+    const barColor = delayed ? 'var(--err)' : color;
+    const opacity  = isDone ? 0.45 : 1;
+
+    let bars = '';
+
+    if (m.recurring && m.recurEnd) {
+      // ── RECURRING ROW ──
+      const occurrences = getOccurrences(m);
+      const rStart = px(m.datum);
+      const rEnd   = px(new Date(m.recurEnd));
+
+      // background range line
+      bars += `<div class="grange-line" style="left:${rStart}px;width:${Math.max(0,rEnd-rStart)}px;background:${barColor}"></div>`;
+
+      // dot per occurrence
+      occurrences.forEach(d => {
+        const x = px(d) - 5;
+        const isPast = d < today;
+        const c = isPast && !isDone ? (delayed?'var(--err)':barColor+'99') : barColor;
+        bars += `<div class="gdot" title="${d.toLocaleDateString('de-DE')}" style="left:${x}px;background:${c};opacity:${opacity}" onclick="openModal('${m.id}')"></div>`;
+      });
+
+    } else if (m.typ === 'meilenstein') {
+      // ── DIAMOND ──
+      const x = px(m.datum) - 7;
+      bars += `<div class="gdiamond" style="left:${x}px;background:${barColor};opacity:${opacity}" onclick="openModal('${m.id}')" title="${m.name}"></div>`;
+
     } else {
-      const x1=px(m.datum); const dEnd=m.frist?new Date(m.frist):new Date(m.datum); const x2=m.frist?px(dEnd):x1; const w=Math.max(8,x2-x1+2); const showLabel=w>50;
-      bars+=`<div class="gbar" style="left:${x1}px;width:${w}px;background:${barColor};opacity:${opacity};color:#fff" onclick="openModal('${m.id}')" title="${m.name}">${showLabel?`<span class="gbar-label">${m.name}</span>`:''}</div>`;
+      // ── NORMAL BAR ──
+      const x1 = px(m.datum);
+      const x2 = m.frist ? px(dEnd) : x1;
+      const w  = Math.max(8, x2 - x1 + 2);
+      const showLabel = w > 50;
+      bars += `<div class="gbar" style="left:${x1}px;width:${w}px;background:${barColor};opacity:${opacity};color:#fff" onclick="openModal('${m.id}')" title="${m.name}">
+        ${showLabel ? `<span class="gbar-label">${m.name}</span>` : ''}
+      </div>`;
     }
-    const divHtml=dividers.map(x=>`<div class="gmonth-div" style="left:${x}px"></div>`).join('');
-    const todayHtml=todayPx>=0&&todayPx<=trackWidth?`<div class="gtoday" style="left:${todayPx}px"></div>`:'';
-    const recurLabel=m.recurring?`<span style="font-size:10px;color:var(--info);font-family:var(--mono)">↻ alle ${m.interval} ${m.unit==='weeks'?'Wo.':'Mo.'}</span>`:'';
-    const tpLabel=m.terminplanDerived?`<span style="font-size:10px;color:var(--accent);font-family:var(--mono)">⚡TP</span>`:'';
+
+    // dividers + today line inside track cell
+    const divHtml = dividers.map(x=>`<div class="gmonth-div" style="left:${x}px"></div>`).join('');
+    const todayHtml = todayPx>=0&&todayPx<=trackWidth ? `<div class="gtoday" style="left:${todayPx}px"></div>` : '';
+
+    // sub-label
+    const recurLabel = m.recurring ? `<span style="font-size:10px;color:var(--info);font-family:var(--mono)">↻ alle ${m.interval} ${m.unit==='weeks'?'Wo.':'Mo.'}</span>` : '';
+    const dzHtml = dzTags(m.disziplinen);
+
     return `<tr>
       <td class="glabel-cell" style="width:${LABEL_W}px;min-width:${LABEL_W}px" onclick="openModal('${m.id}')">
         <div class="gl-inner">
           <div class="gl-name">${TYP[m.typ]?.icon||''} ${m.name}</div>
-          <div class="gl-sub">${sbHtml(m.status)} ${recurLabel} ${tpLabel} ${dzTags(m.disziplinen)}</div>
+          <div class="gl-sub">${sbHtml(m.status)} ${recurLabel} ${dzHtml}</div>
         </div>
       </td>
       <td class="gtrack-cell" colspan="${months.length}" style="width:${trackWidth}px;min-width:${trackWidth}px">
@@ -717,390 +768,448 @@ function renderGantt() {
       </td>
     </tr>`;
   }).join('');
-  const legendHtml=`<div class="legend">
+
+  // legend
+  const legendHtml = `<div class="legend">
     ${Object.entries(TYP).map(([k,v])=>`<div class="legend-item"><div style="width:10px;height:10px;border-radius:2px;background:${v.color}"></div>${v.label}</div>`).join('')}
     <div class="legend-item" style="margin-left:auto"><div style="width:2px;height:12px;background:var(--accent)"></div>Heute</div>
     <div class="legend-item"><div style="width:10px;height:10px;border-radius:2px;background:var(--err)"></div>Verzögert</div>
-    <div class="legend-item"><span style="font-size:10px;color:var(--accent);font-family:var(--mono)">⚡TP</span> Aus Terminplan</div>
+    <div class="legend-item"><div style="width:10px;height:4px;border-radius:2px;background:#3b82f6;opacity:0.25"></div>Zyklus</div>
   </div>`;
-  area.innerHTML=`<div class="gantt-outer"><div class="gantt-scroll"><table class="gtable" style="width:${LABEL_W+trackWidth}px"><colgroup><col style="width:${LABEL_W}px;min-width:${LABEL_W}px">${months.map(()=>`<col style="width:${COL_W}px;min-width:${COL_W}px">`).join('')}</colgroup><thead><tr><th class="gh-corner" style="width:${LABEL_W}px;min-width:${LABEL_W}px;padding:8px 14px;font-size:11px;font-weight:500">Meilenstein</th>${headerCols}</tr></thead><tbody>${rows}</tbody></table></div></div>${legendHtml}`;
+
+  area.innerHTML = `
+    <div class="gantt-outer">
+      <div class="gantt-scroll">
+        <table class="gtable" style="width:${LABEL_W+trackWidth}px">
+          <colgroup>
+            <col style="width:${LABEL_W}px;min-width:${LABEL_W}px">
+            ${months.map(()=>`<col style="width:${COL_W}px;min-width:${COL_W}px">`).join('')}
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="gh-corner" style="width:${LABEL_W}px;min-width:${LABEL_W}px;padding:8px 14px;font-size:11px;font-weight:500">Meilenstein</th>
+              ${headerCols}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+    ${legendHtml}`;
 }
 
+// expand recurring occurrences
 function getOccurrences(m) {
-  const result=[]; const start=new Date(m.datum); const end=new Date(m.recurEnd); let cur=new Date(start); let safety=0;
-  while(cur<=end&&safety++<200){ result.push(new Date(cur)); if(m.unit==='weeks') cur.setDate(cur.getDate()+m.interval*7); else cur.setMonth(cur.getMonth()+m.interval); }
+  const result = [];
+  const start  = new Date(m.datum);
+  const end    = new Date(m.recurEnd);
+  const step   = m.unit === 'weeks' ? m.interval * 7 : 0;
+  let cur = new Date(start);
+  let safety = 0;
+
+  while (cur <= end && safety++ < 200) {
+    result.push(new Date(cur));
+    if (m.unit === 'weeks') {
+      cur.setDate(cur.getDate() + m.interval * 7);
+    } else {
+      cur.setMonth(cur.getMonth() + m.interval);
+    }
+  }
   return result;
 }
 
-// ─── TIMELINE ─────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════
+//  TIMELINE
+// ═════════════════════════════════════════════════════
 function renderTimeline() {
-  const list  = milestones[currentPid]||[];
-  const area  = document.getElementById('main-area');
+  const list   = milestones[currentPid]||[];
+  const area   = document.getElementById('main-area');
   if (!list.length) { area.innerHTML = emptyHtml(); return; }
-  const today = new Date(); today.setHours(0,0,0,0);
-  const sorted= list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
-  const groups={};
-  sorted.forEach(m=>{ const key=new Date(m.datum).toLocaleDateString('de-DE',{month:'long',year:'numeric'}); if(!groups[key]) groups[key]=[]; groups[key].push(m); });
-  const html=Object.entries(groups).map(([month,items])=>`<div class="tl-group"><div class="tl-group-title">${month}</div>${items.map(m=>{
-    const color=TYP[m.typ]?.color||'#8899b0'; const delayed=!['abgeschlossen','freigegeben'].includes(m.status)&&new Date(m.frist||m.datum)<today;
-    const dotColor=delayed?'var(--err)':(['abgeschlossen','freigegeben'].includes(m.status)?'var(--ok)':color);
-    const isDiamond=m.typ==='meilenstein';
-    const recurLabel=m.recurring?`<span class="tag tag-blue">↻ alle ${m.interval} ${m.unit==='weeks'?'Wo.':'Mo.'} · bis ${new Date(m.recurEnd).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>`:'';
-    const tpLabel=m.terminplanDerived?`<span class="tag tag-teal">⚡ Terminplan</span>`:'';
-    return `<div class="tl-item">
-      <div class="tl-date"><strong>${new Date(m.datum).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</strong>${m.frist&&m.frist!==m.datum?`<span style="font-size:10px;color:var(--err);display:block">⚡ ${new Date(m.frist).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</span>`:''}</div>
-      <div class="tl-marker"><div class="tl-dot${isDiamond?' diamond':''}" style="background:${dotColor};box-shadow:0 0 0 2px ${dotColor},0 0 0 4px var(--surface)"></div><div class="tl-line"></div></div>
-      <div class="tl-content">
-        <div class="tl-title">${TYP[m.typ]?.icon||''} ${m.name}</div>
-        <div class="tl-tags">${sbHtml(m.status)}<span class="tag" style="background:${color}20;color:${color}">${TYP[m.typ]?.label||''}</span>${recurLabel}${tpLabel}${dzTags(m.disziplinen)}</div>
-        ${m.desc?`<div class="tl-desc">${m.desc}</div>`:''}
-        <div class="tl-actions"><button class="btn btn-secondary btn-sm" onclick="openModal('${m.id}')">✎ Bearbeiten</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('${m.id}')">⌫</button></div>
-      </div>
-    </div>`;
-  }).join('')}</div>`).join('');
-  area.innerHTML=`<div class="tl-wrap">${html}</div>`;
+
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const sorted = list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+
+  // group by month
+  const groups = {};
+  sorted.forEach(m => {
+    const key = new Date(m.datum).toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+
+  const html = Object.entries(groups).map(([month,items])=>`
+    <div class="tl-group">
+      <div class="tl-group-title">${month}</div>
+      ${items.map(m=>{
+        const color   = TYP[m.typ]?.color||'#8899b0';
+        const delayed = !['abgeschlossen','freigegeben'].includes(m.status) && new Date(m.frist||m.datum)<today;
+        const dotColor= delayed?'var(--err)':(['abgeschlossen','freigegeben'].includes(m.status)?'var(--ok)':color);
+        const isDiamond = m.typ==='meilenstein';
+        const recurLabel = m.recurring
+          ? `<span class="tag tag-blue">↻ alle ${m.interval} ${m.unit==='weeks'?'Wo.':'Mo.'} · bis ${new Date(m.recurEnd).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '';
+        return `<div class="tl-item">
+          <div class="tl-date">
+            <strong>${new Date(m.datum).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</strong>
+            ${m.frist&&m.frist!==m.datum?`<span style="font-size:10px;color:var(--err);display:block">⚡ ${new Date(m.frist).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</span>`:''}
+          </div>
+          <div class="tl-marker">
+            <div class="tl-dot${isDiamond?' diamond':''}" style="background:${dotColor};box-shadow:0 0 0 2px ${dotColor},0 0 0 4px var(--surface)"></div>
+            <div class="tl-line"></div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-title">${TYP[m.typ]?.icon||''} ${m.name}</div>
+            <div class="tl-tags">
+              ${sbHtml(m.status)}
+              <span class="tag" style="background:${color}20;color:${color}">${TYP[m.typ]?.label||''}</span>
+              ${recurLabel}
+              ${dzTags(m.disziplinen)}
+            </div>
+            ${m.desc?`<div class="tl-desc">${m.desc}</div>`:''}
+            <div class="tl-actions">
+              <button class="btn btn-secondary btn-sm" onclick="openModal('${m.id}')">✎ Bearbeiten</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('${m.id}')">⌫</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  area.innerHTML = `<div class="tl-wrap">${html}</div>`;
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────
-function sbHtml(s)  { const m=ST[s]||{cls:'sb-offen',label:s}; return `<span class="sbadge ${m.cls}">${m.label}</span>`; }
-function dzTags(dz) { if(!dz||!dz.length) return ''; return dz.map(id=>{ const d=DISZIPLINEN.find(x=>x.id===id); return d?`<span class="tag tag-gray">${d.label}</span>`:''; }).join(''); }
-function emptyHtml(){ return `<div class="empty-box"><div class="ei">📅</div><div class="et">Noch keine Meilensteine</div><div class="es">Lege jetzt den ersten Eintrag an.</div><button class="btn btn-primary" onclick="openModal()">+ Erster Meilenstein</button></div>`; }
-function noProject(){ return `<div class="empty-box"><div class="ei">📅</div><div class="et">Kein Projekt ausgewählt</div><div class="es">Wähle oben ein Projekt aus der Projektverwaltung</div></div>`; }
-function fmtDE(iso) { return new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function sbHtml(s) {
+  const m = ST[s]||{cls:'sb-offen',label:s};
+  return `<span class="sbadge ${m.cls}">${m.label}</span>`;
+}
+function dzTags(dz) {
+  if (!dz||!dz.length) return '';
+  return dz.map(id=>{
+    const d=DISZIPLINEN.find(x=>x.id===id);
+    return d?`<span class="tag tag-gray">${d.label}</span>`:'';
+  }).join('');
+}
+function emptyHtml() {
+  return `<div class="empty-box"><div class="ei">📅</div><div class="et">Noch keine Meilensteine</div><div class="es">Lege jetzt den ersten Eintrag an.</div><button class="btn btn-primary" onclick="openModal()">+ Erster Meilenstein</button></div>`;
+}
+function noProject() {
+  return `<div class="empty-box"><div class="ei">📅</div><div class="et">Kein Projekt ausgewählt</div><div class="es">Wähle oben ein Projekt aus der Projektverwaltung</div></div>`;
+}
 
 // ─── DZ CHIPS ─────────────────────────────────────────────────────────
-function buildDzChips() { (document.getElementById('dz-wrap')||{}).innerHTML=DISZIPLINEN.map(d=>`<div class="dz-chip" id="dz-${d.id}" onclick="toggleDz('${d.id}')">${d.label}</div>`).join(''); }
-function toggleDz(id) { if(id==='alle'){selectedDz=selectedDz.includes('alle')?[]:['alle'];}else{selectedDz=selectedDz.filter(x=>x!=='alle');selectedDz.includes(id)?selectedDz=selectedDz.filter(x=>x!==id):selectedDz.push(id);} DISZIPLINEN.forEach(d=>document.getElementById('dz-'+d.id)?.classList.toggle('sel',selectedDz.includes(d.id))); }
-function setDz(arr)   { selectedDz=arr||[]; DISZIPLINEN.forEach(d=>document.getElementById('dz-'+d.id)?.classList.toggle('sel',selectedDz.includes(d.id))); }
+function buildDzChips() {
+  (document.getElementById('dz-wrap')||{}).innerHTML = DISZIPLINEN.map(d=>
+    `<div class="dz-chip" id="dz-${d.id}" onclick="toggleDz('${d.id}')">${d.label}</div>`).join('');
+}
+function toggleDz(id) {
+  if (id==='alle') { selectedDz = selectedDz.includes('alle') ? [] : ['alle']; }
+  else { selectedDz=selectedDz.filter(x=>x!=='alle'); selectedDz.includes(id)?selectedDz=selectedDz.filter(x=>x!==id):selectedDz.push(id); }
+  DISZIPLINEN.forEach(d=>document.getElementById('dz-'+d.id)?.classList.toggle('sel',selectedDz.includes(d.id)));
+}
+function setDz(arr) {
+  selectedDz=arr||[];
+  DISZIPLINEN.forEach(d=>document.getElementById('dz-'+d.id)?.classList.toggle('sel',selectedDz.includes(d.id)));
+}
 
 // ─── FORM LOGIC ───────────────────────────────────────────────────────
-function onTypChange() { const isDD=(document.getElementById('f-typ')||{}).value==='datadrop'; (document.getElementById('recurring-section')||{}).style.display=isDD?'':'none'; if(!isDD){(document.getElementById('f-recurring')||{}).checked=false;onRecurringChange();} }
-function onRecurringChange() { const checked=(document.getElementById('f-recurring')||{}).checked; (document.getElementById('recurring-box')||{}).classList.toggle('hidden',!checked); }
+function onTypChange() {
+  const isDD = (document.getElementById('f-typ')||{}).value === 'datadrop';
+  (document.getElementById('recurring-section')||{}).style.display = isDD ? '' : 'none';
+  if (!isDD) { (document.getElementById('f-recurring')||{}).checked=false; onRecurringChange(); }
+}
+function onRecurringChange() {
+  const checked = (document.getElementById('f-recurring')||{}).checked;
+  (document.getElementById('recurring-box')||{}).classList.toggle('hidden', !checked);
+}
 
 // ─── MODAL ────────────────────────────────────────────────────────────
 function openModal(id=null) {
-  if (!currentPid) return; editingId=id;
-  (document.getElementById('modal-title')||{}).textContent = id?'Meilenstein bearbeiten':'Neuer Meilenstein';
-  (document.getElementById('save-btn')||{}).textContent    = id?'Änderungen speichern':'Speichern';
+  if (!currentPid) return;
+  editingId = id;
+  (function(){const _el=document.getElementById('modal-title');if(_el)_el.textContent=id ? 'Meilenstein bearbeiten' : 'Neuer Meilenstein';}());
+  (function(){const _el=document.getElementById('save-btn');if(_el)_el.textContent=id ? 'Änderungen speichern' : 'Speichern';}());
+
   if (id) {
     const m=(milestones[currentPid]||[]).find(x=>x.id===id); if(!m) return;
-    (document.getElementById('f-name')||{}).value   =m.name||''; (document.getElementById('f-typ')||{}).value=m.typ||'datadrop';
-    (document.getElementById('f-status')||{}).value =m.status||'offen'; (document.getElementById('f-datum')||{}).value=m.datum||'';
-    (document.getElementById('f-frist')||{}).value  =m.frist||''; (document.getElementById('f-desc')||{}).value=m.desc||'';
-    (document.getElementById('f-recurring')||{}).checked=(!!m.recurring); (document.getElementById('f-interval')||{}).value=m.interval||3;
-    (document.getElementById('f-unit')||{}).value=m.unit||'weeks'; (document.getElementById('f-recur-end')||{}).value=m.recurEnd||'';
+    (document.getElementById('f-name')||{}).value   = m.name||'';
+    (document.getElementById('f-typ')||{}).value    = m.typ||'datadrop';
+    (document.getElementById('f-status')||{}).value = m.status||'offen';
+    (document.getElementById('f-datum')||{}).value  = m.datum||'';
+    (document.getElementById('f-frist')||{}).value  = m.frist||'';
+    (document.getElementById('f-desc')||{}).value   = m.desc||'';
+    (document.getElementById('f-recurring')||{}).checked = !!m.recurring;
+    (document.getElementById('f-interval')||{}).value    = m.interval||3;
+    (document.getElementById('f-unit')||{}).value        = m.unit||'weeks';
+    (document.getElementById('f-recur-end')||{}).value   = m.recurEnd||'';
     setDz(m.disziplinen||[]);
   } else {
     ['f-name','f-datum','f-frist','f-desc','f-recur-end'].forEach(i=>(document.getElementById(i)||{}).value='');
-    (document.getElementById('f-typ')||{}).value='datadrop'; (document.getElementById('f-status')||{}).value='offen';
-    (document.getElementById('f-recurring')||{}).checked=false; (document.getElementById('f-interval')||{}).value=3;
-    (document.getElementById('f-unit')||{}).value='weeks'; setDz([]);
+    (document.getElementById('f-typ')||{}).value    = 'datadrop';
+    (document.getElementById('f-status')||{}).value = 'offen';
+    (document.getElementById('f-recurring')||{}).checked = false;
+    (document.getElementById('f-interval')||{}).value    = 3;
+    (document.getElementById('f-unit')||{}).value        = 'weeks';
+    setDz([]);
   }
-  onTypChange(); onRecurringChange(); (document.getElementById('modal-ol')||{}).classList.add('open');
+  onTypChange(); onRecurringChange();
+  (document.getElementById('modal-ol')||{}).classList.add('open');
   setTimeout(()=>(document.getElementById('f-name')||{}).focus(),200);
 }
+
 function closeModal() { (document.getElementById('modal-ol')||{}).classList.remove('open'); editingId=null; }
 function bgClose(e)   { if(e.target===document.getElementById('modal-ol')) closeModal(); }
 
 function saveMilestone() {
-  const name=(document.getElementById('f-name')||{}).value.trim(); const datum=(document.getElementById('f-datum')||{}).value;
-  if(!name||!datum){ showToast('Bitte Bezeichnung und Datum ausfüllen.'); return; }
-  const isRecur=(document.getElementById('f-typ')||{}).value==='datadrop'&&(document.getElementById('f-recurring')||{}).checked;
-  const data={ id:editingId||uid(), name, typ:(document.getElementById('f-typ')||{}).value, status:(document.getElementById('f-status')||{}).value, datum, frist:(document.getElementById('f-frist')||{}).value||'', disziplinen:selectedDz.length?selectedDz:['alle'], desc:(document.getElementById('f-desc')||{}).value.trim(), recurring:isRecur, interval:isRecur?parseInt((document.getElementById('f-interval')||{}).value)||3:null, unit:isRecur?(document.getElementById('f-unit')||{}).value:null, recurEnd:isRecur?(document.getElementById('f-recur-end')||{}).value:null, created:editingId?((milestones[currentPid]||[]).find(m=>m.id===editingId)?.created||new Date().toISOString()):new Date().toISOString(), updated:new Date().toISOString() };
-  if(!milestones[currentPid]) milestones[currentPid]=[];
-  if(editingId){ const i=milestones[currentPid].findIndex(m=>m.id===editingId); if(i>-1) milestones[currentPid][i]=data; showToast('✓ Aktualisiert'); }
-  else { milestones[currentPid].push(data); showToast('✓ Meilenstein angelegt'); }
+  const name  = (document.getElementById('f-name')||{}).value.trim();
+  const datum = (document.getElementById('f-datum')||{}).value;
+  if (!name||!datum) { showToast('Bitte Bezeichnung und Datum ausfüllen.'); return; }
+
+  const isRecur = (document.getElementById('f-typ')||{}).value==='datadrop' && (document.getElementById('f-recurring')||{}).checked;
+
+  const data = {
+    id:         editingId||uid(), name,
+    typ:        (document.getElementById('f-typ')||{}).value,
+    status:     (document.getElementById('f-status')||{}).value,
+    datum, frist: (document.getElementById('f-frist')||{}).value||'',
+    disziplinen:selectedDz.length?selectedDz:['alle'],
+    desc:       (document.getElementById('f-desc')||{}).value.trim(),
+    recurring:  isRecur,
+    interval:   isRecur ? parseInt((document.getElementById('f-interval')||{}).value)||3 : null,
+    unit:       isRecur ? (document.getElementById('f-unit')||{}).value : null,
+    recurEnd:   isRecur ? (document.getElementById('f-recur-end')||{}).value : null,
+    created:    editingId?((milestones[currentPid]||[]).find(m=>m.id===editingId)?.created||new Date().toISOString()):new Date().toISOString(),
+    updated:    new Date().toISOString(),
+  };
+
+  if (!milestones[currentPid]) milestones[currentPid]=[];
+  if (editingId) {
+    const i=milestones[currentPid].findIndex(m=>m.id===editingId);
+    if(i>-1) milestones[currentPid][i]=data;
+    showToast('✓ Aktualisiert');
+  } else {
+    milestones[currentPid].push(data);
+    showToast('✓ Meilenstein angelegt');
+  }
   save(); closeModal(); render();
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────
-function confirmDelete(id){ deleteId=id; (document.getElementById('confirm-ol')||{}).classList.add('open'); }
-function closeConfirm()   { (document.getElementById('confirm-ol')||{}).classList.remove('open'); deleteId=null; }
-function doDelete(){ if(!deleteId||!currentPid) return; milestones[currentPid]=(milestones[currentPid]||[]).filter(m=>m.id!==deleteId); save(); closeConfirm(); render(); showToast('Meilenstein gelöscht'); deleteId=null; }
+function confirmDelete(id) { deleteId=id; (document.getElementById('confirm-ol')||{}).classList.add('open'); }
+function closeConfirm()    { (document.getElementById('confirm-ol')||{}).classList.remove('open'); deleteId=null; }
+function doDelete() {
+  if (!deleteId||!currentPid) return;
+  milestones[currentPid]=(milestones[currentPid]||[]).filter(m=>m.id!==deleteId);
+  save(); closeConfirm(); render(); showToast('Meilenstein gelöscht'); deleteId=null;
+}
 
 // ─── EXPORT ───────────────────────────────────────────────────────────
 function exportCSV() {
-  if(!currentPid){ showToast('Erst Projekt wählen'); return; }
-  const list=milestones[currentPid]||[]; const p=projects.find(x=>x.id===currentPid);
-  const rows=[['Projekt','Bezeichnung','Typ','Status','Datum','Frist','Wiederkehrend','Intervall','Einheit','Zyklusende','Disziplinen','Beschreibung','Aus Terminplan']];
-  list.forEach(m=>rows.push([p?.name||'',m.name,TYP[m.typ]?.label||m.typ,ST[m.status]?.label||m.status,m.datum,m.frist||'',m.recurring?'Ja':'Nein',m.interval||'',m.unit||'',m.recurEnd||'',(m.disziplinen||[]).join('; '),m.desc||'',m.terminplanDerived?'Ja':'Nein']));
-  const csv=rows.map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=`meilensteine-${p?.number||'export'}-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url); showToast('✓ Export gestartet');
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-//  TERMINPLAN PANEL
-// ═══════════════════════════════════════════════════════════════════════
-function renderTpPanel() {
-  if (!currentPid) { (document.getElementById('tp-panel')||{}).style.display='none'; return; }
-  (document.getElementById('tp-panel')||{}).style.display='';
-  const tp = terminplanData[currentPid]||{};
-
-  // Type toggle
-  const isPlanung = tp.type === 'planungsterminplan';
-  (document.getElementById('tpb-rahmen')||{}).classList.toggle('active', !isPlanung);
-  (document.getElementById('tpb-planung')||{}).classList.toggle('active',  isPlanung);
-
-  // Dot + folder label
-  const dot = document.getElementById('tp-dot');
-  const folderLbl = document.getElementById('tp-folder-lbl');
-  if (dirHandle) { dot.className='tp-dot connected'; folderLbl.textContent='📁 '+dirHandle.name; folderLbl.style.color='var(--text2)'; }
-  else           { dot.className='tp-dot';            folderLbl.textContent='Kein Ordner verbunden'; folderLbl.style.color='var(--text3)'; }
-
-  // File + version
-  const sep=document.getElementById('tp-sep'); const fileLbl=document.getElementById('tp-file-lbl'); const verTag=document.getElementById('tp-ver-tag');
-  if (tp.filename) {
-    fileLbl.textContent=tp.filename; fileLbl.style.display='';
-    sep.style.display=''; verTag.textContent='v'+(tp.version||1); verTag.style.display='';
-    verTag.title=tp.loadedAt?('Eingelesen: '+new Date(tp.loadedAt).toLocaleDateString('de-DE')):'';
-  } else { fileLbl.style.display='none'; sep.style.display='none'; verTag.style.display='none'; }
-
-  // Derive button
-  const hasLp = tp.lp && Object.values(tp.lp).some(v=>v.start||v.end);
-  (document.getElementById('tp-derive-btn')||{}).disabled = !hasLp;
-
-  renderLpTable();
-}
-
-function setTpType(type) {
-  if (!currentPid) return;
-  if (!terminplanData[currentPid]) terminplanData[currentPid]={lp:{}};
-  terminplanData[currentPid].type=type; saveTerminplan(); renderTpPanel();
-}
-
-function toggleLpTable() {
-  const wrap=document.getElementById('lp-wrap'); const btn=document.getElementById('tp-lp-btn');
-  const open=wrap.style.display!=='none'; wrap.style.display=open?'none':'';
-  btn.style.background=open?'':'var(--nav-bg)'; btn.style.color=open?'':'var(--accent)';
-}
-
-function renderLpTable() {
-  const tbody=document.getElementById('lp-tbody'); if(!tbody) return;
-  const lp=(terminplanData[currentPid]||{}).lp||{};
-  tbody.innerHTML=LP_PHASEN.map(ph=>{
-    const d=lp[ph.id]||{};
-    const src=d.source==='pdf'?'<span class="lp-src pdf">PDF</span>':(d.start||d.end?'<span class="lp-src manual">Manuell</span>':'<span style="font-size:11px;color:var(--text3)">—</span>');
-    return `<tr>
-      <td><span class="lp-badge ${ph.cls}">${ph.label}</span></td>
-      <td style="font-size:12px;color:var(--text2)">${ph.name}</td>
-      <td><input type="date" class="lp-date-inp" id="lp-s-${ph.id}" value="${d.start||''}"></td>
-      <td><input type="date" class="lp-date-inp" id="lp-e-${ph.id}" value="${d.end||''}"></td>
-      <td>${src}</td>
-    </tr>`;
-  }).join('');
-}
-
-function saveLpDates() {
-  if (!currentPid) return;
-  if (!terminplanData[currentPid]) terminplanData[currentPid]={lp:{},type:'rahmentermine',version:1,loadedAt:new Date().toISOString()};
-  const tp=terminplanData[currentPid]; if(!tp.lp) tp.lp={};
-  LP_PHASEN.forEach(ph=>{ const s=(document.getElementById('lp-s-'+ph.id)||{}).value||''; const e=(document.getElementById('lp-e-'+ph.id)||{}).value||''; tp.lp[ph.id]={start:s,end:e,source:(tp.lp[ph.id]||{}).source||'manual'}; });
-  saveTerminplan(); renderTpPanel(); showToast('✓ Rahmentermine gespeichert');
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-//  FOLDER & PDF ACCESS
-// ═══════════════════════════════════════════════════════════════════════
-async function connectFolder() {
-  if (!('showDirectoryPicker' in window)) { showToast('Ordnerzugriff nur in Chrome/Edge – direkt PDF hochladen'); selectPdfFromFolder(); return; }
-  try {
-    dirHandle=await window.showDirectoryPicker({mode:'read'});
-    showToast('✓ Verbunden: '+dirHandle.name); renderTpPanel();
-    await scanFolder();
-  } catch(e) { if(e.name!=='AbortError') showToast('Fehler: '+e.message); }
-}
-
-async function scanFolder() {
-  if (!dirHandle) return;
-  const pdfs=[];
-  try { for await (const [name,handle] of dirHandle.entries()) { if(handle.kind!=='file'||!name.toLowerCase().endsWith('.pdf')) continue; const l=name.toLowerCase(); if(l.includes('terminplan')||l.includes('termin')||l.includes('rahmen')||l.includes('schedule')||l.includes('planung')){ const f=await handle.getFile(); pdfs.push({name,file:f,modified:f.lastModified}); } } } catch(e){ console.warn('[TP]',e); }
-  if (!pdfs.length) { showToast('Keine Terminplan-PDFs gefunden – manuell auswählen'); return; }
-  pdfs.sort((a,b)=>b.modified-a.modified);
-  const newest=pdfs[0]; const tp=terminplanData[currentPid]||{};
-  const hasExisting=tp.lp&&Object.values(tp.lp).some(v=>v.start||v.end);
-  const isNewer=!tp.loadedAt||newest.modified>new Date(tp.loadedAt).getTime();
-  if (hasExisting&&isNewer) { showToast('Neuer Terminplan: '+newest.name+' – wird eingelesen…'); await parsePdf(newest.file,newest.name,true); }
-  else if (!hasExisting)    { showToast('Terminplan gefunden: '+newest.name); await parsePdf(newest.file,newest.name,false); }
-  else                      { showToast('Terminplan ist aktuell ('+newest.name+')'); }
-}
-
-async function selectPdfFromFolder() {
-  // If LP dates already exist this is an update, not a first load
-  const _tp=terminplanData[currentPid]||{};
-  const _isUpd=!!(_tp.lp&&Object.values(_tp.lp).some(v=>v.end));
-  if (dirHandle) {
-    const pdfs=[];
-    try { for await (const [name,handle] of dirHandle.entries()) { if(handle.kind==='file'&&name.toLowerCase().endsWith('.pdf')){ const f=await handle.getFile(); pdfs.push({name,file:f}); } } } catch(e){ showToast('Fehler: '+e.message); return; }
-    if (!pdfs.length) { showToast('Keine PDFs im Ordner'); return; }
-    const picked = pdfs.length===1 ? pdfs[0] : await pickFromList(pdfs);
-    if (picked) await parsePdf(picked.file,picked.name,_isUpd);
-  } else {
-    const inp=document.createElement('input'); inp.type='file'; inp.accept='.pdf';
-    inp.onchange=async()=>{ if(inp.files[0]) await parsePdf(inp.files[0],inp.files[0].name,_isUpd); }; inp.click();
-  }
-}
-
-function pickFromList(pdfs) {
-  return new Promise(resolve=>{
-    const listHtml=pdfs.map((p,i)=>`<div onclick="window.__pp(${i})" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;margin-bottom:6px;font-size:12px;font-family:var(--mono);transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">${p.name}</div>`).join('');
-    window.__pp=i=>{document.getElementById('__ppol').remove();delete window.__pp;resolve(pdfs[i]);};
-    const el=document.createElement('div'); el.id='__ppol'; el.style.cssText='position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
-    el.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:28px;max-width:480px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18)"><div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:16px">PDF auswählen</div>${listHtml}<button class="btn btn-secondary" style="margin-top:4px;width:100%" onclick="document.getElementById('__ppol').remove();delete window.__pp">Abbrechen</button></div>`;
-    document.body.appendChild(el);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-//  PDF PARSING
-// ═══════════════════════════════════════════════════════════════════════
-async function parsePdf(file, filename, isUpdate) {
-  showToast('PDF wird eingelesen…');
-  const dates=await extractDates(file); pdfDates=dates;
-  if (!terminplanData[currentPid]) terminplanData[currentPid]={lp:{},type:'rahmentermine',version:0};
-  const tp=terminplanData[currentPid];
-  // Show filename in UI for feedback, but do NOT save loadedAt/version yet —
-  // those are committed in applyPdfDates so a cancelled modal doesn't
-  // pollute the timestamp (which would prevent future scanFolder updates).
-  tp.filename=filename;
-  renderTpPanel();
-  if (!dates.length) {
-    // No dates found — commit immediately and let user type manually
-    tp.loadedAt=new Date().toISOString(); tp.version=(tp.version||0)+1;
-    saveTerminplan(); renderTpPanel();
-    showToast('Keine Daten im PDF – manuell eingeben'); document.getElementById('lp-wrap').style.display=''; return;
-  }
-  showPdfModal(dates,filename,isUpdate);
-}
-
-async function extractDates(file) {
-  try {
-    const lib=window.pdfjsLib||window['pdfjs-dist/build/pdf'];
-    if (!lib) { console.warn('[TP] PDF.js not loaded'); return []; }
-    lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-    const buf=await file.arrayBuffer(); const pdf=await lib.getDocument({data:buf}).promise;
-    let text='';
-    for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i); const ct=await pg.getTextContent(); text+=ct.items.map(it=>it.str).join(' ')+'\n'; }
-    const re=/\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})\b/g; const found=new Set(); let m;
-    while((m=re.exec(text))!==null){ const dy=m[1].padStart(2,'0'); const mo=m[2].padStart(2,'0'); const yr=m[3].length===2?'20'+m[3]:m[3]; const iso=`${yr}-${mo}-${dy}`; const d=new Date(iso); if(!isNaN(d)&&+yr>=2020&&+yr<=2040) found.add(iso); }
-    return Array.from(found).sort();
-  } catch(e) { console.error('[TP] PDF error:',e); showToast('PDF konnte nicht gelesen werden'); return []; }
-}
-
-function showPdfModal(dates, filename, isUpdate) {
-  const existing=(terminplanData[currentPid]||{}).lp||{};
-  document.getElementById('pdf-info').innerHTML=`<strong>${filename}</strong> – <strong>${dates.length}</strong> Datum/Daten gefunden. Weise jeder LP-Phase den Start- und Endtermin zu.`;
-  const chipHtml=dates.map(d=>`<span class="date-chip">${fmtDE(d)}</span>`).join('');
-  const emptyOpt='<option value="">—</option>';
-  const rows=LP_PHASEN.map(ph=>{ const ex=existing[ph.id]||{}; return `<tr>
-    <td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge ${ph.cls}">${ph.label}</span> <span style="font-size:11px;color:var(--text3)">${ph.name}</span></td>
-    <td style="padding:7px 8px;border-bottom:1px solid var(--border)"><select class="lp-date-inp" id="pms-${ph.id}" style="font-size:11px;padding:4px 7px;width:auto">${emptyOpt}${dates.map(d=>`<option value="${d}"${d===ex.start?' selected':''}>${fmtDE(d)}</option>`).join('')}</select></td>
-    <td style="padding:7px 8px;border-bottom:1px solid var(--border)"><select class="lp-date-inp" id="pme-${ph.id}" style="font-size:11px;padding:4px 7px;width:auto">${emptyOpt}${dates.map(d=>`<option value="${d}"${d===ex.end?' selected':''}>${fmtDE(d)}</option>`).join('')}</select></td>
-  </tr>`; }).join('');
-  document.getElementById('pdf-content').innerHTML=`<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Gefundene Daten</div><div class="date-grid">${chipHtml}</div></div><div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Zuweisung zu Phasen</div><table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text3);font-family:var(--mono);text-align:left">Phase</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text3);font-family:var(--mono);text-align:left">Beginn</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text3);font-family:var(--mono);text-align:left">Ende</th></tr></thead><tbody>${rows}</tbody></table>`;
-  const ol=document.getElementById('pdf-modal-ol'); ol.dataset.isUpdate=isUpdate?'1':'0'; ol.classList.add('open');
-}
-function closePdfModal(){ document.getElementById('pdf-modal-ol').classList.remove('open'); }
-
-function applyPdfDates() {
-  if (!currentPid) return;
-  if (!terminplanData[currentPid]) terminplanData[currentPid]={lp:{},type:'rahmentermine',version:0};
-  const tp=terminplanData[currentPid]; const isUpdate=document.getElementById('pdf-modal-ol').dataset.isUpdate==='1';
-  // Snapshot old LP *before* overwriting (oldLp still has the previous dates)
-  const oldLp=isUpdate?JSON.parse(JSON.stringify(tp.lp||{})):null;
-  if (!tp.lp) tp.lp={};
-  LP_PHASEN.forEach(ph=>{ const s=(document.getElementById('pms-'+ph.id)||{}).value||''; const e=(document.getElementById('pme-'+ph.id)||{}).value||''; tp.lp[ph.id]={start:s,end:e,source:'pdf'}; });
-  // Now commit the timestamp and version (deferred from parsePdf)
-  tp.loadedAt=new Date().toISOString(); tp.version=(tp.version||0)+1;
-  saveTerminplan(); closePdfModal(); renderTpPanel();
-  if (isUpdate&&oldLp) {
-    const deltas=calcDeltas(oldLp,tp.lp);
-    const affected=countAffected(deltas);
-    if(Object.keys(deltas).length===0) { showToast('✓ Terminplan aktualisiert – Termine unverändert'); }
-    else if(affected>0) { showUpdateModal(deltas); }
-    else { showToast('✓ Terminplan aktualisiert – keine abgeleiteten Termine betroffen'); }
-  } else showToast('✓ Termine aus PDF übernommen');
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-//  DELTA & AUTO-SHIFT
-// ═══════════════════════════════════════════════════════════════════════
-function calcDeltas(oldLp, newLp) {
-  const d={}; LP_PHASEN.forEach(ph=>{ const oe=(oldLp[ph.id]||{}).end; const ne=(newLp[ph.id]||{}).end; if(oe&&ne){ const days=Math.round((new Date(ne)-new Date(oe))/864e5); if(days!==0) d[ph.id]={days,oldEnd:oe,newEnd:ne,label:ph.label,name:ph.name}; } }); return d;
-}
-function countAffected(deltas){ return (milestones[currentPid]||[]).filter(m=>m.terminplanDerived&&m.terminplanLp&&deltas[m.terminplanLp]).length; }
-
-function showUpdateModal(deltas) {
-  const affected=(milestones[currentPid]||[]).filter(m=>m.terminplanDerived&&m.terminplanLp&&deltas[m.terminplanLp]);
-  const changed=Object.entries(deltas);
-  document.getElementById('update-intro').innerHTML=`Neuer Terminplan erkannt. <strong>${changed.length} Phase(n)</strong> geändert – <strong>${affected.length} BIM-Termin(e)</strong> werden verschoben.`;
-  const phRows=changed.map(([lp,d])=>{ const cls=d.days>0?'delta-pos':'delta-neg'; const sign=d.days>0?'+':''; const ph=LP_PHASEN.find(p=>p.id===lp); return `<tr><td style="padding:6px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge lp-${lp}">${d.label}</span> <span style="font-size:11px;color:var(--text3)">${ph?.name||''}</span></td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">${fmtDE(d.oldEnd)}</td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">${fmtDE(d.newEnd)}</td><td style="padding:6px 8px;border-bottom:1px solid var(--border)"><span class="${cls}">${sign}${d.days} Tage</span></td></tr>`; }).join('');
-  const msRows=affected.map(m=>{ const d=deltas[m.terminplanLp]; const nd=new Date(m.datum); nd.setDate(nd.getDate()+d.days); const cls=d.days>0?'delta-pos':'delta-neg'; const sign=d.days>0?'+':''; return `<tr><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-size:12px">${TYP[m.typ]?.icon||''} ${m.name}</td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">${fmtDE(m.datum)}</td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">${fmtDE(nd.toISOString().slice(0,10))}</td><td style="padding:6px 8px;border-bottom:1px solid var(--border)"><span class="${cls}">${sign}${d.days} Tage</span></td></tr>`; }).join('');
-  document.getElementById('update-content').innerHTML=`<div class="slabel">Phasenänderungen</div><table class="dtable"><thead><tr><th>Phase</th><th>Bisher</th><th>Neu</th><th>Δ</th></tr></thead><tbody>${phRows}</tbody></table>${affected.length?`<div class="slabel">Betroffene BIM-Termine</div><table class="dtable"><thead><tr><th>BIM-Termin</th><th>Bisher</th><th>Neu</th><th>Δ</th></tr></thead><tbody>${msRows}</tbody></table>`:''}`;
-  const ol=document.getElementById('update-modal-ol'); ol.dataset.deltas=JSON.stringify(deltas); ol.classList.add('open');
-}
-function closeUpdateModal(){ document.getElementById('update-modal-ol').classList.remove('open'); }
-
-function applyAutoShift() {
-  const deltas=JSON.parse(document.getElementById('update-modal-ol').dataset.deltas||'{}'); let count=0;
-  (milestones[currentPid]||[]).forEach(m=>{ if(!m.terminplanDerived||!m.terminplanLp) return; const d=deltas[m.terminplanLp]; if(!d) return; const nd=new Date(m.datum); nd.setDate(nd.getDate()+d.days); m.datum=nd.toISOString().slice(0,10); if(m.frist){const nf=new Date(m.frist);nf.setDate(nf.getDate()+d.days);m.frist=nf.toISOString().slice(0,10);} count++; });
-  save(); closeUpdateModal(); render();
-  const tp=terminplanData[currentPid]; if(tp){if(!tp.history)tp.history=[];tp.history.unshift({version:(tp.version||1)-1,archivedAt:new Date().toISOString()});if(tp.history.length>5)tp.history.pop();saveTerminplan();}
-  showToast(`✓ ${count} BIM-Termin(e) automatisch verschoben`);
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-//  DERIVE BIM-TERMINE
-// ═══════════════════════════════════════════════════════════════════════
-function showDeriveModal() {
-  if (!currentPid) return;
-  const tp=terminplanData[currentPid]||{};
-  if (!tp.lp||!Object.values(tp.lp).some(v=>v.start||v.end)) { showToast('Erst Rahmentermine speichern'); toggleLpTable(); return; }
-  const existing=new Set((milestones[currentPid]||[]).filter(m=>m.terminplanDerived).map(m=>m.name));
-  const rows=BIM_TERMINE_TEMPLATES.map((t,i)=>{
-    const ph=LP_PHASEN.find(p=>p.id===t.lp); const lpd=tp.lp[t.lp]||{}; const base=t.from==='start'?lpd.start:lpd.end;
-    if(!base) return null;
-    const dt=new Date(base); dt.setDate(dt.getDate()+t.offsetDays); const iso=dt.toISOString().slice(0,10);
-    const typ=TYP[t.typ]||TYP.sonstiges; const already=existing.has(t.name);
-    const offLbl=t.offsetDays===0?(t.from==='end'?'Ende LP':'Start LP'):`${t.from==='end'?'Ende':'Start'} LP ${t.offsetDays>0?'+':''}${t.offsetDays}d`;
-    return `<tr>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--border)"><input type="checkbox" class="derive-cb" id="dcb-${i}" data-idx="${i}" data-date="${iso}" ${already?'':'checked'} ${already?'title="Bereits vorhanden"':''}></td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge ${ph?.cls||''}">${ph?.label||t.lp}</span></td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500">${typ.icon} ${t.name}${already?' <span class="tag tag-amber" style="font-size:9px">vorhanden</span>':''}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">${fmtDE(iso)}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3)">${offLbl}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="tag" style="background:${typ.color}20;color:${typ.color};font-size:10px">${typ.label}</span></td>
-    </tr>`;
-  }).filter(Boolean);
-  if (!rows.length) { showToast('Keine LP-Phasen mit Daten – erst Rahmentermine eingeben'); toggleLpTable(); return; }
-  document.getElementById('derive-content').innerHTML=`<table class="dtable"><thead><tr><th style="width:32px"></th><th style="width:60px">Phase</th><th>BIM-Termin</th><th style="width:100px">Datum</th><th style="width:130px">Berechnung</th><th style="width:80px">Typ</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
-  document.getElementById('derive-modal-ol').classList.add('open');
-}
-function closeDeriveModal(){ document.getElementById('derive-modal-ol').classList.remove('open'); }
-function selectAllDerived(s){ document.querySelectorAll('.derive-cb').forEach(cb=>cb.checked=s); }
-
-function applyDerivedTermine() {
-  if(!currentPid) return; if(!milestones[currentPid]) milestones[currentPid]=[]; let count=0;
-  document.querySelectorAll('.derive-cb:checked').forEach(cb=>{ const idx=parseInt(cb.dataset.idx); const date=cb.dataset.date; const t=BIM_TERMINE_TEMPLATES[idx]; if(!t) return;
-    milestones[currentPid].push({id:uid(),name:t.name,typ:t.typ,status:'offen',datum:date,frist:date,disziplinen:t.disziplinen||['alle'],desc:t.desc||'',recurring:false,created:new Date().toISOString(),updated:new Date().toISOString(),terminplanDerived:true,terminplanLp:t.lp,terminplanFrom:t.from,terminplanOffsetDays:t.offsetDays}); count++; });
-  save(); closeDeriveModal(); render(); showToast(`✓ ${count} BIM-Termin(e) übernommen`);
+  if (!currentPid) { showToast('Erst Projekt wählen'); return; }
+  const list = milestones[currentPid]||[];
+  const p    = projects.find(x=>x.id===currentPid);
+  const rows = [['Projekt','Bezeichnung','Typ','Status','Datum','Frist','Wiederkehrend','Intervall','Einheit','Zyklusende','Disziplinen','Beschreibung']];
+  list.forEach(m=>rows.push([p?.name||'',m.name,TYP[m.typ]?.label||m.typ,ST[m.status]?.label||m.status,m.datum,m.frist||'',m.recurring?'Ja':'Nein',m.interval||'',m.unit||'',m.recurEnd||'',(m.disziplinen||[]).join('; '),m.desc||'']));
+  const csv  = rows.map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`meilensteine-${p?.number||'export'}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url); showToast('✓ Export gestartet');
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────
-function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
-function comingSoon()  { showToast('Modul wird in Kürze entwickelt'); }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function comingSoon()   { showToast('Modul wird in Kürze entwickelt'); }
 
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();closeConfirm();closePdfModal();closeDeriveModal();closeUpdateModal();} if((e.metaKey||e.ctrlKey)&&e.key==='n'){e.preventDefault();openModal();} });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeModal();closeConfirm();closePdfModal();closeDeriveModal();closeUpdateModal();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='n'){e.preventDefault();openModal();}
+});
+
+
+// ═══ TERMINPLAN ═══
+function saveTerminplan(){ localStorage.setItem(TP_KEY,JSON.stringify(terminplanData)); }
+function fmtDE(iso){ return iso?new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}):''; }
+
+function renderTpPanel(){
+  if(!currentPid){(document.getElementById('tp-panel')||{}).style.display='none';return;}
+  (document.getElementById('tp-panel')||{}).style.display='';
+  const tp=terminplanData[currentPid]||{};
+  const isPlanung=tp.type==='planungsterminplan';
+  (document.getElementById('tpb-rahmen')||{}).classList.toggle('active',!isPlanung);
+  (document.getElementById('tpb-planung')||{}).classList.toggle('active',isPlanung);
+  const dot=document.getElementById('tp-dot'),fl=document.getElementById('tp-folder-lbl');
+  if(dirHandle){dot.className='tp-dot connected';fl.textContent='Ordner: '+dirHandle.name;fl.style.color='var(--text2)';}
+  else{dot.className='tp-dot';fl.textContent='Kein Ordner verbunden';fl.style.color='var(--text3)';}
+  const sep=document.getElementById('tp-sep'),fileLbl=document.getElementById('tp-file-lbl'),verTag=document.getElementById('tp-ver-tag');
+  if(tp.filename){fileLbl.textContent=tp.filename;fileLbl.style.display='';sep.style.display='';verTag.textContent='v'+(tp.version||1);verTag.style.display='';}
+  else{fileLbl.style.display='none';sep.style.display='none';verTag.style.display='none';}
+  const hasLp=tp.lp&&Object.values(tp.lp).some(v=>v.start||v.end);
+  (document.getElementById('tp-derive-btn')||{}).disabled=!hasLp;
+  renderLpTable();
+}
+function setTpType(type){if(!currentPid)return;if(!terminplanData[currentPid])terminplanData[currentPid]={lp:{}};terminplanData[currentPid].type=type;saveTerminplan();renderTpPanel();}
+function toggleLpTable(){const wrap=document.getElementById('lp-wrap'),btn=document.getElementById('tp-lp-btn');const open=wrap.style.display!=='none';wrap.style.display=open?'none':'';btn.style.background=open?'':'var(--nav-bg)';btn.style.color=open?'':'var(--accent)';}
+function renderLpTable(){
+  const tbody=document.getElementById('lp-tbody');if(!tbody)return;
+  const lp=(terminplanData[currentPid]||{}).lp||{};
+  tbody.innerHTML=LP_PHASEN.map(ph=>{const d=lp[ph.id]||{};const src=d.source==='pdf'?'<span class="lp-src pdf">PDF</span>':(d.start||d.end?'<span class="lp-src manual">Manuell</span>':'<span style="font-size:11px;color:var(--text3)">-</span>');
+    return '<tr><td><span class="lp-badge '+ph.cls+'">'+ph.label+'</span></td><td style="font-size:12px;color:var(--text2)">'+ph.name+'</td><td><input type="date" class="lp-date-inp" id="lp-s-'+ph.id+'" value="'+(d.start||'')+'"></td><td><input type="date" class="lp-date-inp" id="lp-e-'+ph.id+'" value="'+(d.end||'')+'"></td><td>'+src+'</td></tr>';}).join('');
+}
+function saveLpDates(){
+  if(!currentPid)return;
+  if(!terminplanData[currentPid])terminplanData[currentPid]={lp:{},type:'rahmentermine',version:1,loadedAt:new Date().toISOString()};
+  const tp=terminplanData[currentPid];if(!tp.lp)tp.lp={};
+  LP_PHASEN.forEach(ph=>{const s=(document.getElementById('lp-s-'+ph.id)||{}).value||'';const e=(document.getElementById('lp-e-'+ph.id)||{}).value||'';tp.lp[ph.id]={start:s,end:e,source:(tp.lp[ph.id]||{}).source||'manual'};});
+  saveTerminplan();renderTpPanel();showToast('Rahmentermine gespeichert');
+}
+async function connectFolder(){
+  if(!('showDirectoryPicker' in window)){showToast('Nur Chrome/Edge - direkt PDF laden');selectPdfFromFolder();return;}
+  try{dirHandle=await window.showDirectoryPicker({mode:'read'});showToast('Verbunden: '+dirHandle.name);renderTpPanel();await scanFolder();}
+  catch(e){if(e.name!=='AbortError')showToast('Fehler: '+e.message);}
+}
+async function scanFolder(){
+  if(!dirHandle)return;const pdfs=[];
+  try{for await(const[name,handle]of dirHandle.entries()){if(handle.kind!=='file'||!name.toLowerCase().endsWith('.pdf'))continue;const l=name.toLowerCase();if(l.includes('terminplan')||l.includes('termin')||l.includes('rahmen')||l.includes('schedule')||l.includes('planung')){const f=await handle.getFile();pdfs.push({name,file:f,modified:f.lastModified});}}}catch(e){console.warn('[TP]',e);}
+  if(!pdfs.length){showToast('Keine Terminplan-PDFs gefunden');return;}
+  pdfs.sort((a,b)=>b.modified-a.modified);
+  const newest=pdfs[0],tp=terminplanData[currentPid]||{};
+  const hasEx=tp.lp&&Object.values(tp.lp).some(v=>v.start||v.end);
+  const isNewer=!tp.loadedAt||newest.modified>new Date(tp.loadedAt).getTime();
+  if(hasEx&&isNewer){showToast('Neuer Terminplan: '+newest.name);await parsePdf(newest.file,newest.name,true);}
+  else if(!hasEx){showToast('Terminplan gefunden: '+newest.name);await parsePdf(newest.file,newest.name,false);}
+  else showToast('Terminplan aktuell');
+}
+async function selectPdfFromFolder(){
+  const _tp=terminplanData[currentPid]||{};const _isUpd=!!(_tp.lp&&Object.values(_tp.lp).some(v=>v.end));
+  if(dirHandle){
+    const pdfs=[];try{for await(const[name,handle]of dirHandle.entries()){if(handle.kind==='file'&&name.toLowerCase().endsWith('.pdf')){const f=await handle.getFile();pdfs.push({name,file:f});}}}catch(e){showToast('Fehler: '+e.message);return;}
+    if(!pdfs.length){showToast('Keine PDFs im Ordner');return;}
+    const picked=pdfs.length===1?pdfs[0]:await pickFromList(pdfs);if(picked)await parsePdf(picked.file,picked.name,_isUpd);
+  }else{const inp=document.createElement('input');inp.type='file';inp.accept='.pdf';inp.onchange=async()=>{if(inp.files[0])await parsePdf(inp.files[0],inp.files[0].name,_isUpd);};inp.click();}
+}
+function pickFromList(pdfs){
+  return new Promise(resolve=>{
+    window.__pp=i=>{document.getElementById('__ppol').remove();delete window.__pp;resolve(pdfs[i]);};
+    const el=document.createElement('div');el.id='__ppol';el.style.cssText='position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+    el.innerHTML='<div style="background:var(--surface);border-radius:16px;padding:28px;max-width:480px;width:100%"><div style="font-size:16px;font-weight:600;margin-bottom:16px">PDF auswaehlen</div>'+pdfs.map((p,i)=>'<div onclick="window.__pp('+i+')" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;margin-bottom:6px;font-size:12px;font-family:var(--mono)">'+p.name+'</div>').join('')+'<button class="btn btn-secondary" style="margin-top:4px;width:100%" onclick="document.getElementById(\'__ppol\').remove()">Abbrechen</button></div>';
+    document.body.appendChild(el);
+  });
+}
+async function parsePdf(file,filename,isUpdate){
+  showToast('PDF wird eingelesen...');
+  const{dates,rawText,error}=await extractDates(file);pdfDates=dates;
+  if(!terminplanData[currentPid])terminplanData[currentPid]={lp:{},type:'rahmentermine',version:0};
+  const tp=terminplanData[currentPid];tp.filename=filename;renderTpPanel();
+  if(error){showToast('PDF-Fehler: '+error.slice(0,80));document.getElementById('lp-wrap').style.display='';return;}
+  if(!dates.length){showPdfDebugModal(filename,rawText);return;}
+  showPdfModal(dates,filename,isUpdate);
+}
+const _MO={'januar':1,'februar':2,'maerz':3,'april':4,'mai':5,'juni':6,'juli':7,'august':8,'september':9,'oktober':10,'november':11,'dezember':12};
+function _moNum(s){const k=s.toLowerCase().replace(/ä/g,'ae').replace(/ae/g,'ae');return _MO[k]||_MO[s.toLowerCase()];}
+const _MO_RE='Januar|Februar|M(?:ä|ae)rz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember';
+async function extractDates(file){
+  try{
+    const lib=window.pdfjsLib||window['pdfjs-dist/build/pdf'];
+    if(!lib)return{dates:[],rawText:'',error:'PDF.js nicht geladen'};
+    lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    const buf=await file.arrayBuffer();const pdf=await lib.getDocument({data:buf}).promise;
+    let text='';for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const ct=await pg.getTextContent();text+=ct.items.map(it=>it.str).join(' ')+'\n';}
+    if(!text.trim())return{dates:[],rawText:'',error:'Kein lesbarer Text (gescanntes PDF?)'};
+    const found=new Set();let m;
+    const re1=/\b(\d{1,2})\.[ ]?(\d{1,2})\.[ ]?(\d{2,4})\b/g;
+    while((m=re1.exec(text))!==null){const dy=m[1].padStart(2,'0'),mo=m[2].padStart(2,'0'),yr=m[3].length===2?'20'+m[3]:m[3];if(+yr>=2020&&+yr<=2040&&+mo>=1&&+mo<=12&&+dy>=1&&+dy<=31)found.add(yr+'-'+mo+'-'+dy);}
+    const re2=new RegExp('\\b(\\d{1,2})\\.\\s*('+_MO_RE+')\\s+(\\d{4})\\b','gi');
+    while((m=re2.exec(text))!==null){const dy=m[1].padStart(2,'0'),mn=_moNum(m[2]),mo=String(mn||0).padStart(2,'0'),yr=m[3];if(mn&&+yr>=2020&&+yr<=2040)found.add(yr+'-'+mo+'-'+dy);}
+    const re3=new RegExp('\\b('+_MO_RE+')\\s+(\\d{4})\\b','gi');
+    while((m=re3.exec(text))!==null){const mn=_moNum(m[1]),mo=String(mn||0).padStart(2,'0'),yr=m[2];if(mn&&+yr>=2020&&+yr<=2040)found.add(yr+'-'+mo+'-01');}
+    const re4=/\b(\d{4})-(\d{2})-(\d{2})\b/g;
+    while((m=re4.exec(text))!==null){const[,yr,mo,dy]=m;if(+yr>=2020&&+yr<=2040&&+mo>=1&&+mo<=12&&+dy>=1&&+dy<=31)found.add(yr+'-'+mo+'-'+dy);}
+    const re5=/\bKW\s*(\d{1,2})[\/\s]+(\d{4})\b/gi;
+    while((m=re5.exec(text))!==null){const kw=parseInt(m[1]),yr=parseInt(m[2]);if(kw>=1&&kw<=53&&yr>=2020&&yr<=2040){const d=new Date(yr,0,1+((kw-1)*7));const dow=d.getDay();d.setDate(d.getDate()+(dow<=4?1-dow:8-dow));found.add(d.toISOString().slice(0,10));}}
+    return{dates:Array.from(found).sort(),rawText:text.slice(0,3000),error:null};
+  }catch(e){console.error('[TP]',e);return{dates:[],rawText:'',error:e.message};}
+}
+function showPdfDebugModal(filename,rawText){
+  const preview=rawText?rawText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'(kein Text - gescanntes PDF?)';
+  const hint=rawText?'PDF-Text extrahiert, aber keine Datumsangaben erkannt (DD.MM.YYYY, Monat YYYY, KW XX/YYYY). Vorschau:':'Kein Text extrahierbar.';
+  document.getElementById('pdf-info').innerHTML='<strong>'+filename+'</strong> - 0 Datumswerte.<br><span style="color:var(--warn);font-size:12px">'+hint+'</span>';
+  document.getElementById('pdf-content').innerHTML='<pre style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-size:11px;color:var(--text2);white-space:pre-wrap;line-height:1.5">'+preview+'</pre><div style="margin-top:12px;font-size:12px;color:var(--text3)">Rahmentermine bitte manuell eingeben.</div><div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="closePdfModal();document.getElementById(\'lp-wrap\').style.display=\'\'">Manuell eingeben</button></div>';
+  const ol=document.getElementById('pdf-modal-ol');ol.dataset.isUpdate='0';ol.classList.add('open');
+}
+function showPdfModal(dates,filename,isUpdate){
+  const existing=(terminplanData[currentPid]||{}).lp||{};
+  document.getElementById('pdf-info').innerHTML='<strong>'+filename+'</strong> - <strong>'+dates.length+'</strong> Datum/Daten gefunden. Weise jeder LP-Phase Start und Ende zu.';
+  const chip=dates.map(d=>'<span class="date-chip">'+fmtDE(d)+'</span>').join('');
+  const eo='<option value="">-</option>';
+  const rows=LP_PHASEN.map(ph=>{const ex=existing[ph.id]||{};
+    return '<tr><td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge '+ph.cls+'">'+ph.label+'</span></td>'+
+      '<td style="padding:7px 8px;border-bottom:1px solid var(--border)"><select class="lp-date-inp" id="pms-'+ph.id+'">'+eo+dates.map(d=>'<option value="'+d+'"'+(d===ex.start?' selected':'')+'>'+fmtDE(d)+'</option>').join('')+'</select></td>'+
+      '<td style="padding:7px 8px;border-bottom:1px solid var(--border)"><select class="lp-date-inp" id="pme-'+ph.id+'">'+eo+dates.map(d=>'<option value="'+d+'"'+(d===ex.end?' selected':'')+'>'+fmtDE(d)+'</option>').join('')+'</select></td></tr>';}).join('');
+  document.getElementById('pdf-content').innerHTML='<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Gefundene Daten</div><div class="date-grid">'+chip+'</div></div><div style="font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Zuweisung LP-Phasen</div><table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Phase</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Beginn</th><th style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)">Ende</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  const ol=document.getElementById('pdf-modal-ol');ol.dataset.isUpdate=isUpdate?'1':'0';ol.classList.add('open');
+}
+function closePdfModal(){document.getElementById('pdf-modal-ol').classList.remove('open');}
+function applyPdfDates(){
+  if(!currentPid)return;if(!terminplanData[currentPid])terminplanData[currentPid]={lp:{},type:'rahmentermine',version:0};
+  const tp=terminplanData[currentPid],isUpdate=document.getElementById('pdf-modal-ol').dataset.isUpdate==='1';
+  const oldLp=isUpdate?JSON.parse(JSON.stringify(tp.lp||{})):null;if(!tp.lp)tp.lp={};
+  LP_PHASEN.forEach(ph=>{const s=(document.getElementById('pms-'+ph.id)||{}).value||'';const e=(document.getElementById('pme-'+ph.id)||{}).value||'';tp.lp[ph.id]={start:s,end:e,source:'pdf'};});
+  tp.loadedAt=new Date().toISOString();tp.version=(tp.version||0)+1;
+  saveTerminplan();closePdfModal();renderTpPanel();
+  if(isUpdate&&oldLp){const deltas=calcDeltas(oldLp,tp.lp),aff=countAffected(deltas);if(!Object.keys(deltas).length)showToast('Terminplan aktualisiert - unveraendert');else if(aff>0)showUpdateModal(deltas);else showToast('Terminplan aktualisiert - keine Termine betroffen');}
+  else showToast('Termine aus PDF uebernommen');
+}
+function calcDeltas(oldLp,newLp){const d={};LP_PHASEN.forEach(ph=>{const oe=(oldLp[ph.id]||{}).end,ne=(newLp[ph.id]||{}).end;if(oe&&ne){const days=Math.round((new Date(ne)-new Date(oe))/864e5);if(days!==0)d[ph.id]={days,oldEnd:oe,newEnd:ne,label:ph.label,name:ph.name};}});return d;}
+function countAffected(deltas){return(milestones[currentPid]||[]).filter(m=>m.terminplanDerived&&m.terminplanLp&&deltas[m.terminplanLp]).length;}
+function showUpdateModal(deltas){
+  const affected=(milestones[currentPid]||[]).filter(m=>m.terminplanDerived&&m.terminplanLp&&deltas[m.terminplanLp]),changed=Object.entries(deltas);
+  document.getElementById('update-intro').innerHTML='<strong>'+changed.length+'</strong> Phase(n) geaendert - <strong>'+affected.length+'</strong> BIM-Termin(e) betroffen.';
+  const phRows=changed.map(([lp,d])=>{const cls=d.days>0?'delta-pos':'delta-neg',sign=d.days>0?'+':'';return '<tr><td style="padding:6px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge lp-'+lp+'">'+d.label+'</span></td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">'+fmtDE(d.oldEnd)+'</td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">'+fmtDE(d.newEnd)+'</td><td style="padding:6px 8px;border-bottom:1px solid var(--border)"><span class="'+cls+'">'+sign+d.days+' T</span></td></tr>';}).join('');
+  const msRows=affected.map(m=>{const d=deltas[m.terminplanLp],nd=new Date(m.datum);nd.setDate(nd.getDate()+d.days);const cls=d.days>0?'delta-pos':'delta-neg',sign=d.days>0?'+':'';return '<tr><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-size:12px">'+(TYP[m.typ]&&TYP[m.typ].icon||'')+' '+m.name+'</td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">'+fmtDE(m.datum)+'</td><td style="padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">'+fmtDE(nd.toISOString().slice(0,10))+'</td><td style="padding:6px 8px;border-bottom:1px solid var(--border)"><span class="'+cls+'">'+sign+d.days+' T</span></td></tr>';}).join('');
+  document.getElementById('update-content').innerHTML='<div class="slabel">Phasenaenderungen</div><table class="dtable"><thead><tr><th>Phase</th><th>Bisher</th><th>Neu</th><th>Delta</th></tr></thead><tbody>'+phRows+'</tbody></table>'+(affected.length?'<div class="slabel">Betroffene BIM-Termine</div><table class="dtable"><thead><tr><th>BIM-Termin</th><th>Bisher</th><th>Neu</th><th>Delta</th></tr></thead><tbody>'+msRows+'</tbody></table>':'');
+  const ol=document.getElementById('update-modal-ol');ol.dataset.deltas=JSON.stringify(deltas);ol.classList.add('open');
+}
+function closeUpdateModal(){document.getElementById('update-modal-ol').classList.remove('open');}
+function applyAutoShift(){
+  const deltas=JSON.parse(document.getElementById('update-modal-ol').dataset.deltas||'{}');let count=0;
+  (milestones[currentPid]||[]).forEach(m=>{if(!m.terminplanDerived||!m.terminplanLp)return;const d=deltas[m.terminplanLp];if(!d)return;const nd=new Date(m.datum);nd.setDate(nd.getDate()+d.days);m.datum=nd.toISOString().slice(0,10);if(m.frist){const nf=new Date(m.frist);nf.setDate(nf.getDate()+d.days);m.frist=nf.toISOString().slice(0,10);}count++;});
+  save();closeUpdateModal();render();const tp=terminplanData[currentPid];if(tp){if(!tp.history)tp.history=[];tp.history.unshift({version:(tp.version||1)-1,archivedAt:new Date().toISOString()});if(tp.history.length>5)tp.history.pop();saveTerminplan();}
+  showToast(count+' BIM-Termin(e) verschoben');
+}
+function showDeriveModal(){
+  if(!currentPid)return;const tp=terminplanData[currentPid]||{};
+  if(!tp.lp||!Object.values(tp.lp).some(v=>v.start||v.end)){showToast('Erst Rahmentermine speichern');toggleLpTable();return;}
+  const existing=new Set((milestones[currentPid]||[]).filter(m=>m.terminplanDerived).map(m=>m.name));
+  const rows=BIM_TERMINE_TEMPLATES.map((t,i)=>{
+    const ph=LP_PHASEN.find(p=>p.id===t.lp),lpd=tp.lp[t.lp]||{},base=t.from==='start'?lpd.start:lpd.end;if(!base)return null;
+    const dt=new Date(base);dt.setDate(dt.getDate()+t.offsetDays);const iso=dt.toISOString().slice(0,10);
+    const typ=TYP[t.typ]||TYP.sonstiges,already=existing.has(t.name);
+    const offLbl=t.offsetDays===0?(t.from==='end'?'Ende LP':'Start LP'):(t.from==='end'?'Ende':'Start')+' LP '+(t.offsetDays>0?'+':'')+t.offsetDays+'d';
+    return '<tr><td style="padding:7px 8px;border-bottom:1px solid var(--border)"><input type="checkbox" class="derive-cb" id="dcb-'+i+'" data-idx="'+i+'" data-date="'+iso+'" '+(already?'':'checked')+(already?' title="Bereits vorhanden"':'')+'></td><td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="lp-badge '+(ph&&ph.cls||'')+'">'+(ph&&ph.label||t.lp)+'</span></td><td style="padding:7px 8px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500">'+(typ&&typ.icon||'')+' '+t.name+(already?' <span class="tag tag-amber" style="font-size:9px">vorhanden</span>':'')+'</td><td style="padding:7px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px">'+fmtDE(iso)+'</td><td style="padding:7px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3)">'+offLbl+'</td><td style="padding:7px 8px;border-bottom:1px solid var(--border)"><span class="tag" style="background:'+(typ&&typ.color||'#eee')+'20;color:'+(typ&&typ.color||'#888')+';font-size:10px">'+(typ&&typ.label||t.typ)+'</span></td></tr>';
+  }).filter(Boolean);
+  if(!rows.length){showToast('Keine LP-Daten');toggleLpTable();return;}
+  document.getElementById('derive-content').innerHTML='<table class="dtable"><thead><tr><th style="width:32px"></th><th style="width:60px">Phase</th><th>BIM-Termin</th><th style="width:100px">Datum</th><th style="width:130px">Berechnung</th><th style="width:80px">Typ</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>';
+  document.getElementById('derive-modal-ol').classList.add('open');
+}
+function closeDeriveModal(){document.getElementById('derive-modal-ol').classList.remove('open');}
+function selectAllDerived(s){document.querySelectorAll('.derive-cb').forEach(cb=>cb.checked=s);}
+function applyDerivedTermine(){
+  if(!currentPid)return;if(!milestones[currentPid])milestones[currentPid]=[];let count=0;
+  document.querySelectorAll('.derive-cb:checked').forEach(cb=>{const idx=parseInt(cb.dataset.idx),date=cb.dataset.date,t=BIM_TERMINE_TEMPLATES[idx];if(!t)return;milestones[currentPid].push({id:uid(),name:t.name,typ:t.typ,status:'offen',datum:date,frist:date,disziplinen:t.disziplinen||['alle'],desc:t.desc||'',recurring:false,created:new Date().toISOString(),updated:new Date().toISOString(),terminplanDerived:true,terminplanLp:t.lp,terminplanFrom:t.from,terminplanOffsetDays:t.offsetDays});count++;});
+  save();closeDeriveModal();render();showToast(count+' BIM-Termin(e) uebernommen');
+}
 
 init();
 
-// ─── CROSS-MODULE STATE ────────────────────────────────────────
-function goTo(href)            { window.location.href=href; }
-function setCurrentProject(pid){ localStorage.setItem('bim_current_project',pid); }
-function getCurrentProject()   { return localStorage.getItem('bim_current_project')||''; }
+// ─── CROSS-MODULE STATE ───────────────────────────────────────────────
+function goTo(href) { window.location.href = href; }
+function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
+function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
-// Safety re-render
-setTimeout(function(){
+
+// Safety re-render: if workspace is empty after init, reload data and re-render
+setTimeout(function() {
   try {
     var ws = document.getElementById('workspace') ||
              document.getElementById('main-content') ||
@@ -1108,7 +1217,8 @@ setTimeout(function(){
              document.getElementById('projects-container') ||
              document.getElementById('main-area');
     if (ws && (!ws.innerHTML || ws.innerHTML.trim() === '')) {
-      console.info('[BIM] Empty workspace - reloading data from localStorage and re-rendering');
+      console.info('[BIM] Empty workspace – reloading data from localStorage and re-rendering');
+      // Re-run init to pick up any data that arrived after page load
       if (typeof init === 'function') { init(); return; }
       if (typeof render === 'function') render();
       else if (typeof renderProjects === 'function') renderProjects();
@@ -1116,5 +1226,36 @@ setTimeout(function(){
   } catch(e) { console.warn('[BIM] Safety re-render failed:', e.message); }
 }, 800);
 </script>
+
+<div class="modal-overlay" id="pdf-modal-ol" onclick="if(event.target===this)closePdfModal()">
+  <div class="modal" style="max-width:640px;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-header"><div class="modal-title">Terminplan aus PDF</div><button class="modal-close" onclick="closePdfModal()">&times;</button></div>
+    <div class="modal-body" style="overflow-y:auto;flex:1"><div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="pdf-info"></div><div id="pdf-content"></div></div>
+    <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closePdfModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="applyPdfDates()">&Uuml;bernehmen</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="derive-modal-ol" onclick="if(event.target===this)closeDeriveModal()">
+  <div class="modal" style="max-width:780px;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-header"><div class="modal-title">BIM-Termine ableiten</div><button class="modal-close" onclick="closeDeriveModal()">&times;</button></div>
+    <div class="modal-body" style="overflow-y:auto;flex:1"><div style="font-size:12px;color:var(--text3);margin-bottom:14px">BIM-Termine aus Rahmenterminen berechnet.</div><div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-secondary btn-sm" onclick="selectAllDerived(true)">Alle w&auml;hlen</button><button class="btn btn-secondary btn-sm" onclick="selectAllDerived(false)">Keine</button></div><div id="derive-content"></div></div>
+    <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeDeriveModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="applyDerivedTermine()">&Uuml;bernehmen</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="update-modal-ol" onclick="if(event.target===this)closeUpdateModal()">
+  <div class="modal" style="max-width:680px;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-header"><div class="modal-title">Terminplan-Update</div><button class="modal-close" onclick="closeUpdateModal()">&times;</button></div>
+    <div class="modal-body" style="overflow-y:auto;flex:1"><div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="update-intro"></div><div id="update-content"></div></div>
+    <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-secondary" onclick="closeUpdateModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="applyAutoShift()">Alle verschieben</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -461,11 +461,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 
 <div class="toast" id="toast"></div>
 
-<script>
-// ─── CONSTANTS ────────────────────────────────────────────────────────
-const PROJ_KEY  = 'bim_projects_v2';
-const MS_KEY    = 'bi
-// ─── CONSTANTS ────────────────────────────────────────────────────────
+<script>// ─── CONSTANTS ────────────────────────────────────────────────────────
 const PROJ_KEY  = 'bim_projects_v2';
 const MS_KEY    = 'bim_milestones_v1';
 const SET_KEY   = 'bim_settings_v1';
@@ -547,8 +543,8 @@ function init() {
   try { terminplanData=JSON.parse(localStorage.getItem(TP_KEY))||{}; } catch(e){ terminplanData={}; }
 
   buildDzChips();
-  populateS
-  renderProjBadge();elect();
+  populateSelect();
+  renderProjBadge();
   (document.getElementById('del-btn')||{}).addEventListener('click', doDelete);
 }
 

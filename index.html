@@ -477,7 +477,9 @@ function activateProject(pid) {
   renderProjects();
   updateActiveProjBar();
   const proj = (window.projects||window.data||[]).find(p => p.id === pid);
-  if (proj) showToast('✓ ' + proj.name + ' ist jetzt aktiv für alle Module');
+  if (proj) showToast('✓ ' + proj.name + ' ist jetzt aktiv');
+  // Öffne die Detailansicht des Projekts
+  showDetail(pid);
 }
 
 function loadSettings() { try { settings=JSON.parse(localStorage.getItem(SETTINGS_KEY))||{name:'',org:''}; } catch(e){} }
@@ -717,6 +719,7 @@ function showDetail(id){
         <div style="display:flex;gap:6px;flex-wrap:wrap">${phaseTags(p)} ${p.lod?`<span class="tag tag-gray">${p.lod}</span>`:''} ${statusBadge(p.status)}</div>
       </div>
       <div class="detail-actions">
+        <button class="btn ${getCurrentProject()===p.id?'btn-primary':'btn-secondary'}" onclick="activateProject('${p.id}')" style="display:flex;align-items:center;gap:5px">${getCurrentProject()===p.id?'● Aktiv':'▶ Als aktives Projekt öffnen'}</button>
         <button class="btn btn-secondary" onclick="openModal('${p.id}')">✎ Bearbeiten</button>
         <button class="btn btn-danger" onclick="confirmDelete('${p.id}')">⌫ Löschen</button>
       </div>

@@ -277,10 +277,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 
 <main class="main">
   <div class="topbar">
-    <label style="font-size:12px;color:var(--text3);font-family:var(--mono)">Projekt:</label>
-    <select class="proj-sel" id="proj-sel" onchange="onProjectChange()">
-      <option value="">— Projekt wählen —</option>
-    </select>
+    <div id="proj-badge-wrap" style="display:flex;align-items:center;gap:8px;flex-shrink:0"></div>
     <div class="topbar-right">
       <div class="view-toggle">
         <button class="view-btn active" id="vbtn-gantt"     onclick="setView('gantt')">Gantt</button>
@@ -467,6 +464,9 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────────
 const PROJ_KEY  = 'bim_projects_v2';
+const MS_KEY    = 'bi
+// ─── CONSTANTS ────────────────────────────────────────────────────────
+const PROJ_KEY  = 'bim_projects_v2';
 const MS_KEY    = 'bim_milestones_v1';
 const SET_KEY   = 'bim_settings_v1';
 const LABEL_W   = 220;   // px – label column width
@@ -542,41 +542,30 @@ let pdfDates  = [];
 function init() {
   try { const s=JSON.parse(localStorage.getItem(SET_KEY))||{}; (function(){const _el=document.getElementById('sb-user');if(_el)_el.textContent=s.name||'BIM Manager';}()); } catch(e){}
   try { projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[]; } catch(e){ projects=[]; }
-  // Restore active project
-  const _activePid = getCurrentProject();
-  if(_activePid) { setTimeout(()=>{ const s=document.getElementById('proj-sel'); if(s&&_activePid){ s.value=_activePid; if(s.value) onProjectChange(); }},200); }
+  // project read directly via getCurrentProject()
   try { milestones=JSON.parse(localStorage.getItem(MS_KEY))||{}; } catch(e){ milestones={}; }
   try { terminplanData=JSON.parse(localStorage.getItem(TP_KEY))||{}; } catch(e){ terminplanData={}; }
 
   buildDzChips();
-  populateSelect();
+  populateS
+  renderProjBadge();elect();
   (document.getElementById('del-btn')||{}).addEventListener('click', doDelete);
 }
 
 // ─── PROJECT SELECT ───────────────────────────────────────────────────
 function populateSelect() {
-  const sel = document.getElementById('proj-sel');
-  if (!projects.length) {
-    sel.innerHTML = '<option value="">Keine Projekte in der Projektverwaltung</option>'; return;
-  }
-  sel.innerHTML = '<option value="">— Projekt wählen —</option>' +
-    projects.map(p=>`<option value="${p.id}">${p.number} · ${p.name}</option>`).join('');
-
-  // inject sample data for first project if empty
+  if (!projects.length) return;
+  // Inject sample data for first project if empty
   const pid = projects[0].id;
   if (!milestones[pid] || !milestones[pid].length) {
     milestones[pid] = sampleData();
     save();
   }
-  // Prefer the active project from localStorage
-  const activePid = getCurrentProject();
-  sel.value = (activePid && projects.find(p=>p.id===activePid)) ? activePid : pid;
   onProjectChange();
 }
 
 function onProjectChange() {
-  currentPid = (document.getElementById('proj-sel')||{}).value || null;
-  setCurrentProject(currentPid||'');
+  currentPid = getCurrentProject() || null;
   (document.getElementById('btn-new')||{}).disabled = !currentPid;
   if (currentPid) {
     const p = projects.find(x=>x.id===currentPid);
@@ -644,7 +633,7 @@ function updateStats() {
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────
-function render() {
+function render() {renderProjBadge();
   if (!currentPid) return;
   updateStats();
   currentView==='gantt' ? renderGantt() : renderTimeline();
@@ -1456,6 +1445,26 @@ function goTo(href) { window.location.href = href; }
 function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
 function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
+function renderProjBadge() {
+  const pid = getCurrentProject();
+  const proj = (projects||[]).find(p=>p.id===pid);
+  const wrap = document.getElementById('proj-badge-wrap');
+  if(!wrap) return;
+  if(proj) {
+    wrap.innerHTML =
+      '<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">Projekt</span>' +
+      '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(0,201,167,0.25);border-radius:20px;font-size:12px;font-weight:500;color:var(--accent);font-family:var(--mono)" title="Projekt wechseln \u2192 Projektverwaltung">' +
+        '\u25cf ' + proj.number + ' \u00b7 ' + proj.name +
+      '</span>' +
+      '<button onclick="goTo(\'index.html\')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:transparent;font-family:var(--sans);font-size:11px;color:var(--text3);cursor:pointer">\u21c4 wechseln</button>';
+  } else {
+    wrap.innerHTML =
+      '<span style="font-size:12px;color:var(--err)">\u26a0 Kein aktives Projekt</span>' +
+      '<button onclick="goTo(\'index.html\')" style="padding:4px 12px;border:1px solid var(--accent);border-radius:4px;background:var(--accent-dim);font-family:var(--sans);font-size:12px;color:var(--accent);cursor:pointer;font-weight:500">\u2192 Projektverwaltung \u00f6ffnen</button>';
+  }
+}
+
+
 
 // Safety re-render: if workspace is empty after init, reload data and re-render
 setTimeout(function() {
@@ -1474,10 +1483,7 @@ setTimeout(function() {
     }
   } catch(e) { console.warn('[BIM] Safety re-render failed:', e.message); }
 }, 800);
-</script>
-
-<div class="modal-overlay" id="pdf-modal-ol" onclick="if(event.target===this)closePdfModal()">
-  <div class="modal" style="max-width:680px;max-height:88vh;display:flex;flex-direction:column">
+"max-width:680px;max-height:88vh;display:flex;flex-direction:column">
     <div class="modal-header"><div class="modal-title">Terminplan aus PDF</div><button class="modal-close" onclick="closePdfModal()">&times;</button></div>
     <div class="modal-body" style="overflow-y:auto;flex:1"><div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="pdf-info"></div><div id="pdf-content"></div></div>
     <div class="modal-footer" style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">

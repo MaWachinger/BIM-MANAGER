@@ -513,7 +513,6 @@ function rebuildGrpMap(){ GRP_MAP={}; PARAM_GROUPS.forEach(g=>GRP_MAP[g.code]=g)
 function saveGroups(){ localStorage.setItem(GRP_KEY,JSON.stringify(PARAM_GROUPS)); rebuildGrpMap(); }
 
 // ─── OBJECT TREE ──────────────────────────────────────────────────────
-// Based on LastBIM Spezifikationsübersicht
 const OBJ_TREE = {
   id:'root', label:'Bauwerksinformationen', icon:'🏛', level:0, children:[
     { id:'rau', label:'Roh- und Ausbau', icon:'🧱', level:1, children:[
@@ -668,7 +667,6 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 
 // ─── SAMPLE GLOBAL PARAMS ─────────────────────────────────────────────
 function sampleGlobal(){
-  // Vollständig übernommen aus LastBIM Objekt-Stammkatalog – Reiter "Merkmalsübersicht"
   return [
     // ── 000 Waveware Klassifizierung (projektspezifisch) ──────────────
     {id:uid(),name:'E+H Gebäudescode',             pset:'Pset_BuildingCommon',              attr:'BuildingID',                dtype:'IfcLabel',   grp:'000',ifcTypes:['IfcBuilding'],            phases:[],              desc:'Interner Gebäudecode',                   guid:'1d463616-4b59-44e0-9ce3-2281c2518686'},
@@ -815,9 +813,7 @@ function renderGlobal(){
       <div class="glib-banner">
         <strong>◈ Globale Bibliothek</strong> – Merkmale hier sind projektübergreifende Vorlagen. Projekte erhalten beim Übernehmen eigene Kopien. Änderungen hier wirken sich nicht auf bestehende Projektkonfigurationen aus.
       </div>
-      <div class="info-amber">
-        <strong>Strukturiert nach LastBIM-Katalog:</strong> 001-Identifikation (alle Objekte) · 010-Baukonstruktion · 011-Raum · 030-TGA · 050-Produkt · 051-Betrieb · AA/BA-Objektspezifisch
-      </div>
+      
       <div class="ptable-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
         <div style="padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
           <input class="search-box" style="width:200px" placeholder="Suchen…" id="glib-q" value="" oninput="glibSearch()">

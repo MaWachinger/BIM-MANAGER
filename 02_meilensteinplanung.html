@@ -286,7 +286,8 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
       <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export</button>
       <button class="btn btn-primary" id="btn-new" onclick="openModal()" disabled>+ Meilenstein</button>
     
-      <button onclick="goTo('08_hilfe.html')" title="Hilfe &amp; Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
+      <button <button id="tp-toggle-btn" onclick="toggleTpPanel()" title="Rahmenterminplan aus PDF einlesen und BIM-Termine ableiten" style="padding:5px 12px;border:1px solid var(--border);border-radius:var(--r);background:transparent;font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">📅 Terminplan</button>
+      onclick="goTo('08_hilfe.html')" title="Hilfe &amp; Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
     </div>
   </div>
 
@@ -297,6 +298,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
     <div id="tp-panel" style="display:none">
       <div class="tp-bar">
         <div class="tp-bar-left">
+          <div style="font-size:12px;color:var(--text3);padding:10px 14px 6px;line-height:1.6">📋 <strong style="color:var(--text2)">Rahmenterminplan</strong> – PDF-Terminplan einlesen um LP-Daten automatisch zu extrahieren und BIM-Meilensteine daraus abzuleiten. Termine können auch manuell eingegeben werden.</div>
           <div class="tp-type-toggle">
             <button class="tp-type-btn active" id="tpb-rahmen"  onclick="setTpType('rahmentermine')">Rahmentermine</button>
             <button class="tp-type-btn"        id="tpb-planung" onclick="setTpType('planungsterminplan')">Planungsterminplan</button>
@@ -1020,9 +1022,28 @@ document.addEventListener('keydown',e=>{
 function saveTerminplan(){ localStorage.setItem(TP_KEY,JSON.stringify(terminplanData)); }
 function fmtDE(iso){ return iso?new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}):''; }
 
+function toggleTpPanel() {
+  const panel = document.getElementById('tp-panel');
+  const btn   = document.getElementById('tp-toggle-btn');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : '';
+  if (btn) {
+    btn.style.background  = isOpen ? 'transparent'      : 'var(--accent-dim)';
+    btn.style.color       = isOpen ? 'var(--text2)'     : 'var(--accent)';
+    btn.style.borderColor = isOpen ? 'var(--border)'    : 'var(--accent)';
+  }
+  if (!isOpen) renderTpPanel();
+}
+
 function renderTpPanel(){
-  if(!currentPid){(document.getElementById('tp-panel')||{}).style.display='none';return;}
-  (document.getElementById('tp-panel')||{}).style.display='';
+  if(!currentPid){
+    (document.getElementById('tp-panel')||{}).style.display='none';
+    const _b=document.getElementById('tp-toggle-btn');
+    if(_b){_b.style.background='transparent';_b.style.color='var(--text2)';_b.style.borderColor='var(--border)';}
+    return;
+  }
+  // Don't auto-show – only update content; visibility managed by toggleTpPanel()
   const tp=terminplanData[currentPid]||{};
   const isPlanung=tp.type==='planungsterminplan';
   (document.getElementById('tpb-rahmen')||{}).classList.toggle('active',!isPlanung);

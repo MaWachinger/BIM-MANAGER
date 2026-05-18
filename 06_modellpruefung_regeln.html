@@ -489,7 +489,7 @@ function renderProjBar(){
 }
 function renderTopbar(){
   const el=document.getElementById('topbar-right');
-  if(mode==='stamm') el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport()">⬆ Import</button><button class="btn btn-primary btn-sm" onclick="openRuleModal(null,'stamm')">+ Regel</button>`;
+  if(mode==='stamm') el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport()">⬆ Import</button><button class="btn btn-primary btn-sm" onclick="openRuleModal(null,'stamm')">+ Regel</button><button onclick="goTo('08_hilfe.html')" title="Hilfe" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">?</button>`;
   else if(mode==='checkset') el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="addAllToCheckset()" ${!pid?'disabled':''}>Alle übernehmen</button>`;
   else el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="runAllRules()" ${!pid?'disabled':''}>▶ Alle Regeln prüfen</button><button class="btn btn-secondary btn-sm" onclick="exportReport()" ${!pid?'disabled':''}>⬇ Bericht</button>`;
 }

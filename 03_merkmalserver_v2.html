@@ -772,7 +772,7 @@ function renderTopbarRight(){
   if(mode==='global'){
     el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport('global')">⬆ Import</button>
       <button class="btn btn-secondary btn-sm" onclick="exportGlobalCSV()">⬇ Export</button>
-      <button class="btn btn-primary btn-sm" onclick="openParamModal(null,'global')">+ Merkmal</button>`;
+      <button class="btn btn-primary btn-sm" onclick="openParamModal(null,'global')">+ Merkmal</button><button onclick="goTo('08_hilfe.html')" title="Hilfe" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">?</button>`;
   } else {
     el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport('proj')" ${!pid?'disabled':''}>⬆ Import</button>
       <button class="btn btn-secondary btn-sm" onclick="exportIDS()" ${!pid?'disabled':''}>⬇ IDS</button>

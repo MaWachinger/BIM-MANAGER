@@ -443,6 +443,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger" id="del-btn" onclick="closeModal();confirmDelete(editingId)" style="display:none;margin-right:auto">⌫ Löschen</button>
       <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
       <button class="btn btn-primary" id="save-btn" onclick="saveMilestone()">Speichern</button>
     </div>
@@ -930,6 +931,7 @@ function openModal(id=null) {
   editingId = id;
   (function(){const _el=document.getElementById('modal-title');if(_el)_el.textContent=id ? 'Meilenstein bearbeiten' : 'Neuer Meilenstein';}());
   (function(){const _el=document.getElementById('save-btn');if(_el)_el.textContent=id ? 'Änderungen speichern' : 'Speichern';}());
+  (function(){const _el=document.getElementById('del-btn');if(_el)_el.style.display=id?'':'none';}());
 
   if (id) {
     const m=(milestones[currentPid]||[]).find(x=>x.id===id); if(!m) return;
@@ -1001,7 +1003,7 @@ function closeConfirm()    { (document.getElementById('confirm-ol')||{}).classLi
 function doDelete() {
   if (!deleteId||!currentPid) return;
   milestones[currentPid]=(milestones[currentPid]||[]).filter(m=>m.id!==deleteId);
-  save(); closeConfirm(); render(); showToast('Meilenstein gelöscht'); deleteId=null;
+  save(); closeConfirm(); render(); showToast('Eintrag gelöscht'); deleteId=null;
 }
 
 // ─── EXPORT ───────────────────────────────────────────────────────────

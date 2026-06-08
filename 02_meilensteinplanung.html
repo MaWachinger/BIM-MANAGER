@@ -442,7 +442,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger" id="del-btn" onclick="closeModal();confirmDelete(editingId)" style="display:none;margin-right:auto">⌫ Löschen</button>
+      <button class="btn btn-danger" id="del-btn" onclick="confirmDelete(editingId);closeModal()" style="display:none;margin-right:auto">⌫ Löschen</button>
       <button class="btn btn-secondary" id="copy-btn" onclick="copyMilestone()" style="display:none" title="Kopie dieses Eintrags erstellen">⎘ Kopieren</button>
       <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
       <button class="btn btn-primary" id="save-btn" onclick="saveMilestone()">Speichern</button>

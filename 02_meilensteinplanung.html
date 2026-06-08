@@ -248,6 +248,22 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .date-grid{display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow-y:auto;padding:2px 0}
 .date-chip{padding:3px 9px;border-radius:5px;font-size:11px;font-family:var(--mono);border:1px solid var(--border);background:var(--surface);color:var(--text2)}
 .sug-chip{padding:3px 9px;border-radius:5px;font-size:11px;font-family:var(--mono);border:1px solid #fbbf24;background:#fef3c7;color:#92400e}
+
+/* ─── ROW MOVE BUTTONS ─────────────────────────────── */
+.gl-inner { position:relative; }
+.gl-move {
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  display:none; flex-direction:column; gap:1px;
+}
+.glabel-cell:hover .gl-move { display:flex; }
+.move-btn {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:3px; padding:1px 4px; font-size:9px; cursor:pointer;
+  color:var(--text3); line-height:1.2;
+}
+.move-btn:hover:not([disabled]) { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+.move-btn[disabled] { opacity:0.3; cursor:default; }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -462,9 +478,8 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
-<script>// ─── CONSTANTS ────────────────────────────────────────────────────────
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────
 const PROJ_KEY  = 'bim_projects_v2';
 const MS_KEY    = 'bim_milestones_v1';
 const SET_KEY   = 'bim_settings_v1';
@@ -686,7 +701,7 @@ function renderGantt() {
   const dividers = months.slice(1).map(m => px(m));
 
   // build rows
-  const sortedList = list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+  const sortedList = list.slice();  // order preserved for manual grouping
 
   const headerCols = months.map(m=>{
     const isNow = m.getFullYear()===today.getFullYear() && m.getMonth()===today.getMonth();
@@ -747,11 +762,16 @@ function renderGantt() {
     const recurLabel = m.recurring ? `<span style="font-size:10px;color:var(--info);font-family:var(--mono)">↻ alle ${m.interval} ${m.unit==='weeks'?'Wo.':'Mo.'}</span>` : '';
     const dzHtml = dzTags(m.disziplinen);
 
+    const rowIdx = sortedList.indexOf(m);
     return `<tr>
       <td class="glabel-cell" style="width:${LABEL_W}px;min-width:${LABEL_W}px" onclick="openModal('${m.id}')">
         <div class="gl-inner">
           <div class="gl-name">${TYP[m.typ]?.icon||''} ${m.name}</div>
           <div class="gl-sub">${sbHtml(m.status)} ${recurLabel} ${dzHtml}</div>
+        </div>
+        <div class="gl-move" onclick="event.stopPropagation()">
+          <button class="move-btn" onclick="moveUp('${m.id}',event)" title="Nach oben" ${rowIdx===0?'disabled':''}>▲</button>
+          <button class="move-btn" onclick="moveDown('${m.id}',event)" title="Nach unten" ${rowIdx===sortedList.length-1?'disabled':''}>▼</button>
         </div>
       </td>
       <td class="gtrack-cell" colspan="${months.length}" style="width:${trackWidth}px;min-width:${trackWidth}px">
@@ -818,7 +838,7 @@ function renderTimeline() {
   if (!list.length) { area.innerHTML = emptyHtml(); return; }
 
   const today  = new Date(); today.setHours(0,0,0,0);
-  const sorted = list.slice().sort((a,b)=>new Date(a.datum)-new Date(b.datum));
+  const sorted = list.slice();  // order preserved for manual grouping
 
   // group by month
   const groups = {};
@@ -914,6 +934,24 @@ function onRecurringChange() {
 }
 
 // ─── MODAL ────────────────────────────────────────────────────────────
+
+function moveUp(id, evt) {
+  if (evt) evt.stopPropagation();
+  const arr = milestones[currentPid]||[];
+  const i = arr.findIndex(m=>m.id===id);
+  if (i <= 0) return;
+  [arr[i-1], arr[i]] = [arr[i], arr[i-1]];
+  save(); render();
+}
+function moveDown(id, evt) {
+  if (evt) evt.stopPropagation();
+  const arr = milestones[currentPid]||[];
+  const i = arr.findIndex(m=>m.id===id);
+  if (i < 0 || i >= arr.length-1) return;
+  [arr[i+1], arr[i]] = [arr[i], arr[i+1]];
+  save(); render();
+}
+
 function openModal(id=null) {
   if (!currentPid) return;
   editingId = id;
@@ -1482,27 +1520,37 @@ function goTo(href) { window.location.href = href; }
 function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
 function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
+
 function renderProjBadge() {
-  const pid = getCurrentProject();
-  const proj = (projects||[]).find(p=>p.id===pid);
-  const wrap = document.getElementById('proj-badge-wrap');
+  var pid = getCurrentProject();
+  var proj = (projects||[]).find(function(p){return p.id===pid;});
+  var wrap = document.getElementById('proj-badge-wrap');
   if(!wrap) return;
   if(proj) {
     wrap.innerHTML =
-      '<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">Projekt</span>' +
-      '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--accent-dim);border:1px solid rgba(0,201,167,0.25);border-radius:20px;font-size:12px;font-weight:500;color:var(--accent);font-family:var(--mono)" title="Projekt wechseln \u2192 Projektverwaltung">' +
-        '\u25cf ' + proj.number + ' \u00b7 ' + proj.name +
-      '</span>' +
-      '<button onclick="goTo(\'index.html\')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:transparent;font-family:var(--sans);font-size:11px;color:var(--text3);cursor:pointer">\u21c4 wechseln</button>';
+      '<span style="font-size:11px;color:var(--text3);font-family:monospace">Projekt</span>' +
+      '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;' +
+        'background:var(--accent-dim);border:1px solid rgba(0,201,167,0.25);' +
+        'border-radius:20px;font-size:12px;font-weight:500;color:var(--accent);' +
+        'font-family:monospace">\u25cf ' + proj.number + ' \u00b7 ' + proj.name + '</span>' +
+      '<button onclick="goTo(\'index.html\')" ' +
+        'style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;' +
+        'background:transparent;font-family:var(--sans);font-size:11px;' +
+        'color:var(--text3);cursor:pointer">\u21c4 wechseln</button>';
   } else {
     wrap.innerHTML =
       '<span style="font-size:12px;color:var(--err)">\u26a0 Kein aktives Projekt</span>' +
-      '<button onclick="goTo(\'index.html\')" style="padding:4px 12px;border:1px solid var(--accent);border-radius:4px;background:var(--accent-dim);font-family:var(--sans);font-size:12px;color:var(--accent);cursor:pointer;font-weight:500">\u2192 Projektverwaltung \u00f6ffnen</button>';
+      '<button onclick="goTo(\'index.html\')" ' +
+        'style="padding:4px 12px;border:1px solid var(--accent);border-radius:4px;' +
+        'background:var(--accent-dim);font-family:var(--sans);font-size:12px;' +
+        'color:var(--accent);cursor:pointer;font-weight:500">\u2192 Projektverwaltung</button>';
   }
 }
 
 
+
 </script>
+
 <div class="modal-overlay" id="pdf-modal-ol" onclick="if(event.target===this)closePdfModal()">
   <div class="modal" style="max-width:680px;max-height:88vh;display:flex;flex-direction:column">
     <div class="modal-header"><div class="modal-title">Terminplan aus PDF</div><button class="modal-close" onclick="closePdfModal()">&times;</button></div>

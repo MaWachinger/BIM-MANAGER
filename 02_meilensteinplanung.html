@@ -585,13 +585,13 @@ function onProjectChange() {
     const p = projects.find(x=>x.id===currentPid);
     (document.getElementById('page-sub')||{}).textContent = `${p?.name||''} · Klicke auf einen Eintrag zum Bearbeiten`;
     if (!milestones[currentPid]) milestones[currentPid] = [];
-    (document.getElementById('stats-row')||{}).style.display = 'grid';
+    (function(){var _es=document.getElementById('stats-row');if(_es)_es.style.display='grid';}());
     renderTpPanel();
     render();
   } else {
     (function(){const _el=document.getElementById('page-sub');if(_el)_el.textContent='Wähle ein Projekt um Meilensteine zu verwalten';}());
-    (document.getElementById('stats-row')||{}).style.display = 'none';
-    (document.getElementById('tp-panel')||{}).style.display = 'none';
+    (function(){var _es=document.getElementById('stats-row');if(_es)_es.style.display='none';}());
+    (function(){var _es=document.getElementById('tp-panel');if(_es)_es.style.display='none';}());
     (function(){const _el=document.getElementById('main-area');if(_el)_el.innerHTML=noProject();}());
   }
 }
@@ -637,11 +637,11 @@ function updateStats() {
   if (upcoming.length) {
     const d = new Date(upcoming[0].datum);
     (function(){const _el=document.getElementById('st-next');if(_el)_el.textContent=d.toLocaleDateString('de-DE',{day:'2-digit',month:'short'});}());
-    (document.getElementById('st-next')||{}).style.color      = (d-today)<14*864e5 ? 'var(--warn)' : 'var(--text)';
+    (function(){var _es=document.getElementById('st-next');if(_es)_es.style.color=(d-today)<14*864e5 ? 'var(--warn)' : 'var(--text)';}());
     (function(){const _el=document.getElementById('st-next-name');if(_el)_el.textContent=upcoming[0].name.slice(0,24);}());
   } else {
     (function(){const _el=document.getElementById('st-next');if(_el)_el.textContent='—';}());
-    (document.getElementById('st-next')||{}).style.color      = 'var(--text3)';
+    (function(){var _es=document.getElementById('st-next');if(_es)_es.style.color='var(--text3)';}());
     (function(){const _el=document.getElementById('st-next-name');if(_el)_el.textContent='Kein offener Termin';}());
   }
 }
@@ -655,8 +655,8 @@ function render() {renderProjBadge();
 
 function setView(v) {
   currentView = v;
-  (document.getElementById('vbtn-gantt')||{}).classList.toggle('active', v==='gantt');
-  (document.getElementById('vbtn-timeline')||{}).classList.toggle('active', v==='timeline');
+  (function(){var _ec=document.getElementById('vbtn-gantt');if(_ec)_ec.classList.toggle('active', v==='gantt');}());
+  (function(){var _ec=document.getElementById('vbtn-timeline');if(_ec)_ec.classList.toggle('active', v==='timeline');}());
   render();
 }
 
@@ -925,12 +925,12 @@ function setDz(arr) {
 // ─── FORM LOGIC ───────────────────────────────────────────────────────
 function onTypChange() {
   const isDD = (document.getElementById('f-typ')||{}).value === 'datadrop';
-  (document.getElementById('recurring-section')||{}).style.display = isDD ? '' : 'none';
+  (function(){var _es=document.getElementById('recurring-section');if(_es)_es.style.display=isDD ? '' : 'none';}());
   if (!isDD) { (document.getElementById('f-recurring')||{}).checked=false; onRecurringChange(); }
 }
 function onRecurringChange() {
   const checked = (document.getElementById('f-recurring')||{}).checked;
-  (document.getElementById('recurring-box')||{}).classList.toggle('hidden', !checked);
+  (function(){var _ec=document.getElementById('recurring-box');if(_ec)_ec.classList.toggle('hidden', !checked);}());
 }
 
 // ─── MODAL ────────────────────────────────────────────────────────────
@@ -983,7 +983,7 @@ function openModal(id=null) {
     setDz([]);
   }
   onTypChange(); onRecurringChange();
-  (document.getElementById('modal-ol')||{}).classList.add('open');
+  (function(){var _ec=document.getElementById('modal-ol');if(_ec)_ec.classList.add('open');}());
   setTimeout(()=>(document.getElementById('f-name')||{}).focus(),200);
 }
 
@@ -1005,7 +1005,7 @@ function copyMilestone() {
   showToast('✓ Kopie erstellt: ' + copy.name);
 }
 
-function closeModal() { (document.getElementById('modal-ol')||{}).classList.remove('open'); editingId=null; }
+function closeModal() { (function(){var _ec=document.getElementById('modal-ol');if(_ec)_ec.classList.remove('open');}()); editingId=null; }
 function bgClose(e)   { if(e.target===document.getElementById('modal-ol')) closeModal(); }
 
 function saveMilestone() {
@@ -1043,8 +1043,8 @@ function saveMilestone() {
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────
-function confirmDelete(id) { deleteId=id; (document.getElementById('confirm-ol')||{}).classList.add('open'); }
-function closeConfirm()    { (document.getElementById('confirm-ol')||{}).classList.remove('open'); deleteId=null; }
+function confirmDelete(id) { deleteId=id; (function(){var _ec=document.getElementById('confirm-ol');if(_ec)_ec.classList.add('open');}()); }
+function closeConfirm()    { (function(){var _ec=document.getElementById('confirm-ol');if(_ec)_ec.classList.remove('open');}()); deleteId=null; }
 function doDelete() {
   if (!deleteId||!currentPid) return;
   milestones[currentPid]=(milestones[currentPid]||[]).filter(m=>m.id!==deleteId);
@@ -1096,7 +1096,7 @@ function toggleTpPanel() {
 
 function renderTpPanel(){
   if(!currentPid){
-    (document.getElementById('tp-panel')||{}).style.display='none';
+    (function(){var _es=document.getElementById('tp-panel');if(_es)_es.style.display='none';}());
     const _b=document.getElementById('tp-toggle-btn');
     if(_b){_b.style.background='transparent';_b.style.color='var(--text2)';_b.style.borderColor='var(--border)';}
     return;
@@ -1104,8 +1104,8 @@ function renderTpPanel(){
   // Don't auto-show – only update content; visibility managed by toggleTpPanel()
   const tp=terminplanData[currentPid]||{};
   const isPlanung=tp.type==='planungsterminplan';
-  (document.getElementById('tpb-rahmen')||{}).classList.toggle('active',!isPlanung);
-  (document.getElementById('tpb-planung')||{}).classList.toggle('active',isPlanung);
+  (function(){var _ec=document.getElementById('tpb-rahmen');if(_ec)_ec.classList.toggle('active',!isPlanung);}());
+  (function(){var _ec=document.getElementById('tpb-planung');if(_ec)_ec.classList.toggle('active',isPlanung);}());
   const dot=document.getElementById('tp-dot'),fl=document.getElementById('tp-folder-lbl');
   if(dirHandle){dot.className='tp-dot connected';fl.textContent='Ordner: '+dirHandle.name;fl.style.color='var(--text2)';}
   else{dot.className='tp-dot';fl.textContent='Kein Ordner verbunden';fl.style.color='var(--text3)';}

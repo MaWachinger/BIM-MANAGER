@@ -443,6 +443,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="del-btn" onclick="closeModal();confirmDelete(editingId)" style="display:none;margin-right:auto">⌫ Löschen</button>
+      <button class="btn btn-secondary" id="copy-btn" onclick="copyMilestone()" style="display:none" title="Kopie dieses Eintrags erstellen">⎘ Kopieren</button>
       <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
       <button class="btn btn-primary" id="save-btn" onclick="saveMilestone()">Speichern</button>
     </div>
@@ -919,6 +920,7 @@ function openModal(id=null) {
   (function(){const _el=document.getElementById('modal-title');if(_el)_el.textContent=id ? 'Meilenstein bearbeiten' : 'Neuer Meilenstein';}());
   (function(){const _el=document.getElementById('save-btn');if(_el)_el.textContent=id ? 'Änderungen speichern' : 'Speichern';}());
   (function(){const _el=document.getElementById('del-btn');if(_el)_el.style.display=id?'':'none';}());
+  (function(){const _el=document.getElementById('copy-btn');if(_el)_el.style.display=id?'':'none';}());
 
   if (id) {
     const m=(milestones[currentPid]||[]).find(x=>x.id===id); if(!m) return;
@@ -945,6 +947,24 @@ function openModal(id=null) {
   onTypChange(); onRecurringChange();
   (document.getElementById('modal-ol')||{}).classList.add('open');
   setTimeout(()=>(document.getElementById('f-name')||{}).focus(),200);
+}
+
+
+function copyMilestone() {
+  if (!editingId || !currentPid) return;
+  const orig = (milestones[currentPid]||[]).find(m=>m.id===editingId);
+  if (!orig) return;
+  const copy = Object.assign({}, orig, {
+    id:    uid(),
+    name:  orig.name + ' (Kopie)',
+    datum: orig.datum || '',
+    frist: orig.frist || '',
+  });
+  milestones[currentPid] = (milestones[currentPid]||[]).concat([copy]);
+  save();
+  closeModal();
+  render();
+  showToast('✓ Kopie erstellt: ' + copy.name);
 }
 
 function closeModal() { (document.getElementById('modal-ol')||{}).classList.remove('open'); editingId=null; }

@@ -647,10 +647,16 @@ function updateStats() {
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────
-function render() {renderProjBadge();
-  if (!currentPid) return;
-  updateStats();
-  currentView==='gantt' ? renderGantt() : renderTimeline();
+function render() {
+  try {
+    renderProjBadge();
+    if (!currentPid) return;
+    updateStats();
+    currentView==='gantt' ? renderGantt() : renderTimeline();
+  } catch(e) {
+    console.error('render() crash:', e.message, e.stack);
+    showToast('⚠ Render-Fehler: ' + e.message);
+  }
 }
 
 function setView(v) {
@@ -1009,8 +1015,13 @@ function closeModal() { (function(){var _ec=document.getElementById('modal-ol');
 function bgClose(e)   { if(e.target===document.getElementById('modal-ol')) closeModal(); }
 
 function saveMilestone() {
-  const name  = (document.getElementById('f-name')||{}).value.trim();
-  const datum = (document.getElementById('f-datum')||{}).value;
+  try {
+  const f_name_el = document.getElementById('f-name');
+  const f_datum_el = document.getElementById('f-datum');
+  if (!f_name_el) { showToast('⚠ f-name fehlt im DOM'); return; }
+  if (!f_datum_el) { showToast('⚠ f-datum fehlt im DOM'); return; }
+  const name  = f_name_el.value.trim();
+  const datum = f_datum_el.value;
   if (!name||!datum) { showToast('Bitte Bezeichnung und Datum ausfüllen.'); return; }
 
   const isRecur = (document.getElementById('f-typ')||{}).value==='datadrop' && (document.getElementById('f-recurring')||{}).checked;
@@ -1021,7 +1032,7 @@ function saveMilestone() {
     status:     (document.getElementById('f-status')||{}).value,
     datum, frist: (document.getElementById('f-frist')||{}).value||'',
     disziplinen:selectedDz.length?selectedDz:['alle'],
-    desc:       (document.getElementById('f-desc')||{}).value.trim(),
+    desc:       (document.getElementById('f-desc')||document.createElement('textarea')).value.trim(),
     recurring:  isRecur,
     interval:   isRecur ? parseInt((document.getElementById('f-interval')||{}).value)||3 : null,
     unit:       isRecur ? (document.getElementById('f-unit')||{}).value : null,
@@ -1040,6 +1051,7 @@ function saveMilestone() {
     showToast('✓ Meilenstein angelegt');
   }
   save(); closeModal(); render();
+  } catch(e) { showToast('⚠ Fehler: ' + e.message); console.error('saveMilestone crash:', e); }
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────

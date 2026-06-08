@@ -456,7 +456,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
     <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6">Diese Aktion kann nicht rückgängig gemacht werden.</div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="closeConfirm()">Abbrechen</button>
-      <button class="btn btn-danger" id="del-btn">Ja, löschen</button>
+      <button class="btn btn-danger" id="confirm-del-btn" onclick="doDelete()">Ja, löschen</button>
     </div>
   </div>
 </div>
@@ -547,7 +547,7 @@ function init() {
   buildDzChips();
   populateSelect();
   renderProjBadge();
-  (document.getElementById('del-btn')||{}).addEventListener('click', doDelete);
+  // confirm button wired via onclick attribute
 }
 
 // ─── PROJECT SELECT ───────────────────────────────────────────────────

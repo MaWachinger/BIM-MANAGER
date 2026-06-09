@@ -264,6 +264,19 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .move-btn:hover:not([disabled]) { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
 .move-btn[disabled] { opacity:0.3; cursor:default; }
 
+
+/* ─── RESIZABLE LABEL COLUMN ───────────────────────────────── */
+.gantt-outer { position:relative; }
+.glabel-resize-handle {
+  position:absolute; left:0; top:0; bottom:0;
+  width:4px; cursor:col-resize; z-index:10;
+  background:transparent; transition:background 0.15s;
+}
+.glabel-resize-handle:hover, .glabel-resize-handle.dragging {
+  background:var(--accent);
+}
+.gantt-outer .gantt-scroll { overflow-x:auto; }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -485,7 +498,7 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 const PROJ_KEY  = 'bim_projects_v2';
 const MS_KEY    = 'bim_milestones_v1';
 const SET_KEY   = 'bim_settings_v1';
-const LABEL_W   = 220;   // px – label column width
+let LABEL_W = 220; // resizable   // px – label column width
 const COL_W     = 90;    // px – each month column width
 
 const DISZIPLINEN = [
@@ -649,12 +662,36 @@ function updateStats() {
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────
+function initGanttResize() {
+  const handle = document.getElementById('gantt-resize-handle');
+  if (!handle) return;
+  let startX=0, startW=0;
+  handle.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startW = LABEL_W;
+    handle.classList.add('dragging');
+    const onMove = e2 => {
+      LABEL_W = Math.max(120, Math.min(480, startW + (e2.clientX - startX)));
+      render();
+    };
+    const onUp = () => {
+      handle.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  });
+}
+
 function render() {
   try {
     renderProjBadge();
     if (!currentPid) return;
     updateStats();
     currentView==='gantt' ? renderGantt() : renderTimeline();
+    if(currentView==='gantt') initGanttResize();
   } catch(e) {
     console.error('render() crash:', e.message, e.stack);
     showToast('⚠ Render-Fehler: ' + e.message);
@@ -797,7 +834,7 @@ function renderGantt() {
   </div>`;
 
   area.innerHTML = `
-    <div class="gantt-outer">
+    <div class="gantt-outer"><div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite anpassen"></div>
       <div class="gantt-scroll">
         <table class="gtable" style="width:${LABEL_W+trackWidth}px">
           <colgroup>
@@ -1052,7 +1089,10 @@ function saveMilestone() {
     milestones[currentPid].push(data);
     showToast('✓ Meilenstein angelegt');
   }
-  save(); closeModal(); render();
+  console.log('[BIM] Saving datum:', datum, 'frist:', (document.getElementById('f-frist')||{}).value);
+  closeModal();
+  save();
+  render();
   } catch(e) { showToast('⚠ Fehler: ' + e.message); console.error('saveMilestone crash:', e); }
 }
 

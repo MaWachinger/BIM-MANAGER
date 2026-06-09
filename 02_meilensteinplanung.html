@@ -362,6 +362,51 @@ tr.gantt-hidden { display:none; }
 .indent-btn:hover { background:var(--accent-dim); color:var(--accent); }
 .indent-label { font-size:12px; color:var(--text3); font-family:var(--mono); }
 
+
+/* ─── 3-COL GANTT LAYOUT ─────────────────────────────────────────── */
+.gcol-row  { position:sticky;left:0;z-index:8;background:var(--surface2);
+             border-right:1px solid var(--border);text-align:center;
+             font-size:11px;color:var(--text3);font-family:var(--mono);
+             user-select:none;vertical-align:middle; }
+.gcol-name { position:sticky;z-index:7;background:var(--surface);
+             border-right:1px solid var(--border);vertical-align:middle;
+             cursor:pointer;padding:0; }
+.gcol-act  { position:sticky;z-index:6;background:var(--surface2);
+             border-right:2px solid var(--border);padding:4px 3px;
+             vertical-align:middle; }
+th.gcol-row,th.gcol-name,th.gcol-act {
+  top:0;background:var(--surface2);font-size:11px;font-weight:500;
+  padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap; }
+th.gcol-row{z-index:15;} th.gcol-name{z-index:14;} th.gcol-act{z-index:13;text-align:center;}
+
+/* name cell inner */
+.gname-inner{display:flex;align-items:center;padding:6px 6px;gap:3px;height:52px;box-sizing:border-box;}
+.gname-toggle{width:16px;height:16px;flex-shrink:0;border:none;background:transparent;
+  cursor:pointer;color:var(--text3);font-size:10px;display:flex;align-items:center;
+  justify-content:center;border-radius:3px;padding:0;transition:transform 0.15s;}
+.gname-toggle:hover{background:var(--accent-dim);color:var(--accent);}
+.gname-toggle.collapsed{transform:rotate(-90deg);}
+.gname-ph{display:inline-block;width:16px;height:16px;flex-shrink:0;}
+.gname-text{flex:1;min-width:0;overflow:hidden;}
+.gname-title{font-size:13px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gl-level-0 .gname-title{font-weight:600;}
+.gname-badges{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;}
+
+/* actions cell */
+.gact-wrap{display:flex;align-items:center;gap:2px;justify-content:center;}
+.gab{width:22px;height:22px;border-radius:4px;border:1px solid var(--border);
+  background:var(--surface);cursor:pointer;font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text3);padding:0;transition:all 0.12s;}
+.gab:hover:not([disabled]){background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.gab[disabled]{opacity:0.25;cursor:default;}
+.gab.gab-add{background:var(--accent);color:#0f1623;border-color:var(--accent);font-size:14px;}
+.gab.gab-add:hover{background:#00b396;}
+
+/* row number cell */
+.grow-num{font-size:11px;color:var(--text3);font-family:var(--mono);text-align:center;}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -511,11 +556,10 @@ tr.gantt-hidden { display:none; }
           <input type="date" id="f-datum">
         </div>
         <div class="fg">
-          <label>Einzug (Hierarchie)</label>
-          <div class="indent-controls">
-            <button type="button" class="indent-btn" onclick="changeIndent(-1)" title="Einzug verkleinern">← Outdent</button>
-            <span class="indent-label" id="f-level-label">Ebene 0</span>
-            <button type="button" class="indent-btn" onclick="changeIndent(1)" title="Einzug vergrößern">Indent →</button>
+          <label>Zur Zeile verschieben</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" id="f-rownum" min="1" placeholder="Zeilennummer" style="width:100px">
+            <span style="font-size:12px;color:var(--text3)" id="f-rownum-hint"></span>
             <input type="hidden" id="f-level" value="0">
           </div>
         </div>
@@ -592,11 +636,14 @@ tr.gantt-hidden { display:none; }
 <div class="toast" id="toast"></div>
 
 <script>
+
 // ─── CONSTANTS ────────────────────────────────────────────────────────
 const PROJ_KEY  = 'bim_projects_v2';
 const MS_KEY    = 'bim_milestones_v1';
 const SET_KEY   = 'bim_settings_v1';
-let LABEL_W = 220; // resizable   // px – label column width
+let LABEL_W = 200; // resizable
+const ROW_W  = 36;  // row number col
+const ACT_W  = 88;  // actions col – label column width
 const COL_W     = 90;    // px – each month column width
 
 const DISZIPLINEN = [
@@ -786,8 +833,10 @@ function initGanttResize() {
     if (table) {
       const cols = table.querySelectorAll('col');
       if (cols[0]) { cols[0].style.width = newW + 'px'; cols[0].style.minWidth = newW + 'px'; }
-      const cells = table.querySelectorAll('th.gh-corner, td.glabel-cell');
-      cells.forEach(el => { el.style.width = newW + 'px'; el.style.minWidth = newW + 'px'; });
+      const nameCells = table.querySelectorAll('th.gcol-name, td.gcol-name');
+      nameCells.forEach(el => { el.style.width = newW+'px'; el.style.minWidth = newW+'px'; });
+      const actCells = table.querySelectorAll('th.gcol-act, td.gcol-act');
+      actCells.forEach(el => { el.style.left = (ROW_W+newW)+'px'; });
     }
   });
 
@@ -939,40 +988,37 @@ function renderGantt() {
     const dzHtml = dzTags(m.disziplinen);
 
     const rowIdx = sortedList.indexOf(m);
-    // Hierarchy: determine visibility and toggle state
     const mLevel = m.level||0;
-    // Find if any ancestor is collapsed
+    // visibility: hidden if ancestor is collapsed
     let isHidden = false;
-    for (let _j = rowIdx-1; _j >= 0; _j--) {
-      const _anc = sortedList[_j];
-      const _ancLevel = _anc.level||0;
-      if (_ancLevel < mLevel) {
-        if (collapsedIds.has(_anc.id)) { isHidden = true; }
-        break;
-      }
+    for (let _j=rowIdx-1;_j>=0;_j--) {
+      const _al=sortedList[_j].level||0;
+      if (_al<mLevel){if(collapsedIds.has(sortedList[_j].id))isHidden=true;break;}
     }
-    // Check if this entry has children (next entry has higher level)
-    const hasChildren = rowIdx < sortedList.length-1 && (sortedList[rowIdx+1].level||0) > mLevel;
-    const isCollapsed = collapsedIds.has(m.id);
-    const toggleBtn = hasChildren
-      ? `<button class="gl-toggle${isCollapsed?' collapsed':''}" onclick="toggleCollapse('${m.id}',event)" title="${isCollapsed?'Aufklappen':'Einklappen'}">${isCollapsed?'▶':'▼'}</button>`
-      : `<span class="gl-toggle-placeholder"></span>`;
+    const hasChildren=rowIdx<sortedList.length-1&&(sortedList[rowIdx+1].level||0)>mLevel;
+    const isCollapsed=collapsedIds.has(m.id);
     return `<tr class="${isHidden?'gantt-hidden':''} gl-level-${mLevel}">
-      <td class="glabel-cell" style="width:${LABEL_W}px;min-width:${LABEL_W}px" onclick="openModal('${m.id}')">
-        <div class="gl-inner">
-          ${toggleBtn}
-          <span style="display:inline-block;width:${mLevel*14}px;flex-shrink:0"></span>
-          <div class="gl-name-wrap">
-            <div class="gl-name">${TYP[m.typ]?.icon||''} ${m.name}</div>
-            <div class="gl-sub">${sbHtml(m.status)} ${recurLabel} ${dzHtml}</div>
+      <td class="gcol-row" style="left:0;width:${ROW_W}px">
+        <div class="grow-num">${rowIdx+1}</div>
+      </td>
+      <td class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px" onclick="openModal('${m.id}')">
+        <div class="gname-inner" style="padding-left:${6+mLevel*16}px">
+          ${hasChildren
+            ? `<button class="gname-toggle${isCollapsed?' collapsed':''}" onclick="toggleCollapse('${m.id}',event)">${isCollapsed?'▶':'▼'}</button>`
+            : '<span class="gname-ph"></span>'}
+          <div class="gname-text">
+            <div class="gname-title">${TYP[m.typ]?.icon||''} ${m.name}</div>
+            <div class="gname-badges">${sbHtml(m.status)} ${recurLabel} ${dzHtml}</div>
           </div>
-          <div class="gl-row-actions" onclick="event.stopPropagation()">
-            <button class="gl-action-btn" onclick="changeIndentOf('${m.id}',-1,event)" title="Einzug verkleinern (Outdent)">←</button>
-            <button class="gl-action-btn" onclick="changeIndentOf('${m.id}',1,event)" title="Einzug vergrößern (Indent)">→</button>
-            <button class="gl-action-btn" onclick="moveUp('${m.id}',event)" title="Nach oben" ${rowIdx===0?'disabled':''}>▲</button>
-            <button class="gl-action-btn" onclick="moveDown('${m.id}',event)" title="Nach unten" ${rowIdx===sortedList.length-1?'disabled':''}>▼</button>
-            <button class="gl-action-btn gl-insert" onclick="insertBelow('${m.id}',event)" title="Neue Zeile darunter einfügen">+</button>
-          </div>
+        </div>
+      </td>
+      <td class="gcol-act" style="left:${ROW_W+LABEL_W}px;width:${ACT_W}px">
+        <div class="gact-wrap">
+          <button class="gab" onclick="changeIndentOf('${m.id}',-1,event)" title="Outdent">←</button>
+          <button class="gab" onclick="changeIndentOf('${m.id}',1,event)" title="Indent">→</button>
+          <button class="gab" onclick="moveUp('${m.id}',event)" title="↑" ${rowIdx===0?'disabled':''}>▲</button>
+          <button class="gab" onclick="moveDown('${m.id}',event)" title="↓" ${rowIdx===sortedList.length-1?'disabled':''}>▼</button>
+          <button class="gab gab-add" onclick="insertBelow('${m.id}',event)" title="+">+</button>
         </div>
       </td>
       <td class="gtrack-cell" colspan="${months.length}" style="width:${trackWidth}px;min-width:${trackWidth}px">
@@ -989,17 +1035,25 @@ function renderGantt() {
     <div class="legend-item"><div style="width:10px;height:4px;border-radius:2px;background:#3b82f6;opacity:0.25"></div>Zyklus</div>
   </div>`;
 
+  const totalW = ROW_W + LABEL_W + ACT_W + trackWidth;
   area.innerHTML = `
     <div class="gantt-outer">
       <div class="gantt-scroll" id="gantt-scroll-area">
-        <table class="gtable" style="width:${LABEL_W+trackWidth}px;min-width:${LABEL_W+trackWidth}px">
+        <table class="gtable" style="width:${totalW}px;min-width:${totalW}px">
           <colgroup>
+            <col style="width:${ROW_W}px;min-width:${ROW_W}px">
             <col style="width:${LABEL_W}px;min-width:${LABEL_W}px">
+            <col style="width:${ACT_W}px;min-width:${ACT_W}px">
             ${months.map(()=>`<col style="width:${COL_W}px;min-width:${COL_W}px">`).join('')}
           </colgroup>
           <thead>
             <tr>
-              <th class="gh-corner" style="width:${LABEL_W}px;min-width:${LABEL_W}px;padding:8px 14px;font-size:11px;font-weight:500;position:sticky;left:0;top:0;z-index:15;background:var(--surface2)">Meilenstein<div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite anpassen – ziehen"></div></th>
+              <th class="gcol-row" style="left:0;width:${ROW_W}px">#</th>
+              <th class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px">
+                Vorgang
+                <div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite – ziehen"></div>
+              </th>
+              <th class="gcol-act" style="left:${ROW_W+LABEL_W}px;width:${ACT_W}px">Aktionen</th>
               ${headerCols}
             </tr>
           </thead>
@@ -1217,6 +1271,14 @@ function openModal(id=null, insertAfterHint=null) {
     (document.getElementById('f-frist')||{}).value  = m.frist||'';
     (document.getElementById('f-desc')||{}).value   = m.desc||'';
     (document.getElementById('f-recurring')||{}).checked = !!m.recurring;
+    (function(){
+      const arr=milestones[currentPid]||[];
+      const rn=arr.findIndex(x=>x.id===id)+1;
+      const el=document.getElementById('f-rownum');
+      const hint=document.getElementById('f-rownum-hint');
+      if(el){el.value='';el.placeholder='Aktuelle Zeile: '+rn;}
+      if(hint)hint.textContent='(1–'+arr.length+')';
+    }());
     (function(){const _el=document.getElementById('f-level');const _lb=document.getElementById('f-level-label');if(_el){_el.value=m.level||0;if(_lb)_lb.textContent='Ebene '+(m.level||0);}}());
     (document.getElementById('f-interval')||{}).value    = m.interval||3;
     (document.getElementById('f-unit')||{}).value        = m.unit||'weeks';
@@ -1228,6 +1290,13 @@ function openModal(id=null, insertAfterHint=null) {
     (document.getElementById('f-status')||{}).value = 'offen';
     (document.getElementById('f-recurring')||{}).checked = false;
     (document.getElementById('f-interval')||{}).value    = 3;
+    (function(){
+      const el=document.getElementById('f-rownum');
+      const hint=document.getElementById('f-rownum-hint');
+      if(el){el.value='';el.placeholder='Zeilennummer';}
+      const arr=milestones[currentPid]||[];
+      if(hint)hint.textContent='(1–'+(arr.length+1)+')';
+    }());
     (function(){const _el=document.getElementById('f-level');const _lb=document.getElementById('f-level-label');if(_el){_el.value=0;if(_lb)_lb.textContent='Ebene 0 (Gruppe)';}}());
     (document.getElementById('f-unit')||{}).value        = 'weeks';
     setDz([]);
@@ -1304,6 +1373,14 @@ function saveMilestone() {
     showToast('✓ Meilenstein angelegt');
   }
   console.log('[BIM] Saving datum:', datum, 'frist:', (document.getElementById('f-frist')||{}).value);
+  // Apply row-number jump if specified
+  const _rn=parseInt((document.getElementById('f-rownum')||{}).value);
+  if(!isNaN(_rn)&&_rn>=1){
+    const _arr=milestones[currentPid];
+    const _cur=_arr.findIndex(x=>x.id===data.id);
+    const _tgt=Math.max(0,Math.min(_arr.length-1,_rn-1));
+    if(_cur!==-1&&_cur!==_tgt){_arr.splice(_cur,1);_arr.splice(_tgt,0,data);}
+  }
   closeModal();
   save();
   render();

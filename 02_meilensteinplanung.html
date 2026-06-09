@@ -832,7 +832,14 @@ function initGanttResize() {
     const table = document.querySelector('.gtable');
     if (table) {
       const cols = table.querySelectorAll('col');
-      if (cols[0]) { cols[0].style.width = newW + 'px'; cols[0].style.minWidth = newW + 'px'; }
+      // cols[0]=row# (fixed), cols[1]=Vorgang (resize), cols[2]=Actions (move left)
+      if (cols[1]) { cols[1].style.width = newW+'px'; cols[1].style.minWidth = newW+'px'; }
+      // Update total table width
+      const totalW = ROW_W + newW + ACT_W;
+      const trackCols = cols.length - 3;
+      table.style.width = (totalW + trackCols * COL_W) + 'px';
+      table.style.minWidth = table.style.width;
+      // Update sticky cells
       const nameCells = table.querySelectorAll('th.gcol-name, td.gcol-name');
       nameCells.forEach(el => { el.style.width = newW+'px'; el.style.minWidth = newW+'px'; });
       const actCells = table.querySelectorAll('th.gcol-act, td.gcol-act');

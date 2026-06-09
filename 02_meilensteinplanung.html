@@ -478,6 +478,8 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────────
 const PROJ_KEY  = 'bim_projects_v2';
@@ -1079,7 +1081,7 @@ function exportCSV() {
 }
 
 // ─── UTILS ────────────────────────────────────────────────────────────
-function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function showToast(msg) { const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 function comingSoon()   { showToast('Modul wird in Kürze entwickelt'); }
 
 document.addEventListener('keydown',e=>{

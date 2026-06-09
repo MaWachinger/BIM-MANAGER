@@ -688,6 +688,7 @@ const ST = {
 let projects = [], milestones = {}, currentPid = null, editingId = null, deleteId = null;
 let collapsedIds = new Set(); // collapsed group IDs
 let selectedId = null;           // highlighted row
+let zoomLevel = 0;               // 0=Monate 1=2-Wochen 2=1-Woche
 let currentView = 'gantt', selectedDz = [];
 
 const TP_KEY = 'bim_terminplan_v1';
@@ -882,6 +883,7 @@ function render(opts) {
     currentView==='gantt' ? renderGantt() : renderTimeline();
     if (currentView==='gantt') {
       initGanttResize();
+    initWheelZoom();
       setTimeout(()=>{
         const sc2 = document.getElementById('gantt-scroll-area');
         if (!sc2) return;
@@ -922,6 +924,35 @@ function setView(v) {
 // ═════════════════════════════════════════════════════
 //  GANTT
 // ═════════════════════════════════════════════════════
+// ─── ZOOM ────────────────────────────────────────────────────────────
+const ZOOM_LEVELS = [
+  { unit:'month', step:1, colW:90,  label:'Monate'   },
+  { unit:'week',  step:2, colW:70,  label:'2-Wochen' },
+  { unit:'week',  step:1, colW:40,  label:'Wochen'   },
+];
+
+function getISOWeek(d) {
+  const date = new Date(d); date.setHours(0,0,0,0);
+  date.setDate(date.getDate() + 3 - (date.getDay()+6)%7);
+  const w1 = new Date(date.getFullYear(),0,4);
+  return 1 + Math.round(((date-w1)/86400000 - 3 + (w1.getDay()+6)%7)/7);
+}
+
+function initWheelZoom() {
+  const sc = document.getElementById('gantt-scroll-area');
+  if (!sc || sc._zoomBound) return;
+  sc._zoomBound = true;
+  sc.addEventListener('wheel', e => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    // scroll up (negative deltaY) = zoom in (+1), down = zoom out (-1)
+    const delta = e.deltaY < 0 ? 1 : -1;
+    const prev = zoomLevel;
+    zoomLevel = Math.max(0, Math.min(ZOOM_LEVELS.length-1, zoomLevel + delta));
+    if (zoomLevel !== prev) render();
+  }, { passive:false });
+}
+
 function renderGantt() {
   const list   = milestones[currentPid]||[];
   const area   = document.getElementById('main-area');
@@ -943,30 +974,49 @@ function renderGantt() {
   rangeStart.setDate(1); rangeStart.setMonth(rangeStart.getMonth()-1);
   rangeEnd.setDate(1);   rangeEnd.setMonth(rangeEnd.getMonth()+2);
 
-  // build months array
-  const months = [];
-  const cur = new Date(rangeStart);
-  while (cur < rangeEnd) { months.push(new Date(cur)); cur.setMonth(cur.getMonth()+1); }
+  // zoom-aware periods (months or weeks)
+  const zDef = ZOOM_LEVELS[zoomLevel] || ZOOM_LEVELS[0];
+  const zColW = zDef.colW;
+  const periods = [];
+  if (zDef.unit === 'month') {
+    const cur = new Date(rangeStart);
+    while (cur < rangeEnd) { periods.push(new Date(cur)); cur.setMonth(cur.getMonth()+1); }
+  } else {
+    // align to nearest Monday
+    const cur = new Date(rangeStart);
+    const dow = cur.getDay(); // 0=Sun
+    cur.setDate(cur.getDate() - (dow===0 ? 6 : dow-1));
+    while (cur < rangeEnd) {
+      periods.push(new Date(cur));
+      cur.setDate(cur.getDate() + 7 * zDef.step);
+    }
+  }
 
   const totalMs    = rangeEnd - rangeStart;
-  const trackWidth = months.length * COL_W;   // total track px
+  const trackWidth = periods.length * zColW;
 
   // helper: date → px offset within track
   const px = d => Math.round((new Date(d) - rangeStart) / totalMs * trackWidth);
-  // today px
   const todayPx = px(today);
-
-  // month divider px positions
-  const dividers = months.slice(1).map(m => px(m));
+  const dividers = periods.slice(1).map(p => px(p));
 
   // build rows
   const sortedList = list.slice();  // order preserved for manual grouping
 
-  const headerCols = months.map(m=>{
-    const isNow = m.getFullYear()===today.getFullYear() && m.getMonth()===today.getMonth();
-    return `<th class="gh-month-cell${isNow?' today-month':''}" style="width:${COL_W}px;min-width:${COL_W}px">${
-      m.toLocaleDateString('de-DE',{month:'short',year:'2-digit'})
-    }</th>`;
+  const headerCols = periods.map(p => {
+    let label, isCur;
+    if (zDef.unit === 'month') {
+      isCur = p.getFullYear()===today.getFullYear() && p.getMonth()===today.getMonth();
+      label = p.toLocaleDateString('de-DE',{month:'short',year:'2-digit'});
+    } else {
+      const kw = getISOWeek(p);
+      const kwEnd = new Date(p); kwEnd.setDate(kwEnd.getDate() + 7*zDef.step - 1);
+      isCur = today >= p && today <= kwEnd;
+      label = zDef.step===1
+        ? `KW&thinsp;${String(kw).padStart(2,'0')}`
+        : `KW&thinsp;${String(kw).padStart(2,'0')}–${String(getISOWeek(kwEnd)).padStart(2,'0')}`;
+    }
+    return `<th class="gh-month-cell${isCur?' today-month':''}" style="width:${zColW}px;min-width:${zColW}px">${label}</th>`;
   }).join('');
 
   const rows = sortedList.map(m => {
@@ -1078,13 +1128,14 @@ function renderGantt() {
             <col style="width:${ROW_W}px;min-width:${ROW_W}px">
             <col style="width:${LABEL_W}px;min-width:${LABEL_W}px">
             <col style="width:${ACT_W}px;min-width:${ACT_W}px">
-            ${months.map(()=>`<col style="width:${COL_W}px;min-width:${COL_W}px">`).join('')}
+            ${periods.map(()=>`<col style="width:${zColW}px;min-width:${zColW}px">`).join('')}
           </colgroup>
           <thead>
             <tr>
               <th class="gcol-row" style="left:0;width:${ROW_W}px">#</th>
               <th class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px">
-                Vorgang
+                <span>Vorgang</span>
+                <span style="font-size:9px;font-family:var(--mono);color:var(--text3);font-weight:400;margin-left:4px">${ZOOM_LEVELS[zoomLevel].label}</span>
                 <div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite – ziehen"></div>
               </th>
               <th class="gcol-act" style="left:${ROW_W+LABEL_W}px;width:${ACT_W}px">Aktionen</th>

@@ -416,6 +416,18 @@ tr.gantt-selected td.gtrack-cell { background:rgba(0,201,167,0.04); }
 td.gcol-name { transition:background 0.12s; }
 td.gcol-name:hover { background:var(--surface2); }
 
+
+/* ─── MONTH GROUP HEADER ROW ──────────────────────────── */
+.gh-group-row th { border-bottom:1px solid var(--border); }
+.gh-month-group {
+  background:var(--nav-bg); color:#8899b0;
+  font-size:10px; font-weight:600; letter-spacing:0.05em;
+  text-align:center; padding:4px 6px;
+  border-right:2px solid var(--nav-border);
+  white-space:nowrap; text-transform:uppercase;
+}
+.gh-month-group.today-month { background:#0f2030; color:var(--accent); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -1003,21 +1015,43 @@ function renderGantt() {
   // build rows
   const sortedList = list.slice();  // order preserved for manual grouping
 
-  const headerCols = periods.map(p => {
-    let label, isCur;
-    if (zDef.unit === 'month') {
-      isCur = p.getFullYear()===today.getFullYear() && p.getMonth()===today.getMonth();
-      label = p.toLocaleDateString('de-DE',{month:'short',year:'2-digit'});
-    } else {
+  // Build period headers with optional month-grouping row for week views
+  let monthGroupRow = '';
+  let periodHeaderRow = '';
+
+  if (zDef.unit === 'month') {
+    // Single header row: month labels
+    periodHeaderRow = periods.map(p => {
+      const isCur = p.getFullYear()===today.getFullYear() && p.getMonth()===today.getMonth();
+      const label = p.toLocaleDateString('de-DE',{month:'short',year:'2-digit'});
+      return `<th class="gh-month-cell${isCur?' today-month':''}" style="width:${zColW}px;min-width:${zColW}px">${label}</th>`;
+    }).join('');
+  } else {
+    // Two-row header: month groups on top, KW numbers below
+    // Build month groups (periods grouped by month)
+    const monthGroups = [];
+    periods.forEach(p => {
+      const mKey = p.getFullYear()*100 + p.getMonth();
+      const last = monthGroups[monthGroups.length-1];
+      if (last && last.key === mKey) { last.count++; }
+      else { monthGroups.push({ key: mKey, date: new Date(p), count: 1 }); }
+    });
+    monthGroupRow = monthGroups.map(g => {
+      const label = g.date.toLocaleDateString('de-DE',{month:'short',year:'numeric'});
+      const isNow = g.date.getFullYear()===today.getFullYear() && g.date.getMonth()===today.getMonth();
+      return `<th class="gh-month-group${isNow?' today-month':''}" colspan="${g.count}" style="min-width:${g.count*zColW}px">${label}</th>`;
+    }).join('');
+    periodHeaderRow = periods.map(p => {
       const kw = getISOWeek(p);
       const kwEnd = new Date(p); kwEnd.setDate(kwEnd.getDate() + 7*zDef.step - 1);
-      isCur = today >= p && today <= kwEnd;
-      label = zDef.step===1
-        ? `KW&thinsp;${String(kw).padStart(2,'0')}`
-        : `KW&thinsp;${String(kw).padStart(2,'0')}–${String(getISOWeek(kwEnd)).padStart(2,'0')}`;
-    }
-    return `<th class="gh-month-cell${isCur?' today-month':''}" style="width:${zColW}px;min-width:${zColW}px">${label}</th>`;
-  }).join('');
+      const isCur = today >= p && today <= kwEnd;
+      const label = zDef.step===1
+        ? `<span style="font-size:10px">KW</span>&thinsp;${String(kw).padStart(2,'0')}`
+        : `<span style="font-size:9px">KW</span>&thinsp;${String(kw).padStart(2,'0')}–${String(getISOWeek(kwEnd)).padStart(2,'0')}`;
+      return `<th class="gh-month-cell${isCur?' today-month':''}" style="width:${zColW}px;min-width:${zColW}px">${label}</th>`;
+    }).join('');
+  }
+  const headerCols = periodHeaderRow; // used in table template
 
   const rows = sortedList.map(m => {
     const color   = TYP[m.typ]?.color || '#8899b0';
@@ -1131,18 +1165,23 @@ function renderGantt() {
             ${periods.map(()=>`<col style="width:${zColW}px;min-width:${zColW}px">`).join('')}
           </colgroup>
           <thead>
+            \${monthGroupRow ? \`<tr class="gh-group-row">
+              <th class="gcol-row" style="left:0;width:\${ROW_W}px;border-bottom:none"></th>
+              <th class="gcol-name" style="left:\${ROW_W}px;width:\${LABEL_W}px;border-bottom:none"></th>
+              <th class="gcol-act" style="left:\${ROW_W+LABEL_W}px;width:\${ACT_W}px;border-bottom:none"></th>
+              \${monthGroupRow}
+            </tr>\` : ''}
             <tr>
-              <th class="gcol-row" style="left:0;width:${ROW_W}px">#</th>
-              <th class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px">
+              <th class="gcol-row" style="left:0;width:\${ROW_W}px">#</th>
+              <th class="gcol-name" style="left:\${ROW_W}px;width:\${LABEL_W}px">
                 <span>Vorgang</span>
-                <span style="font-size:9px;font-family:var(--mono);color:var(--text3);font-weight:400;margin-left:4px">${ZOOM_LEVELS[zoomLevel].label}</span>
+                <span style="font-size:9px;font-family:var(--mono);color:var(--text3);font-weight:400;margin-left:4px">\${ZOOM_LEVELS[zoomLevel].label}</span>
                 <div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite – ziehen"></div>
               </th>
-              <th class="gcol-act" style="left:${ROW_W+LABEL_W}px;width:${ACT_W}px">Aktionen</th>
-              ${headerCols}
+              <th class="gcol-act" style="left:\${ROW_W+LABEL_W}px;width:\${ACT_W}px;text-align:center">Aktionen</th>
+              \${headerCols}
             </tr>
-          </thead>
-          <tbody>${rows}</tbody>
+          </thead>          <tbody>${rows}</tbody>
         </table>
       </div>
     ${legendHtml}

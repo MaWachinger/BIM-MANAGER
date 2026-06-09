@@ -111,7 +111,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .gh-month-cell:last-child{border-right:1px solid var(--border)}
 
 /* Label column */
-.glabel-cell{background:var(--surface);border-bottom:1px solid var(--border);border-right:2px solid var(--border);position:sticky;left:0;z-index:5;vertical-align:middle;padding:0;cursor:pointer;box-shadow:2px 0 4px rgba(0,0,0,0.06)}
+.glabel-cell{background:var(--surface);border-bottom:1px solid var(--border);border-right:2px solid var(--border);position:sticky;left:0;z-index:5;vertical-align:middle;padding:0;cursor:pointer;box-shadow:2px 0 4px rgba(0,0,0,0.06);overflow:visible}
 .glabel-cell:hover .gl-inner{background:var(--surface2)}
 .gl-inner{padding:10px 14px}
 .gl-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
@@ -322,6 +322,53 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .content-header { padding:20px 32px 12px; flex-shrink:0; }
 /* legend below gantt scroll */
 .legend { flex-shrink:0; padding:10px 14px; border-top:1px solid var(--border); background:var(--surface); }
+
+/* ─── INSERT ROW BUTTON ─────────────────────────────────────────── */
+.gl-insert-btn {
+  position:absolute; left:-22px; top:50%; transform:translateY(-50%);
+  width:18px; height:18px; border-radius:50%;
+  background:var(--accent); color:#0f1623;
+  border:none; cursor:pointer; font-size:13px; font-weight:700;
+  display:none; align-items:center; justify-content:center;
+  line-height:1; z-index:6; box-shadow:0 1px 4px rgba(0,0,0,0.2);
+  padding:0;
+}
+tr:hover .gl-insert-btn { display:flex; }
+
+/* ─── HIERARCHY / INDENT ────────────────────────────────────────── */
+.gl-toggle {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:3px; cursor:pointer;
+  border:none; background:transparent; color:var(--text3);
+  font-size:10px; flex-shrink:0; margin-right:2px;
+  transition:transform 0.15s;
+}
+.gl-toggle:hover { background:var(--surface2); color:var(--text); }
+.gl-toggle.collapsed { transform:rotate(-90deg); }
+.gl-toggle-placeholder { display:inline-block; width:16px; flex-shrink:0; margin-right:2px; }
+
+/* indent by level */
+.gl-indent-0 .gl-inner { padding-left:4px; }
+.gl-indent-1 .gl-inner { padding-left:20px; }
+.gl-indent-2 .gl-inner { padding-left:38px; }
+.gl-indent-3 .gl-inner { padding-left:56px; }
+
+/* collapsed child rows */
+tr.gantt-hidden { display:none; }
+
+/* level styling */
+.gl-level-0 .gl-name { font-weight:600; }
+.gl-level-1 { opacity:0.92; }
+.gl-level-2 { opacity:0.85; }
+
+/* indent controls in modal */
+.indent-controls { display:flex; align-items:center; gap:6px; }
+.indent-btn { padding:4px 10px; border:1px solid var(--border); border-radius:4px;
+  background:var(--surface2); cursor:pointer; font-size:13px; font-family:var(--sans);
+  color:var(--text2); }
+.indent-btn:hover { background:var(--accent-dim); color:var(--accent); }
+.indent-label { font-size:12px; color:var(--text3); font-family:var(--mono); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -470,6 +517,15 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
           <label>Datum (Soll) *</label>
           <input type="date" id="f-datum">
         </div>
+        <div class="fg">
+          <label>Einzug (Hierarchie)</label>
+          <div class="indent-controls">
+            <button type="button" class="indent-btn" onclick="changeIndent(-1)" title="Einzug verkleinern">← Outdent</button>
+            <span class="indent-label" id="f-level-label">Ebene 0</span>
+            <button type="button" class="indent-btn" onclick="changeIndent(1)" title="Einzug vergrößern">Indent →</button>
+            <input type="hidden" id="f-level" value="0">
+          </div>
+        </div>
 
         <div class="fg">
           <label>Harte Frist (Deadline)</label>
@@ -581,6 +637,7 @@ const ST = {
 
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects = [], milestones = {}, currentPid = null, editingId = null, deleteId = null;
+let collapsedIds = new Set(); // collapsed group IDs
 let currentView = 'gantt', selectedDz = [];
 
 const TP_KEY = 'bim_terminplan_v1';
@@ -889,10 +946,29 @@ function renderGantt() {
     const dzHtml = dzTags(m.disziplinen);
 
     const rowIdx = sortedList.indexOf(m);
-    return `<tr>
-      <td class="glabel-cell" style="width:${LABEL_W}px;min-width:${LABEL_W}px" onclick="openModal('${m.id}')">
+    // Hierarchy: determine visibility and toggle state
+    const mLevel = m.level||0;
+    // Find if any ancestor is collapsed
+    let isHidden = false;
+    for (let _j = rowIdx-1; _j >= 0; _j--) {
+      const _anc = sortedList[_j];
+      const _ancLevel = _anc.level||0;
+      if (_ancLevel < mLevel) {
+        if (collapsedIds.has(_anc.id)) { isHidden = true; }
+        break;
+      }
+    }
+    // Check if this entry has children (next entry has higher level)
+    const hasChildren = rowIdx < sortedList.length-1 && (sortedList[rowIdx+1].level||0) > mLevel;
+    const isCollapsed = collapsedIds.has(m.id);
+    const toggleBtn = hasChildren
+      ? `<button class="gl-toggle${isCollapsed?' collapsed':''}" onclick="toggleCollapse('${m.id}',event)" title="${isCollapsed?'Aufklappen':'Einklappen'}">${isCollapsed?'▶':'▼'}</button>`
+      : `<span class="gl-toggle-placeholder"></span>`;
+    return `<tr class="${isHidden?'gantt-hidden':''} gl-level-${mLevel}">
+      <td class="glabel-cell gl-indent-${mLevel}" style="width:${LABEL_W}px;min-width:${LABEL_W}px" onclick="openModal('${m.id}')">
+        <button class="gl-insert-btn" onclick="insertBelow('${m.id}',event)" title="Neue Zeile darunter einfügen">+</button>
         <div class="gl-inner">
-          <div class="gl-name">${TYP[m.typ]?.icon||''} ${m.name}</div>
+          <div class="gl-name">${toggleBtn}${TYP[m.typ]?.icon||''} ${m.name}</div>
           <div class="gl-sub">${sbHtml(m.status)} ${recurLabel} ${dzHtml}</div>
         </div>
         <div class="gl-move" onclick="event.stopPropagation()">
@@ -1078,7 +1154,44 @@ function moveDown(id, evt) {
   save(); render();
 }
 
-function openModal(id=null) {
+// ─── HIERARCHY HELPERS ──────────────────────────────────────────────
+function changeIndent(delta) {
+  const inp = document.getElementById('f-level');
+  const lbl = document.getElementById('f-level-label');
+  if (!inp) return;
+  const cur = parseInt(inp.value)||0;
+  const nxt = Math.max(0, Math.min(3, cur + delta));
+  inp.value = nxt;
+  if (lbl) lbl.textContent = 'Ebene ' + nxt + (nxt===0?' (Gruppe)':nxt===1?' (Untergruppe)':'');
+}
+
+function toggleCollapse(id, evt) {
+  evt.stopPropagation();
+  if (collapsedIds.has(id)) collapsedIds.delete(id);
+  else collapsedIds.add(id);
+  render();
+}
+
+function insertBelow(id, evt) {
+  evt.stopPropagation();
+  const arr = milestones[currentPid]||[];
+  const i = arr.findIndex(m => m.id === id);
+  const ref = arr[i];
+  editingId = null;
+  // Pre-fill level from parent row
+  setTimeout(() => {
+    const lvl = document.getElementById('f-level');
+    const lbl = document.getElementById('f-level-label');
+    if (lvl) { lvl.value = ref ? (ref.level||0) : 0; }
+    if (lbl) lbl.textContent = 'Ebene ' + (ref ? (ref.level||0) : 0);
+    // Position new entry right after ref in array
+    if (lvl) lvl.dataset.insertAfter = id;
+  }, 50);
+  openModal(null, id); // pass insertAfter hint
+}
+
+function openModal(id=null, insertAfterHint=null) {
+  window._insertAfter = insertAfterHint;
   if (!currentPid) return;
   editingId = id;
   (function(){const _el=document.getElementById('modal-title');if(_el)_el.textContent=id ? 'Meilenstein bearbeiten' : 'Neuer Meilenstein';}());
@@ -1095,6 +1208,7 @@ function openModal(id=null) {
     (document.getElementById('f-frist')||{}).value  = m.frist||'';
     (document.getElementById('f-desc')||{}).value   = m.desc||'';
     (document.getElementById('f-recurring')||{}).checked = !!m.recurring;
+    (function(){const _el=document.getElementById('f-level');const _lb=document.getElementById('f-level-label');if(_el){_el.value=m.level||0;if(_lb)_lb.textContent='Ebene '+(m.level||0);}}());
     (document.getElementById('f-interval')||{}).value    = m.interval||3;
     (document.getElementById('f-unit')||{}).value        = m.unit||'weeks';
     (document.getElementById('f-recur-end')||{}).value   = m.recurEnd||'';
@@ -1105,6 +1219,7 @@ function openModal(id=null) {
     (document.getElementById('f-status')||{}).value = 'offen';
     (document.getElementById('f-recurring')||{}).checked = false;
     (document.getElementById('f-interval')||{}).value    = 3;
+    (function(){const _el=document.getElementById('f-level');const _lb=document.getElementById('f-level-label');if(_el){_el.value=0;if(_lb)_lb.textContent='Ebene 0 (Gruppe)';}}());
     (document.getElementById('f-unit')||{}).value        = 'weeks';
     setDz([]);
   }
@@ -1152,6 +1267,7 @@ function saveMilestone() {
     status:     (document.getElementById('f-status')||{}).value,
     datum, frist: (document.getElementById('f-frist')||{}).value||'',
     disziplinen:selectedDz.length?selectedDz:['alle'],
+    level:      parseInt((document.getElementById('f-level')||{}).value)||0,
     desc:       (document.getElementById('f-desc')||document.createElement('textarea')).value.trim(),
     recurring:  isRecur,
     interval:   isRecur ? parseInt((document.getElementById('f-interval')||{}).value)||3 : null,
@@ -1167,7 +1283,15 @@ function saveMilestone() {
     if(i>-1) milestones[currentPid][i]=data;
     showToast('✓ Aktualisiert');
   } else {
-    milestones[currentPid].push(data);
+    const _insertAfter = window._insertAfter;
+    window._insertAfter = null;
+    if (_insertAfter) {
+      const _idx = milestones[currentPid].findIndex(m=>m.id===_insertAfter);
+      if (_idx !== -1) { milestones[currentPid].splice(_idx+1, 0, data); }
+      else { milestones[currentPid].push(data); }
+    } else {
+      milestones[currentPid].push(data);
+    }
     showToast('✓ Meilenstein angelegt');
   }
   console.log('[BIM] Saving datum:', datum, 'frist:', (document.getElementById('f-frist')||{}).value);

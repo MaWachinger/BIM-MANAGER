@@ -43,10 +43,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .user-role{font-size:11px;color:var(--nav-text)}
 
 /* MAIN */
-.main{margin-left:240px;flex:1;min-height:100vh}
+.main{margin-left:240px;flex:1;min-height:100vh;overflow-x:hidden;max-width:calc(100vw - 240px)}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;gap:12px;flex-wrap:nowrap;overflow:visible;position:sticky;top:0;z-index:50}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:nowrap}
-.content{padding:28px 32px}
+.content{padding:28px 32px;overflow-x:hidden}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
@@ -96,10 +96,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
    GANTT  –  correct approach:
    label column (sticky) + ONE colspan track cell
 ═══════════════════════════════════════════════════ */
-.gantt-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
-.gantt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.gantt-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow-x:clip;overflow-y:visible;margin-bottom:20px;max-width:100%}
+.gantt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;cursor:default}
 
-.gtable{border-collapse:collapse;table-layout:fixed}
+.gtable{border-collapse:collapse;table-layout:fixed;border-spacing:0}
+.gtable thead th{position:sticky;top:0;z-index:10;background:var(--surface2)}
+.gtable thead .gh-corner{z-index:15;background:var(--surface2)}
+
 
 /* Header row */
 .gh-corner{background:var(--surface2);border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:12}
@@ -108,7 +111,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .gh-month-cell:last-child{border-right:1px solid var(--border)}
 
 /* Label column */
-.glabel-cell{background:var(--surface);border-bottom:1px solid var(--border);border-right:1px solid var(--border);position:sticky;left:0;z-index:5;vertical-align:middle;padding:0;cursor:pointer}
+.glabel-cell{background:var(--surface);border-bottom:1px solid var(--border);border-right:2px solid var(--border);position:sticky;left:0;z-index:5;vertical-align:middle;padding:0;cursor:pointer;box-shadow:2px 0 4px rgba(0,0,0,0.06)}
 .glabel-cell:hover .gl-inner{background:var(--surface2)}
 .gl-inner{padding:10px 14px}
 .gl-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
@@ -691,7 +694,21 @@ function render() {
     if (!currentPid) return;
     updateStats();
     currentView==='gantt' ? renderGantt() : renderTimeline();
-    if(currentView==='gantt') initGanttResize();
+    if(currentView==='gantt') {
+    initGanttResize();
+    // Auto-scroll to today's position
+    setTimeout(()=>{
+      const sc=document.getElementById('gantt-scroll-area');
+      const ar=document.getElementById('main-area');
+      if(sc&&ar){
+        const todayLine=ar.querySelector('.gtoday-line');
+        if(todayLine){
+          const todayLeft=parseInt(todayLine.style.left)||0;
+          sc.scrollLeft=Math.max(0,todayLeft-200);
+        }
+      }
+    },50);
+  }
   } catch(e) {
     console.error('render() crash:', e.message, e.stack);
     showToast('⚠ Render-Fehler: ' + e.message);
@@ -835,15 +852,15 @@ function renderGantt() {
 
   area.innerHTML = `
     <div class="gantt-outer"><div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite anpassen"></div>
-      <div class="gantt-scroll">
-        <table class="gtable" style="width:${LABEL_W+trackWidth}px">
+      <div class="gantt-scroll" id="gantt-scroll-area">
+        <table class="gtable" style="width:${LABEL_W+trackWidth}px;min-width:${LABEL_W+trackWidth}px">
           <colgroup>
             <col style="width:${LABEL_W}px;min-width:${LABEL_W}px">
             ${months.map(()=>`<col style="width:${COL_W}px;min-width:${COL_W}px">`).join('')}
           </colgroup>
           <thead>
             <tr>
-              <th class="gh-corner" style="width:${LABEL_W}px;min-width:${LABEL_W}px;padding:8px 14px;font-size:11px;font-weight:500">Meilenstein</th>
+              <th class="gh-corner" style="width:${LABEL_W}px;min-width:${LABEL_W}px;padding:8px 14px;font-size:11px;font-weight:500;position:sticky;left:0;top:0;z-index:15;background:var(--surface2)">Meilenstein</th>
               ${headerCols}
             </tr>
           </thead>

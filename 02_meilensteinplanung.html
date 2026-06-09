@@ -1154,6 +1154,16 @@ function renderGantt() {
   </div>`;
 
   const totalW = ROW_W + LABEL_W + ACT_W + trackWidth;
+  // Build group row HTML (month headers for week zoom) without nested template literals
+  let groupRowHtml = '';
+  if (monthGroupRow) {
+    groupRowHtml = '<tr class="gh-group-row">'
+      + '<th class="gcol-row" style="left:0;width:' + ROW_W + 'px;border-bottom:none"></th>'
+      + '<th class="gcol-name" style="left:' + ROW_W + 'px;width:' + LABEL_W + 'px;border-bottom:none"></th>'
+      + '<th class="gcol-act" style="left:' + (ROW_W+LABEL_W) + 'px;width:' + ACT_W + 'px;border-bottom:none"></th>'
+      + monthGroupRow
+      + '</tr>';
+  }
   area.innerHTML = `
     <div class="gantt-outer">
       <div class="gantt-scroll" id="gantt-scroll-area">
@@ -1165,23 +1175,18 @@ function renderGantt() {
             ${periods.map(()=>`<col style="width:${zColW}px;min-width:${zColW}px">`).join('')}
           </colgroup>
           <thead>
-            \${monthGroupRow ? \`<tr class="gh-group-row">
-              <th class="gcol-row" style="left:0;width:\${ROW_W}px;border-bottom:none"></th>
-              <th class="gcol-name" style="left:\${ROW_W}px;width:\${LABEL_W}px;border-bottom:none"></th>
-              <th class="gcol-act" style="left:\${ROW_W+LABEL_W}px;width:\${ACT_W}px;border-bottom:none"></th>
-              \${monthGroupRow}
-            </tr>\` : ''}
+            ${groupRowHtml}
             <tr>
-              <th class="gcol-row" style="left:0;width:\${ROW_W}px">#</th>
-              <th class="gcol-name" style="left:\${ROW_W}px;width:\${LABEL_W}px">
+              <th class="gcol-row" style="left:0;width:${ROW_W}px">#</th>
+              <th class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px">
                 <span>Vorgang</span>
-                <span style="font-size:9px;font-family:var(--mono);color:var(--text3);font-weight:400;margin-left:4px">\${ZOOM_LEVELS[zoomLevel].label}</span>
-                <div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite – ziehen"></div>
+                <span style="font-size:9px;font-family:var(--mono);color:var(--text3);font-weight:400;margin-left:4px">${ZOOM_LEVELS[zoomLevel].label}</span>
+                <div id="gantt-resize-handle" class="glabel-resize-handle" title="Spaltenbreite \u2013 ziehen"></div>
               </th>
-              <th class="gcol-act" style="left:\${ROW_W+LABEL_W}px;width:\${ACT_W}px;text-align:center">Aktionen</th>
-              \${headerCols}
+              <th class="gcol-act" style="left:${ROW_W+LABEL_W}px;width:${ACT_W}px;text-align:center">Aktionen</th>
+              ${headerCols}
             </tr>
-          </thead>          <tbody>${rows}</tbody>
+          </thead>         <tbody>${rows}</tbody>
         </table>
       </div>
     ${legendHtml}

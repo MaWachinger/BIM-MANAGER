@@ -43,10 +43,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .user-role{font-size:11px;color:var(--nav-text)}
 
 /* MAIN */
-.main{margin-left:240px;flex:1;min-height:100vh;overflow-x:hidden;max-width:calc(100vw - 240px)}
+.main{margin-left:240px;width:calc(100vw - 240px);max-width:calc(100vw - 240px);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;gap:12px;flex-wrap:nowrap;overflow:visible;position:sticky;top:0;z-index:50}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:nowrap}
-.content{padding:28px 32px;overflow-x:hidden}
+.content{padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column;min-height:0}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
@@ -96,8 +96,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
    GANTT  –  correct approach:
    label column (sticky) + ONE colspan track cell
 ═══════════════════════════════════════════════════ */
-.gantt-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow-x:clip;overflow-y:visible;margin-bottom:20px;max-width:100%}
-.gantt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;cursor:default}
+.gantt-outer{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column;max-width:100%}
+.gantt-scroll{overflow-x:auto;overflow-y:auto;-webkit-overflow-scrolling:touch;width:100%;cursor:default;flex:1;min-height:0}
 
 .gtable{border-collapse:collapse;table-layout:fixed;border-spacing:0}
 .gtable thead th{position:sticky;top:0;z-index:10;background:var(--surface2)}
@@ -283,6 +283,45 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
 .gh-corner { position:relative; }
 .gantt-outer .gantt-scroll { overflow-x:auto; }
 
+
+/* ─── VIEWPORT LAYOUT ──────────────────────────────────────────── */
+.content-header {
+  flex-shrink:0;
+  padding:20px 32px 0;
+}
+.content-gantt-wrap {
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+  padding:0 32px 16px;
+  display:flex;
+  flex-direction:column;
+}
+#main-area {
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.gantt-outer {
+  flex:1;
+  min-height:0;
+}
+.gantt-scroll {
+  height:100%;
+  overflow-x:auto;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+
+/* flex-shrink:0 for fixed elements in column layout */
+#tp-panel { flex-shrink:0; }
+.stats-row { flex-shrink:0; margin:0 32px 12px; }
+.content-header { padding:20px 32px 12px; flex-shrink:0; }
+/* legend below gantt scroll */
+.legend { flex-shrink:0; padding:10px 14px; border-top:1px solid var(--border); background:var(--surface); }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -327,10 +366,12 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
   </div>
 
   <div class="content">
+  <div class="content-header">
     <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:4px">Meilensteinplanung</div>
-    <div style="font-size:13px;color:var(--text3);margin-bottom:24px" id="page-sub">Wähle ein Projekt um Meilensteine zu verwalten</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:12px" id="page-sub">Wähle ein Projekt um Meilensteine zu verwalten</div>
+  </div><!-- /content-header -->
 
-    <div id="tp-panel" style="display:none">
+  <div id="tp-panel" style="display:none">
       <div class="tp-bar">
         <div class="tp-bar-left">
           <div style="font-size:12px;color:var(--text3);padding:10px 14px 6px;line-height:1.6">📋 <strong style="color:var(--text2)">Rahmenterminplan</strong> – PDF-Terminplan einlesen um LP-Daten automatisch zu extrahieren und BIM-Meilensteine daraus abzuleiten. Termine können auch manuell eingegeben werden.</div>
@@ -378,9 +419,11 @@ textarea{resize:vertical;min-height:64px;line-height:1.6}
       <div class="stat-card"><div class="stat-label">Abgeschlossen</div><div class="stat-value" id="st-done" style="color:var(--ok)">0</div><div class="stat-sub">Freigegeben</div></div>
     </div>
 
+  <div class="content-gantt-wrap">
     <div id="main-area">
       <div class="empty-box"><div class="ei">📅</div><div class="et">Kein Projekt ausgewählt</div><div class="es">Wähle oben ein Projekt aus</div></div>
     </div>
+  </div><!-- /content-gantt-wrap -->
   </div>
 </main>
 
@@ -888,8 +931,8 @@ function renderGantt() {
           <tbody>${rows}</tbody>
         </table>
       </div>
-    </div>
-    ${legendHtml}`;
+    ${legendHtml}
+    </div>`;
 }
 
 // expand recurring occurrences

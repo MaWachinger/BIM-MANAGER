@@ -858,27 +858,39 @@ function initGanttResize() {
   });
 }
 
-function render() {
+function render(opts) {
+  // Preserve scroll position across re-renders
+  const sc = document.getElementById('gantt-scroll-area');
+  const savedScrollLeft = sc ? sc.scrollLeft : 0;
+  const savedScrollTop  = sc ? sc.scrollTop  : 0;
+  const hasScrolled = savedScrollLeft > 0 || savedScrollTop > 0;
+
   try {
     renderProjBadge();
     if (!currentPid) return;
     updateStats();
     currentView==='gantt' ? renderGantt() : renderTimeline();
-    if(currentView==='gantt') {
-    initGanttResize();
-    // Auto-scroll to today's position
-    setTimeout(()=>{
-      const sc=document.getElementById('gantt-scroll-area');
-      const ar=document.getElementById('main-area');
-      if(sc&&ar){
-        const todayLine=ar.querySelector('.gtoday-line');
-        if(todayLine){
-          const todayLeft=parseInt(todayLine.style.left)||0;
-          sc.scrollLeft=Math.max(0,todayLeft-200);
+    if (currentView==='gantt') {
+      initGanttResize();
+      setTimeout(()=>{
+        const sc2 = document.getElementById('gantt-scroll-area');
+        if (!sc2) return;
+        if (hasScrolled) {
+          // Restore previous position
+          sc2.scrollLeft = savedScrollLeft;
+          sc2.scrollTop  = savedScrollTop;
+        } else {
+          // First load: scroll to today
+          const ar = document.getElementById('main-area');
+          if (ar) {
+            const todayLine = ar.querySelector('.gtoday-line');
+            if (todayLine) {
+              sc2.scrollLeft = Math.max(0, (parseInt(todayLine.style.left)||0) - 200);
+            }
+          }
         }
-      }
-    },50);
-  }
+      }, 0);
+    }
   } catch(e) {
     console.error('render() crash:', e.message, e.stack);
     showToast('⚠ Render-Fehler: ' + e.message);

@@ -407,6 +407,15 @@ th.gcol-row{z-index:15;} th.gcol-name{z-index:14;} th.gcol-act{z-index:13;text-a
 /* row number cell */
 .grow-num{font-size:11px;color:var(--text3);font-family:var(--mono);text-align:center;}
 
+
+/* ─── ROW SELECTION ─────────────────────────────────────────────── */
+tr.gantt-selected td.gcol-row,
+tr.gantt-selected td.gcol-name,
+tr.gantt-selected td.gcol-act  { background:rgba(0,201,167,0.10) !important; }
+tr.gantt-selected td.gtrack-cell { background:rgba(0,201,167,0.04); }
+td.gcol-name { transition:background 0.12s; }
+td.gcol-name:hover { background:var(--surface2); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -678,6 +687,7 @@ const ST = {
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects = [], milestones = {}, currentPid = null, editingId = null, deleteId = null;
 let collapsedIds = new Set(); // collapsed group IDs
+let selectedId = null;           // highlighted row
 let currentView = 'gantt', selectedDz = [];
 
 const TP_KEY = 'bim_terminplan_v1';
@@ -875,6 +885,11 @@ function render(opts) {
       setTimeout(()=>{
         const sc2 = document.getElementById('gantt-scroll-area');
         if (!sc2) return;
+        // Re-apply row selection highlight after DOM rebuild
+        if (selectedId) {
+          const selRow = document.querySelector('tr[data-id="' + selectedId + '"]');
+          if (selRow) selRow.classList.add('gantt-selected');
+        }
         if (hasScrolled) {
           // Restore previous position
           sc2.scrollLeft = savedScrollLeft;
@@ -1017,10 +1032,10 @@ function renderGantt() {
     const hasChildren=rowIdx<sortedList.length-1&&(sortedList[rowIdx+1].level||0)>mLevel;
     const isCollapsed=collapsedIds.has(m.id);
     return `<tr class="${isHidden?'gantt-hidden':''} gl-level-${mLevel}">
-      <td class="gcol-row" style="left:0;width:${ROW_W}px">
+      <td class="gcol-row" style="left:0;width:${ROW_W}px;cursor:default" onclick="selectRow('${m.id}',event)">
         <div class="grow-num">${rowIdx+1}</div>
       </td>
-      <td class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px" onclick="openModal('${m.id}')">
+      <td class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px;cursor:pointer" onclick="selectRow('${m.id}',event)" ondblclick="openModal('${m.id}')">
         <div class="gname-inner" style="padding-left:${6+mLevel*16}px">
           ${hasChildren
             ? `<button class="gname-toggle${isCollapsed?' collapsed':''}" onclick="toggleCollapse('${m.id}',event)">${isCollapsed?'▶':'▼'}</button>`
@@ -1247,6 +1262,15 @@ function changeIndentOf(id, delta, evt) {
   save(); render();
 }
 
+function selectRow(id, evt) {
+  if (evt) evt.stopPropagation();
+  // Remove highlight from previous row (no re-render needed)
+  document.querySelectorAll('tr.gantt-selected').forEach(r => r.classList.remove('gantt-selected'));
+  selectedId = id;
+  const row = document.querySelector('tr[data-id="' + id + '"]');
+  if (row) row.classList.add('gantt-selected');
+}
+
 function toggleCollapse(id, evt) {
   evt.stopPropagation();
   if (collapsedIds.has(id)) collapsedIds.delete(id);
@@ -1439,6 +1463,7 @@ function showToast(msg) { const t=document.getElementById('toast'); if(!t) retur
 function comingSoon()   { showToast('Modul wird in Kürze entwickelt'); }
 
 document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(document.getElementById('modal-ol')||{}).classList?.contains('open')&&document.activeElement?.tagName!=='TEXTAREA'){saveMilestone();return;}
   if(e.key==='Escape'){closeModal();closeConfirm();closePdfModal();closeDeriveModal();closeUpdateModal();}
   if((e.metaKey||e.ctrlKey)&&e.key==='n'){e.preventDefault();openModal();}
 });

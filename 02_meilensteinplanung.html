@@ -1324,7 +1324,11 @@ function copyMilestone() {
     datum: orig.datum || '',
     frist: orig.frist || '',
   });
-  milestones[currentPid] = (milestones[currentPid]||[]).concat([copy]);
+  // Insert directly after original, not at end
+  const _arr = milestones[currentPid]||[];
+  const _origIdx = _arr.findIndex(m=>m.id===editingId);
+  if (_origIdx !== -1) _arr.splice(_origIdx+1, 0, copy);
+  else _arr.push(copy);
   save();
   closeModal();
   render();

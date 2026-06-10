@@ -728,7 +728,26 @@ body.bulk-mode td.gcol-name { cursor:pointer; }
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="del-btn" onclick="confirmDelete(editingId);closeModal()" style="display:none;margin-right:auto">⌫ Löschen</button>
-      <button class="btn btn-secondary" id="copy-btn" onclick="copyMilestone()" style="dis
+      <button class="btn btn-secondary" id="copy-btn" onclick="copyMilestone()" style="display:none;margin-right:auto">⎘ Kopie erstellen</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveMilestone()">✓ Änderungen speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete dialog -->
+<div class="modal-overlay" id="confirm-ol" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title">Eintrag löschen?</div></div>
+    <div class="modal-body">
+      <div id="confirm-msg" style="font-size:13px;color:var(--text2);margin-bottom:8px">Diese Aktion kann nicht rückgängig gemacht werden.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Abbrechen</button>
+      <button class="btn btn-danger" id="confirm-del-btn" onclick="doDelete()">Ja, löschen</button>
+    </div>
+  </div>
+</div>
 
 <script>
 console.log("[BIM] Script loaded OK, version 20260610b, JS chars=86623");

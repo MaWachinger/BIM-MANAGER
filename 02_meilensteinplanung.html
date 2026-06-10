@@ -428,6 +428,54 @@ td.gcol-name:hover { background:var(--surface2); }
 }
 .gh-month-group.today-month { background:#0f2030; color:var(--accent); }
 
+
+/* ─── BULK MODE ──────────────────────────────────────────────────── */
+#btn-bulk.bulk-active { background:var(--accent-dim); color:var(--accent);
+  border-color:var(--accent); font-weight:600; }
+
+/* Row: bulk checkbox indicator in row-number cell */
+.gcol-row .bulk-cb { display:none; }
+body.bulk-mode .gcol-row .bulk-cb   { display:flex; align-items:center;
+  justify-content:center; width:18px; height:18px; border-radius:4px;
+  border:2px solid var(--border); background:var(--surface); cursor:pointer;
+  flex-shrink:0; font-size:11px; color:transparent; transition:all 0.1s; }
+body.bulk-mode .gcol-row .grow-num  { display:none; }
+body.bulk-mode tr.gantt-bulk-sel .bulk-cb {
+  background:var(--accent); border-color:var(--accent); color:#0f1623; }
+
+/* Bulk selected row highlight */
+body.bulk-mode tr.gantt-bulk-sel td.gcol-row,
+body.bulk-mode tr.gantt-bulk-sel td.gcol-name,
+body.bulk-mode tr.gantt-bulk-sel td.gcol-act  { background:rgba(0,201,167,0.14) !important; }
+
+/* In bulk mode: single click selects, cursor pointer on whole row */
+body.bulk-mode td.gcol-name { cursor:pointer; }
+
+/* ─── BULK ACTION BAR ────────────────────────────────────────────── */
+#bulk-bar {
+  display:none; position:sticky; bottom:0; left:0; right:0;
+  background:var(--nav-bg); border-top:1px solid var(--accent);
+  padding:10px 16px; gap:10px; align-items:center; flex-wrap:wrap;
+  z-index:20; box-shadow:0 -2px 12px rgba(0,0,0,0.18);
+}
+#bulk-bar.visible { display:flex; }
+.bulk-count { font-size:13px; font-weight:600; color:var(--accent);
+  font-family:var(--mono); flex-shrink:0; margin-right:6px; }
+.bulk-sep { width:1px; height:24px; background:var(--nav-border); flex-shrink:0; }
+.bulk-btn { padding:6px 14px; border-radius:var(--r); border:1px solid var(--nav-border);
+  background:var(--nav-hover); color:#c8d8e8; font-family:var(--sans); font-size:12px;
+  cursor:pointer; font-weight:500; transition:all 0.12s; white-space:nowrap; }
+.bulk-btn:hover { background:var(--accent-dim); color:var(--accent);
+  border-color:var(--accent); }
+.bulk-btn.bulk-primary { background:var(--accent); color:#0f1623;
+  border-color:var(--accent); }
+.bulk-btn.bulk-primary:hover { background:#00b396; }
+.bulk-btn.bulk-cancel { color:var(--text3); }
+.bulk-target-wrap { display:flex; align-items:center; gap:6px; }
+.bulk-target-inp { width:64px; padding:5px 8px; border:1px solid var(--nav-border);
+  border-radius:var(--r); background:#1a2744; color:#c8d8e8;
+  font-family:var(--mono); font-size:12px; text-align:center; }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="bim_sync.js"></script>
@@ -467,7 +515,8 @@ td.gcol-name:hover { background:var(--surface2); }
       <button class="btn btn-primary" id="btn-new" onclick="openModal()" disabled>+ Meilenstein</button>
     
       <button id="tp-toggle-btn" onclick="toggleTpPanel()" title="Rahmenterminplan aus PDF einlesen und BIM-Termine ableiten" style="padding:5px 12px;border:1px solid var(--border);border-radius:var(--r);background:transparent;font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">📅 Terminplan</button>
-      <button onclick="goTo('08_hilfe.html')" title="Hilfe &amp; Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
+      <button <button id="btn-bulk" onclick="toggleBulkMode()" title="Mehrfachauswahl aktivieren" style="padding:5px 12px;border:1px solid var(--border);border-radius:var(--r);background:transparent;font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">☑ Bulk</button>
+      onclick="goTo('08_hilfe.html')" title="Hilfe &amp; Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
     </div>
   </div>
 
@@ -526,6 +575,25 @@ td.gcol-name:hover { background:var(--surface2); }
     </div>
 
   <div class="content-gantt-wrap">
+    <div id="bulk-bar">
+      <span class="bulk-count" id="bulk-count">0 ausgewählt</span>
+      <div class="bulk-sep"></div>
+      <button class="bulk-btn bulk-primary" onclick="bulkCopy()">⎘ Kopieren</button>
+      <div class="bulk-sep"></div>
+      <div class="bulk-target-wrap">
+        <button class="bulk-btn" onclick="bulkMove()">↕ Verschieben zu Zeile</button>
+        <input class="bulk-target-inp" id="bulk-target" type="number" min="1" placeholder="#">
+      </div>
+      <div class="bulk-sep"></div>
+      <div class="bulk-target-wrap">
+        <button class="bulk-btn" onclick="bulkCopyMove()">⎘↕ Kopieren + Verschieben</button>
+        <input class="bulk-target-inp" id="bulk-target2" type="number" min="1" placeholder="#">
+      </div>
+      <div class="bulk-sep"></div>
+      <button class="bulk-btn" onclick="bulkSelectAll()">Alle</button>
+      <button class="bulk-btn" onclick="bulkDeselect()">Keine</button>
+      <button class="bulk-btn bulk-cancel" onclick="toggleBulkMode()">✕ Abbrechen</button>
+    </div>
     <div id="main-area">
       <div class="empty-box"><div class="ei">📅</div><div class="et">Kein Projekt ausgewählt</div><div class="es">Wähle oben ein Projekt aus</div></div>
     </div>
@@ -701,6 +769,8 @@ let projects = [], milestones = {}, currentPid = null, editingId = null, deleteI
 let collapsedIds = new Set(); // collapsed group IDs
 let selectedId = null;           // highlighted row
 let zoomLevel = 0;               // 0=Monate 1=2-Wochen 2=1-Woche
+let bulkMode = false;
+let bulkSelected = new Set();
 let currentView = 'gantt', selectedDz = [];
 
 const TP_KEY = 'bim_terminplan_v1';
@@ -1116,10 +1186,11 @@ function renderGantt() {
     const hasChildren=rowIdx<sortedList.length-1&&(sortedList[rowIdx+1].level||0)>mLevel;
     const isCollapsed=collapsedIds.has(m.id);
     return `<tr class="${isHidden?'gantt-hidden':''} gl-level-${mLevel}">
-      <td class="gcol-row" style="left:0;width:${ROW_W}px;cursor:default" onclick="selectRow('${m.id}',event)">
+      <td class="gcol-row" style="left:0;width:${ROW_W}px;cursor:pointer" onclick="bulkMode?toggleBulkSelect('${m.id}',event):selectRow('${m.id}',event)">
         <div class="grow-num">${rowIdx+1}</div>
+        <div class="bulk-cb" onclick="toggleBulkSelect('${m.id}',event)">&#10003;</div>
       </td>
-      <td class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px;cursor:pointer" onclick="selectRow('${m.id}',event)" ondblclick="openModal('${m.id}')">
+      <td class="gcol-name" style="left:${ROW_W}px;width:${LABEL_W}px;cursor:pointer" onclick="bulkMode?toggleBulkSelect('${m.id}',event):selectRow('${m.id}',event)" ondblclick="openModal('${m.id}')">
         <div class="gname-inner" style="padding-left:${6+mLevel*16}px">
           ${hasChildren
             ? `<button class="gname-toggle${isCollapsed?' collapsed':''}" onclick="toggleCollapse('${m.id}',event)">${isCollapsed?'▶':'▼'}</button>`
@@ -1365,6 +1436,94 @@ function selectRow(id, evt) {
   const row = document.querySelector('tr[data-id="' + id + '"]');
   if (row) row.classList.add('gantt-selected');
 }
+
+// ─── BULK MODE ────────────────────────────────────────────────────────
+function toggleBulkMode() {
+  bulkMode = !bulkMode;
+  bulkSelected.clear();
+  document.body.classList.toggle('bulk-mode', bulkMode);
+  var btn = document.getElementById('btn-bulk');
+  if (btn) btn.classList.toggle('bulk-active', bulkMode);
+  updateBulkBar();
+  render();
+}
+
+function toggleBulkSelect(id, evt) {
+  if (evt) evt.stopPropagation();
+  if (!bulkMode) return;
+  if (bulkSelected.has(id)) bulkSelected.delete(id);
+  else bulkSelected.add(id);
+  var row = document.querySelector('tr[data-id="' + id + '"]');
+  if (row) row.classList.toggle('gantt-bulk-sel', bulkSelected.has(id));
+  updateBulkBar();
+}
+
+function bulkSelectAll() {
+  (milestones[currentPid]||[]).forEach(function(m){ bulkSelected.add(m.id); });
+  document.querySelectorAll('tr[data-id]').forEach(function(r){ r.classList.add('gantt-bulk-sel'); });
+  updateBulkBar();
+}
+
+function bulkDeselect() {
+  bulkSelected.clear();
+  document.querySelectorAll('tr.gantt-bulk-sel').forEach(function(r){ r.classList.remove('gantt-bulk-sel'); });
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  var bar = document.getElementById('bulk-bar');
+  var cnt = document.getElementById('bulk-count');
+  if (!bar) return;
+  if (bulkMode) {
+    bar.classList.add('visible');
+    if (cnt) cnt.textContent = bulkSelected.size + ' ausgewählt';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function bulkCopy() {
+  if (!bulkSelected.size || !currentPid) return;
+  var arr = milestones[currentPid];
+  var sel = arr.filter(function(m){ return bulkSelected.has(m.id); });
+  sel.slice().reverse().forEach(function(orig) {
+    var copy = Object.assign({}, orig, { id: uid(), name: orig.name + ' (Kopie)' });
+    var i = arr.findIndex(function(m){ return m.id === orig.id; });
+    arr.splice(i + 1, 0, copy);
+  });
+  save(); bulkDeselect(); render();
+  showToast('✓ ' + sel.length + ' Vorgänge kopiert');
+}
+
+function bulkMove() {
+  var targetStr = (document.getElementById('bulk-target')||{}).value;
+  var target = parseInt(targetStr);
+  if (!bulkSelected.size || !currentPid) { showToast('Bitte Vorgänge auswählen'); return; }
+  if (isNaN(target) || target < 1) { showToast('Bitte Zielzeile eingeben'); return; }
+  var arr = milestones[currentPid];
+  var sel = arr.filter(function(m){ return bulkSelected.has(m.id); });
+  var rest = arr.filter(function(m){ return !bulkSelected.has(m.id); });
+  var insertAt = Math.max(0, Math.min(rest.length, target - 1));
+  rest.splice.apply(rest, [insertAt, 0].concat(sel));
+  milestones[currentPid] = rest;
+  save(); bulkDeselect(); render();
+  showToast('✓ ' + sel.length + ' Vorgänge zu Zeile ' + target + ' verschoben');
+}
+
+function bulkCopyMove() {
+  var targetStr = (document.getElementById('bulk-target2')||{}).value;
+  var target = parseInt(targetStr);
+  if (!bulkSelected.size || !currentPid) { showToast('Bitte Vorgänge auswählen'); return; }
+  if (isNaN(target) || target < 1) { showToast('Bitte Zielzeile eingeben'); return; }
+  var arr = milestones[currentPid];
+  var sel = arr.filter(function(m){ return bulkSelected.has(m.id); });
+  var copies = sel.map(function(orig){ return Object.assign({}, orig, { id: uid(), name: orig.name + ' (Kopie)' }); });
+  var insertAt = Math.max(0, Math.min(arr.length, target - 1));
+  arr.splice.apply(arr, [insertAt, 0].concat(copies));
+  save(); bulkDeselect(); render();
+  showToast('✓ ' + copies.length + ' Kopien an Zeile ' + target + ' eingefügt');
+}
+
 
 function toggleCollapse(id, evt) {
   evt.stopPropagation();

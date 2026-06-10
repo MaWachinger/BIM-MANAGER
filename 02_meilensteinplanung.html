@@ -1210,7 +1210,7 @@ function renderGantt() {
     }
     const hasChildren=rowIdx<sortedList.length-1&&(sortedList[rowIdx+1].level||0)>mLevel;
     const isCollapsed=collapsedIds.has(m.id);
-    return `<tr class="${isHidden?'gantt-hidden':''} gl-level-${mLevel}">
+    return `<tr class="${isHidden?'gantt-hidden':''} gl-level-${mLevel}${bulkSelected.has(m.id)?' gantt-bulk-sel':''}" data-id="${m.id}">
       <td class="gcol-row" style="left:0;width:${ROW_W}px;cursor:pointer" onclick="bulkMode?toggleBulkSelect('${m.id}',event):selectRow('${m.id}',event)">
         <div>
           <div class="grow-num">${rowIdx+1}</div>

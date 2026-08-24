@@ -631,6 +631,41 @@ const NODE_MAP = {};
 function flattenNodes(node) { NODE_MAP[node.id]=node; (node.children||[]).forEach(flattenNodes); }
 flattenNodes(OBJ_TREE);
 
+
+// ─── IFC-KLASSE → OBJEKTBAUM-KNOTEN-MAPPING ─────────────────────
+const IFC_TO_NODES = {
+  'IfcWall':                 ['bau-mw','bau-sbw','bau-tw'],
+  'IfcWallStandardCase':     ['bau-mw','bau-sbw','bau-tw'],
+  'IfcCurtainWall':          ['hub-pa','hub-pr','hub-vo'],
+  'IfcColumn':               ['bau-hs','bau-sbs','bau-ss'],
+  'IfcBeam':                 ['bau-ht','bau-sbt','bau-st'],
+  'IfcSlab':                 ['bau-fi','bau-hb','bau-ob','bau-fd','bau-gd','bau-sd'],
+  'IfcRoof':                 ['bau-fd','bau-gd','bau-sd'],
+  'IfcFooting':              ['bau-bp','bau-ef','bau-sf'],
+  'IfcStair':                ['bau-htr','bau-sbtr','bau-str'],
+  'IfcStairFlight':          ['bau-htr','bau-sbtr','bau-str'],
+  'IfcRamp':                 ['bau-tre'],
+  'IfcWindow':               ['oef-dk','oef-fv','oef-ol'],
+  'IfcDoor':                 ['oef-at','oef-bt','oef-it','oef-ro','oef-sch','oef-sek'],
+  'IfcOpeningElement':       ['oef-dd','oef-so','oef-wd2'],
+  'IfcSpace':                ['fla-bu','fla-te','fla-vk','fla-mep','fla-ra'],
+  'IfcZone':                 ['fla-az','fla-ba','fla-kz'],
+  'IfcCovering':             ['bod-e','bod-f','bod-p','bod-t','dec-a','dec-g','dec-m','wbe-a','wbe-f','wbe-g','hub-wd'],
+  'IfcSite':                 ['aau'],
+  'IfcBuilding':             ['root'],
+  'IfcProject':              ['root'],
+};
+function resolveIfcTypesToNodes(ifcTypes){
+  const nodes=new Set();
+  (ifcTypes||[]).forEach(t=>{ (IFC_TO_NODES[t]||[]).forEach(n=>nodes.add(n)); });
+  return [...nodes];
+}
+function resolveAssignParam(a){
+  if(a.globalRef) return globalParams.find(x=>x.id===a.globalRef);
+  if(a.projRef && pid) return (projParams[pid]||[]).find(x=>x.id===a.projRef);
+  return null;
+}
+
 // Get all ancestor IDs
 function getAncestors(nodeId) {
   const res=[];
@@ -782,7 +817,7 @@ function updateBadges(){
   (function(){const _e=document.getElementById('nav-count');if(_e)_e.textContent=globalParams.length;}());
   // Count unique global params that have been assigned in this project
   const assignedSet=new Set();
-  if(pid) Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedSet.add(a.globalRef); }));
+  if(pid) Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedSet.add(a.globalRef); else if(a.projRef) assignedSet.add('proj:'+a.projRef); }));
   (function(){const _e=document.getElementById('tb-proj');if(_e)_e.textContent=pid?assignedSet.size:0;}());
 }
 function setMode(m){
@@ -902,7 +937,7 @@ function renderProject(){
   const awfs=awfData[pid]||[];
   // Count unique global params assigned in this project
   const assignedGlobalIds=new Set();
-  Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedGlobalIds.add(a.globalRef); }));
+  Object.values(assignments[pid]||{}).forEach(list=>list.forEach(a=>{ if(a.globalRef) assignedGlobalIds.add(a.globalRef); else if(a.projRef) assignedGlobalIds.add('proj:'+a.projRef); }));
 
   (document.getElementById('workspace')||{}).innerHTML=`
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
@@ -975,7 +1010,7 @@ function renderCombinedParamList(globals, projs, assignedGlobalIds){
       · Projekt-eigene Merkmale <span style="font-family:var(--mono);color:var(--text3);font-weight:400">${projFiltered.length}${q?'/'+projOwn.length:''}</span>
     </div>`;
     if(projFiltered.length){
-      html += renderProjOwnList(projFiltered);
+      html += renderProjOwnList(projFiltered, assignedGlobalIds);
     } else if(q){
       html += `<div style="padding:8px 14px;font-size:11px;color:var(--text3);font-style:italic">Keine Treffer im Filter</div>`;
     }
@@ -990,7 +1025,7 @@ function renderCombinedParamList(globals, projs, assignedGlobalIds){
 }
 
 // Render der projekt-eigenen Merkmale (kompakter, mit Push-Button)
-function renderProjOwnList(items){
+function renderProjOwnList(items, assignedGlobalIds){
   const grpOrder=PARAM_GROUPS.map(g=>g.code);
   const byGrp={};
   items.forEach(p=>{if(!byGrp[p.grp])byGrp[p.grp]=[];byGrp[p.grp].push(p);});
@@ -1044,12 +1079,11 @@ function pushToGlobal(paramId){
   const idx=list.findIndex(p=>p.id===paramId);
   if(idx<0){showToast('Merkmal nicht gefunden');return;}
   const p=list[idx];
-  // Dedup gegen bestehende Bibliothek
   const existing=globalParams.find(g=>g.pset===p.pset && g.attr===p.attr);
-  let globalId;
+  let globalId, note;
   if(existing){
     globalId=existing.id;
-    showToast('✓ Bereits in Bibliothek vorhanden – verlinkt');
+    note='Bereits in Bibliothek – verlinkt';
   } else {
     const newG={...p,id:uid()};
     delete newG.globalRef;
@@ -1057,11 +1091,22 @@ function pushToGlobal(paramId){
     globalParams.push(newG);
     globalId=newG.id;
     saveGlobal();
-    showToast('⤴ In globale Bibliothek verschoben: '+p.name);
+    note='⤴ In globale Bibliothek: '+p.name;
   }
-  // Konvertiere den Projekt-Eintrag: aus "eigen" wird "Referenz auf global"
   list[idx]={...p,globalRef:globalId};
-  savePP();
+  // Migriere bestehende projRef-Assignments zu globalRef
+  let migrated=0;
+  Object.keys(assignments[pid]||{}).forEach(nodeId=>{
+    (assignments[pid][nodeId]||[]).forEach(a=>{
+      if(a.projRef===paramId){
+        a.globalRef=globalId;
+        delete a.projRef;
+        migrated++;
+      }
+    });
+  });
+  savePP(); saveAssign();
+  showToast('✓ '+note+(migrated?' · '+migrated+' Zuweisung(en) migriert':''));
   render();
 }
 
@@ -1728,16 +1773,37 @@ function doImport(){
   else{
     if(!pid){showToast('Kein Projekt');return;}
     if(!projParams[pid]) projParams[pid]=[];
-    // Projekt-eigene Merkmale: NUR in projParams speichern, KEIN Push in globale Bibliothek.
-    // Explizite Uebernahme geschieht per Push-Button pro Merkmal.
-    let added=0, skipped=0;
+    if(!assignments[pid]) assignments[pid]={};
+    let added=0, skipped=0, autoAssigned=0, unmapped=[];
     importRows.forEach(r=>{
-      const existsInProj=projParams[pid].some(p=>p.pset===r.pset && p.attr===r.attr);
-      if(existsInProj){ skipped++; }
-      else { projParams[pid].push({...r,id:uid(),addedAt:new Date().toISOString()}); added++; }
+      let projP=projParams[pid].find(p=>p.pset===r.pset && p.attr===r.attr && !p.globalRef);
+      if(projP){ skipped++; }
+      else {
+        projP={...r,id:uid(),addedAt:new Date().toISOString()};
+        projParams[pid].push(projP);
+        added++;
+      }
+      const nodeIds=resolveIfcTypesToNodes(r.ifcTypes||[]);
+      if(!nodeIds.length){
+        (r.ifcTypes||[]).forEach(t=>{ if(!unmapped.includes(t)) unmapped.push(t); });
+      }
+      nodeIds.forEach(nodeId=>{
+        if(!assignments[pid][nodeId]) assignments[pid][nodeId]=[];
+        const already=assignments[pid][nodeId].find(a=>a.projRef===projP.id);
+        if(!already){
+          assignments[pid][nodeId].push({id:uid(), paramId:projP.id, projRef:projP.id, pflicht:true, awfIds:[]});
+          autoAssigned++;
+        }
+      });
     });
-    savePP();
-    showToast('✓ '+added+' Projekt-Merkmale angelegt'+(skipped?', '+skipped+' bereits vorhanden':''));
+    savePP(); saveAssign();
+    const parts=[];
+    if(added) parts.push(added+' angelegt');
+    if(skipped) parts.push(skipped+' bereits vorhanden');
+    if(autoAssigned) parts.push(autoAssigned+' Zuweisungen erzeugt');
+    let msg='✓ '+parts.join(', ');
+    if(unmapped.length) msg+=' · unklare IFC-Typen: '+unmapped.slice(0,3).join(',')+(unmapped.length>3?'…':'');
+    showToast(msg);
   }
   closeImport();render();
 }

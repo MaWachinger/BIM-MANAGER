@@ -629,6 +629,9 @@ const OBJ_TREE = {
         {id:'tga-elste',label:'Elektro (Schalt-/Sicherungstechnik)',icon:'·',level:3,children:[{id:'tga-sich',label:'Sicherungsautomat',icon:'·',level:4},{id:'tga-rel',label:'Relais',icon:'·',level:4}]},
         {id:'tga-msrste',label:'MSR (Sensorik / Aktorik)',icon:'·',level:3,children:[{id:'tga-ds',label:'Drucksensor',icon:'·',level:4},{id:'tga-pm',label:'Präsenzmelder',icon:'·',level:4},{id:'tga-tf',label:'Temperaturfühler',icon:'·',level:4}]},
       ]},
+      { id:'tga-foerd', label:'005 – Förderanlagen', icon:'🛗', level:2, children:[
+        {id:'tga-foerdanl',label:'Förderanlagen (IfcTransportElement)',icon:'·',level:3,children:[{id:'tga-aufz',label:'Aufzug',icon:'·',level:4},{id:'tga-fahr',label:'Fahrtreppe / Fahrsteig',icon:'·',level:4}]},
+      ]},
     ]},
   ]
 };
@@ -707,6 +710,13 @@ const IFC_TO_NODES = {
   // TGA – Sanitaer
   'ifcsanitaryterminal':     ['tga-du','tga-wt','tga-wc'],
   'ifcwasteterminal':        ['tga-sanabg'],
+  // ergaenzt aus dem BIM-Elementplan Bau72
+  'ifctransportelement':     ['tga-aufz','tga-fahr'],
+  'ifcactuator':             ['tga-msr'],
+  'ifcdamper':               ['tga-lk'],
+  'ifcductaccessory':        ['tga-lk'],
+  'ifcrailing':              ['rau'],
+  'ifcfoundation':           ['bau-bp','bau-ef','bau-sf'],
 };
 function resolveIfcTypesToNodes(ifcTypes){
   const nodes=new Set();
@@ -756,7 +766,18 @@ function normalizeDatatype(input){
   if(!input) return 'IfcLabel';
   const raw=String(input).trim();
   // Wenn bereits ein IFC-Typ: durchreichen
-  if(/^Ifc/i.test(raw)) return raw.charAt(0).toUpperCase()+raw.slice(1);
+  if(/^Ifc/i.test(raw)){
+    // IDS schreibt Datentypen komplett gross (IFCLABEL) – auf CamelCase zurueckfuehren
+    const CANON={ifclabel:'IfcLabel',ifctext:'IfcText',ifcinteger:'IfcInteger',ifcreal:'IfcReal',
+      ifcboolean:'IfcBoolean',ifclogical:'IfcLogical',ifcidentifier:'IfcIdentifier',
+      ifcdate:'IfcDate',ifctime:'IfcTime',ifcdatetime:'IfcDateTime',ifcduration:'IfcDuration',
+      ifclengthmeasure:'IfcLengthMeasure',ifcareameasure:'IfcAreaMeasure',
+      ifcvolumemeasure:'IfcVolumeMeasure',ifcmassmeasure:'IfcMassMeasure',
+      ifcpowermeasure:'IfcPowerMeasure',ifcilluminancemeasure:'IfcIlluminanceMeasure',
+      ifcthermodynamictemperaturemeasure:'IfcThermodynamicTemperatureMeasure',
+      ifcurireference:'IfcURIReference',ifccountmeasure:'IfcCountMeasure'};
+    return CANON[raw.toLowerCase()]||(raw.charAt(0).toUpperCase()+raw.slice(1));
+  }
   const key=raw.toLowerCase().replace(/[\s\-_./]/g,'');
   const MAP={
     // Text
@@ -784,7 +805,9 @@ function normalizeDatatype(input){
   return MAP[key]||'IfcLabel';
 }
 // Generische IFC-Klassen — bei Vorhandensein von spezifischen werden diese ignoriert
-const GENERIC_IFC = new Set(['ifcelement','ifcbuildingelement','ifcbuildingelementproxy','ifcdistributionelement','ifcbuildingcomponent']);
+// IfcDistributionElement bewusst NICHT generisch: im BIM-Elementplan ist es eine
+// gewaehlte Klasse (Verteilungen, Kabeltrassen, Luftkanalzubehoer, Brandschutzklappen).
+const GENERIC_IFC = new Set(['ifcelement','ifcbuildingelement','ifcbuildingelementproxy','ifcbuildingcomponent']);
 
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={};
@@ -1996,17 +2019,30 @@ function parseIDS(xml){
   const doc=new DOMParser().parseFromString(xml,'application/xml');
   importRows=[];
   doc.querySelectorAll('specification').forEach(spec=>{
-    const ifc=spec.querySelector('applicability entity name simpleValue')?.textContent||'IfcElement';
+    // IFC-Klassen: <simpleValue> ODER <xs:restriction><xs:enumeration value="..."/>
+    // Ohne den Enumerations-Zweig fielen alle Gruppen mit mehreren Klassen auf
+    // 'IfcElement' zurueck und verloren beim Import ihre Zuweisung.
+    const nameEl=spec.querySelector('applicability entity name');
+    let ifcTypes=[];
+    if(nameEl){
+      const sv=nameEl.querySelector('simpleValue');
+      if(sv) ifcTypes=[(sv.textContent||'').trim()];
+      else ifcTypes=[...nameEl.querySelectorAll('enumeration')]
+                      .map(e=>(e.getAttribute('value')||'').trim()).filter(Boolean);
+    }
+    if(!ifcTypes.length) ifcTypes=['IfcElement'];
     spec.querySelectorAll('requirements property').forEach(prop=>{
       const pset=prop.querySelector('propertySet simpleValue')?.textContent||'';
       const attr=prop.querySelector('baseName simpleValue')?.textContent||'';
-      // Datatype: aus attribute ODER aus value/simpleValue oder aus dataType-Element
-      const rawDtype=prop.getAttribute('datatype')
+      // IDS 1.0 schreibt das Attribut 'dataType' – in XML sind Attributnamen
+      // case-sensitiv, 'datatype' trifft es nicht. Kleinschreibung als Fallback.
+      const rawDtype=prop.getAttribute('dataType')
+                   ||prop.getAttribute('datatype')
                    ||prop.querySelector('value simpleValue')?.getAttribute('type')
                    ||prop.querySelector('dataType')?.textContent
                    ||'IfcLabel';
       const dtype=normalizeDatatype(rawDtype);
-      if(pset&&attr) importRows.push({id:uid(),name:attr,pset,attr,dtype,grp:'ZZ',ifcTypes:[ifc],phases:[],desc:''});
+      if(pset&&attr) importRows.push({id:uid(),name:attr,pset,attr,dtype,grp:'ZZ',ifcTypes:[...ifcTypes],phases:[],desc:''});
     });
   });showPreview();
 }

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM Manager · Zuordnung</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav-bg:#0f1623;--nav-border:#1e2d45;--nav-text:#8899b0;--nav-hover:#1a2744;--nav-active:#152238;
+  --accent:#00c9a7;--accent-dim:rgba(0,201,167,0.13);--accent-mid:rgba(0,201,167,0.3);
+  --global:#8b5cf6;--global-dim:rgba(139,92,246,0.1);
+  --bg:#f0f3f8;--surface:#fff;--surface2:#f5f7fa;--border:#e2e8f0;--border2:#d0d9e8;
+  --text:#1a2540;--text2:#4a5876;--text3:#8899b0;
+  --ok:#10b981;--ok-bg:#ecfdf5;--warn:#f59e0b;--warn-bg:#fffbeb;
+  --err:#ef4444;--err-bg:#fef2f2;--info:#3b82f6;--info-bg:#eff6ff;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --r:6px;--rl:10px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+
+/* SIDEBAR */
+.sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
+.logo{padding:20px 18px 18px;border-bottom:1px solid var(--nav-border)}
+.logo-mark{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0f1623;font-family:var(--mono);flex-shrink:0}
+.logo-name{font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:-0.02em}
+.logo-sub{font-size:10px;color:var(--nav-text);letter-spacing:0.06em;text-transform:uppercase;margin-left:39px;font-family:var(--mono)}
+.nav{padding:8px 0;flex:1}
+.nav-section{padding:14px 18px 5px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3d5473;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--nav-text);font-size:13px;border-left:2px solid transparent;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:#c8d8e8}
+.nav-item.active{background:var(--nav-active);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-icon{width:17px;height:17px;opacity:0.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:#1e2d45;color:var(--nav-text);font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;min-width:18px;text-align:center}
+.nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;flex-shrink:0}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+
+/* MODE TABS */
+.mode-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0;gap:0}
+.mode-tab{padding:10px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:6px}
+.mode-tab:hover{color:var(--text2)}
+.mode-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.mode-tab.g.active{color:var(--global);border-bottom-color:var(--global)}
+.tb{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:8px;background:var(--surface2);color:var(--text3)}
+.mode-tab.active .tb{background:var(--accent-dim);color:var(--accent)}
+.mode-tab.g.active .tb{background:var(--global-dim);color:var(--global)}
+
+/* PROJECT SELECTOR BAR */
+.proj-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.proj-bar label{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.psel{padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none}
+.psel:focus{border-color:var(--accent)}
+
+/* ══════════════════════════════════════
+   MAIN 3-COLUMN WORKSPACE
+══════════════════════════════════════ */
+.workspace{flex:1;display:flex;min-height:0;overflow:hidden}
+
+/* COL 1: PARAMETER LIST */
+.param-col{width:270px;min-width:270px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.col-header{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.col-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)}
+.col-scroll{flex:1;overflow-y:auto;padding:6px 0}
+.search-row{padding:6px 10px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.search-box{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none}
+.search-box:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+
+/* Parameter groups */
+.pgrp{border-bottom:1px solid var(--border)}
+.pgrp-header{padding:7px 12px;display:flex;align-items:center;gap:7px;cursor:grab;user-select:none;transition:background 0.1s}
+.pgrp-header:hover{background:var(--surface2)}
+.pgrp-code{font-size:10px;font-family:var(--mono);font-weight:600;min-width:30px;flex-shrink:0}
+.pgrp-name{font-size:12px;font-weight:500;color:var(--text);flex:1}
+.pgrp-count{font-size:10px;font-family:var(--mono);color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:8px}
+.pgrp-toggle{font-size:10px;color:var(--text3);transition:transform 0.15s}
+.pgrp-toggle.open{transform:rotate(90deg)}
+.pgrp-items{display:none;padding:2px 0 4px}
+.pgrp.expanded .pgrp-items{display:block}
+
+/* Individual parameter card */
+.pcard{margin:2px 8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);cursor:grab;background:var(--surface);transition:all 0.12s;user-select:none;position:relative}
+.pcard:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(0,201,167,0.15)}
+.pcard.dragging{opacity:0.45;border-color:var(--accent)}
+.pcard.assigned-here{background:var(--ok-bg);border-color:#a7f3d0}
+.pcard-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+.pcard-sub{font-size:10px;font-family:var(--mono);color:var(--text3)}
+.pcard-badge{position:absolute;top:5px;right:7px;font-size:10px;color:var(--ok);font-weight:600}
+
+/* COL 2: OBJECT TREE */
+.tree-col{width:300px;min-width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.tree-scroll{flex:1;overflow-y:auto;padding:4px 0}
+
+/* Tree nodes */
+.tnode{display:flex;align-items:center;gap:0;padding:0;cursor:pointer;user-select:none}
+.tnode-inner{display:flex;align-items:center;gap:6px;flex:1;padding:5px 10px;border-radius:0;transition:background 0.1s;border-left:3px solid transparent}
+.tnode:hover .tnode-inner{background:var(--surface2)}
+.tnode.selected .tnode-inner{background:var(--accent-dim);border-left-color:var(--accent)}
+.tnode.drop-over .tnode-inner{background:var(--accent-mid);border-left-color:var(--accent);border-left-style:dashed;border-width:2px}
+.tnode-toggle{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px;flex-shrink:0;transition:transform 0.15s}
+.tnode-toggle.open{transform:rotate(90deg)}
+.tnode-toggle.leaf{opacity:0;pointer-events:none}
+.tnode-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center;line-height:1}
+.tnode-label{font-size:12px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.tnode-label.l0{font-weight:600;color:var(--text);font-size:13px}
+.tnode-label.l1{font-weight:600;color:var(--text2)}
+.tnode-label.l2{font-weight:500;color:var(--text2)}
+.tnode-label.l3{font-weight:400;color:var(--text2)}
+.tnode-label.l4{font-weight:400;color:var(--text3)}
+.tnode-count{font-size:10px;font-family:var(--mono);color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:8px;flex-shrink:0}
+.tnode.selected .tnode-count{background:var(--accent-dim);color:var(--accent)}
+.inherited-dot{width:5px;height:5px;border-radius:50%;background:var(--warn);flex-shrink:0;opacity:0.7}
+.tchildren{display:none}
+.tchildren.open{display:block}
+
+/* COL 3: AWF MATRIX */
+.awf-col{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.matrix-wrap{flex:1;overflow:auto;position:relative}
+.matrix-hint{padding:24px;text-align:center;color:var(--text3);font-size:13px;line-height:1.6}
+.matrix-hint .ei{font-size:32px;margin-bottom:10px}
+
+/* Matrix table */
+.mtable{border-collapse:collapse;min-width:100%;font-size:12px}
+.mtable th{padding:0;background:var(--surface);position:sticky;top:0;z-index:10;white-space:nowrap}
+.mtable .th-param{width:240px;min-width:240px;padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);border-right:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);position:sticky;left:0;background:var(--surface);z-index:20}
+.mtable .th-awf{padding:6px 12px;text-align:center;border-bottom:2px solid var(--border);border-right:1px solid var(--border);min-width:110px}
+.th-awf-name{font-size:11px;font-weight:600;color:var(--text);display:block;margin-bottom:2px}
+.th-awf-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.th-awf-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+
+.mtable td{padding:0;border-bottom:1px solid var(--border);vertical-align:middle}
+.mtable tr:last-child td{border-bottom:none}
+.mtable tr:hover .td-param,.mtable tr:hover .td-check{background:#fafbfd}
+
+.td-param{padding:8px 12px;border-right:1px solid var(--border);position:sticky;left:0;background:var(--surface);z-index:5;min-width:240px;width:240px}
+.td-param-name{font-weight:500;color:var(--text);margin-bottom:2px;font-size:12px}
+.td-param-sub{font-size:10px;font-family:var(--mono);color:var(--text3);display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
+.inherited-label{font-size:10px;background:var(--warn-bg);color:#92400e;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+
+.td-check{padding:6px;text-align:center;border-right:1px solid var(--border);vertical-align:middle}
+.awf-cb{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+
+.td-pflicht{padding:5px 8px;border-right:1px solid var(--border);text-align:center}
+.pflicht-tag{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px;cursor:pointer;user-select:none;display:inline-block}
+.pflicht-tag.on{background:var(--err-bg);color:var(--err)}
+.pflicht-tag.off{background:var(--surface2);color:var(--text3)}
+
+.td-remove{padding:4px 8px;text-align:center}
+.rm-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:3px;transition:all 0.1s}
+.rm-btn:hover{background:var(--err-bg);color:var(--err)}
+
+/* AWF header color bar */
+.awf-color-bar{height:3px;width:100%;display:block;margin-bottom:4px;border-radius:1px}
+
+/* ══════════════════════════════════════
+   GLOBAL LIBRARY MODE
+══════════════════════════════════════ */
+.glib-layout{flex:1;display:flex;overflow:hidden}
+.glib-side{width:210px;min-width:210px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto}
+.glib-body{flex:1;overflow-y:auto;padding:20px 24px}
+.glib-banner{background:var(--global-dim);border:1px solid #c4b5fd;border-radius:var(--r);padding:10px 14px;font-size:12px;color:#5b21b6;margin-bottom:16px;line-height:1.6}
+.glib-cat{padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text2);border-left:3px solid transparent;transition:all 0.12s}
+.glib-cat:hover{background:var(--surface2)}
+.glib-cat.active{background:var(--global-dim);border-left-color:var(--global);color:var(--global);font-weight:500}
+
+/* Param table */
+.ptable{width:100%;border-collapse:collapse;font-size:12px}
+.ptable th{padding:7px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);background:var(--surface2);border-bottom:1px solid var(--border)}
+.ptable td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:#fafbfd}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#0f1623}
+.btn-primary:hover{background:#00b396}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-secondary:hover{background:var(--surface2)}
+.btn-global{background:var(--global-dim);border:1px solid #c4b5fd;color:var(--global)}
+.btn-global:hover{background:#ddd6fe}
+.btn-danger{background:var(--err-bg);color:var(--err);border:1px solid #fca5a5}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-xs{padding:2px 7px;font-size:10px;font-family:var(--mono)}
+.btn-ghost{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:13px;display:inline-flex;align-items:center;transition:all 0.12s}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+
+/* TAGS */
+.tag{padding:2px 5px;border-radius:3px;font-size:10px;font-weight:500;font-family:var(--mono);display:inline-block}
+.tag-blue{background:#dbeafe;color:#1e40af}
+.tag-green{background:#d1fae5;color:#065f46}
+.tag-amber{background:#fef3c7;color:#92400e}
+.tag-purple{background:#ede9fe;color:#5b21b6}
+.tag-gray{background:var(--surface2);color:var(--text2)}
+.tag-teal{background:#ccfbf1;color:#0f766e}
+.tag-global{background:var(--global-dim);color:var(--global)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:20px 24px 14px;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.modal-close{width:28px;height:28px;border:1px solid var(--border);border-radius:var(--r);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3)}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:0 24px 20px}
+.modal-section{padding-top:14px;border-top:1px solid var(--border);margin-top:14px}
+.modal-section-title{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:10px}
+.modal-footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg label{font-size:11px;font-weight:500;color:var(--text2)}
+.fg input,.fg select,.fg textarea{padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface);outline:none;width:100%;transition:border-color 0.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.fg textarea{resize:vertical;min-height:56px;line-height:1.5}
+.form-hint{font-size:10px;color:var(--text3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+
+/* IFC selector */
+.ifc-sel{border:1px solid var(--border);border-radius:var(--r);padding:6px;max-height:180px;overflow-y:auto;background:var(--surface)}
+.ifc-g{margin-bottom:6px}
+.ifc-g-label{font-size:10px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;padding:2px 4px;letter-spacing:0.06em}
+.ifc-opt{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:3px;cursor:pointer;transition:background 0.1s}
+.ifc-opt:hover{background:var(--surface2)}
+.ifc-opt input{width:12px;height:12px;accent-color:var(--accent);cursor:pointer}
+.ifc-opt label{font-size:11px;font-family:var(--mono);color:var(--text2);cursor:pointer}
+.ifc-opt.sel label{color:var(--accent);font-weight:500}
+
+/* Phase chips */
+.phase-grid{display:flex;gap:4px;flex-wrap:wrap}
+.ph{display:inline-flex;align-items:center;justify-content:center;width:30px;height:18px;border-radius:3px;font-size:10px;font-weight:600;font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text3);transition:all 0.12s;user-select:none}
+.ph.on{background:var(--accent);color:#0f1623;border-color:var(--accent)}
+
+/* AWF color swatches */
+.cswatch{width:22px;height:22px;border-radius:5px;cursor:pointer;border:2px solid transparent;display:inline-block;transition:all 0.13s}
+.cswatch:hover{transform:scale(1.15)}
+.cswatch.sel{border-color:var(--text);box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--text)}
+
+/* IMPORT */
+.import-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+.itab{padding:7px 14px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.12s}
+.itab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--surface2)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone input{display:none}
+
+/* CONFIRM */
+.confirm-box{background:var(--surface);border-radius:var(--rl);padding:24px;max-width:380px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
+.modal-overlay.open .confirm-box{transform:translateY(0)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--nav-bg);color:#e2e8f0;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;border-left:3px solid var(--accent);z-index:999;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+.info-box{padding:8px 12px;border-radius:var(--r);font-size:12px;line-height:1.6;margin-bottom:12px}
+.info-blue{background:var(--info-bg);border:1px solid #bfdbfe;color:#1d4ed8}
+.info-purple{background:var(--global-dim);border:1px solid #c4b5fd;color:#5b21b6}
+.info-amber{background:var(--warn-bg);border:1px solid #fde68a;color:#92400e}
+
+/* No-project state */
+.no-project{flex:1;display:flex;align-items:center;justify-content:center}
+.no-project-inner{text-align:center;color:var(--text3)}
+.no-project-inner .ei{font-size:36px;margin-bottom:10px}
+.no-project-inner .et{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px}
+</style>
+<script src="bim_sync.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><div class="logo-icon">BIM</div><div class="logo-name">BIM Manager</div></div>
+    <div class="logo-sub">Zuordnung</div>
+  </div>
+<nav class="nav">
+    <div class="nav-section">Festlegen &nbsp;·&nbsp; Ebene 0</div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h5M3 10h5M3 15h5M12 10h5M8 5c3 0 1 5 4 5M8 15c3 0 1-5 4-5"/></svg>Zuordnung</div>
+    <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5h16v3H2zM2 10h16v3H2zM2 15h10v3H2z"/></svg>Merkmalskatalog</div>
+    <div class="nav-item" onclick="goTo('02_meilensteinplanung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h14M3 5h14M3 15h8"/></svg>Meilensteinplan</div>
+    <div class="nav-section">Prüfen &nbsp;·&nbsp; Ebene 1–2</div>
+    <div class="nav-item" onclick="goTo('05_modellpruefung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M4 4h3V2h6v2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/></svg>Modellprüfung</div>
+    <div class="nav-item" onclick="goTo('06_modellpruefung_regeln.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3a7 7 0 100 14A7 7 0 0010 3zm0 3v4M10 13h.01"/></svg>Prüfregeln</div>
+    <div class="nav-section">Auswerten</div>
+    <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2zM10 9h4M10 13h4M6 9h.01M6 13h.01"/></svg>Reifegradbericht</div>
+    <div class="nav-section">Projektrahmen</div>
+    <div class="nav-item" onclick="goTo('index.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2H2zm5 2v10M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-item" onclick="goTo('04_anwendungsfaelle.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 4v4l3 3"/></svg>Anwendungsfälle</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="font-size:12px;color:#c8d8e8;font-weight:500" id="sb-user">BIM Manager</div>
+    <div style="font-size:10px;color:var(--nav-text)">Zuordnung</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <span style="font-size:12px;color:var(--text3)">Zuordnung &nbsp;·&nbsp; Merkmal &rarr; Meilenstein</span>
+    <div class="topbar-right" id="topbar-right">
+      <select id="proj-sel" onchange="switchProject(this.value)" style="height:28px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--sans);font-size:12px;padding:0 8px;max-width:240px"></select>
+      <button onclick="goTo('08_hilfe.html')" title="Hilfe &amp; Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
+    </div>
+  </div>
+
+  <!-- BEFUNDE (Ebene 0) -->
+  <div class="zo-befunde" id="zo-befunde"></div>
+
+  <!-- SOLL-KURVE -->
+  <div class="zo-kurve-wrap" id="zo-kurve-wrap"></div>
+
+  <!-- ZWEIGETEILTE ARBEITSFLÄCHE -->
+  <div class="zo-split">
+    <!-- LINKS: MERKMALSKATALOG -->
+    <div class="zo-pane">
+      <div class="zo-pane-head">
+        <span class="zo-pane-title">Merkmalskatalog</span>
+        <span class="zo-count" id="zo-left-count">0</span>
+      </div>
+      <div class="zo-toolbar">
+        <input type="text" id="zo-search" placeholder="Merkmal suchen…" oninput="onSearch(this.value)">
+        <label class="zo-chk"><input type="checkbox" id="zo-only-open" checked onchange="render()"> nur offene</label>
+      </div>
+      <div class="zo-list" id="zo-left"></div>
+    </div>
+
+    <!-- RECHTS: MEILENSTEINPLAN -->
+    <div class="zo-pane">
+      <div class="zo-pane-head">
+        <span class="zo-pane-title">Meilensteinplan</span>
+        <span class="zo-count" id="zo-right-count">0</span>
+      </div>
+      <div class="zo-toolbar">
+        <label class="zo-chk"><input type="checkbox" id="zo-only-ms" checked onchange="render()"> nur Meilensteine &amp; Datadrops</label>
+        <button class="zo-btn-ghost" onclick="toggleErweitert()" id="zo-adv-btn">Erweitert ▾</button>
+      </div>
+      <div class="zo-adv" id="zo-adv">
+        <div class="zo-adv-row">
+          <div>
+            <div class="zo-adv-t">Aus Leistungsphasen vorbelegen</div>
+            <div class="zo-adv-d">Leitet den frühesten Meilenstein aus den vorhandenen LP-Angaben der Merkmale ab. Setzt nur dort, wo noch nichts zugeordnet ist.</div>
+          </div>
+          <button class="zo-btn" onclick="ableitenAusLph()">Vorbelegen</button>
+        </div>
+        <div class="zo-adv-row">
+          <div>
+            <div class="zo-adv-t">Vorbelegung zurücknehmen</div>
+            <div class="zo-adv-d">Entfernt ausschließlich abgeleitete Zuordnungen. Von Hand gesetzte bleiben unangetastet.</div>
+          </div>
+          <button class="zo-btn-danger" onclick="ableitungZuruecknehmen()">Zurücknehmen</button>
+        </div>
+      </div>
+      <div class="zo-list" id="zo-right"></div>
+    </div>
+  </div>
+</div>
+
+<div class="zo-toast" id="zo-toast"></div>
+
+<style>
+.zo-befunde{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 20px 4px}
+.zo-bef{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:12px 14px;display:flex;align-items:center;gap:12px}
+.zo-bef.warn{border-color:#fcd9a0;background:var(--warn-bg)}
+.zo-bef.ok{border-color:#a7e8cd;background:var(--ok-bg)}
+.zo-bef.dim{opacity:0.55}
+.zo-bef-n{font-family:var(--mono);font-size:22px;font-weight:500;line-height:1;min-width:34px}
+.zo-bef.warn .zo-bef-n{color:var(--warn)}
+.zo-bef.ok .zo-bef-n{color:var(--ok)}
+.zo-bef.dim .zo-bef-n{color:var(--text3)}
+.zo-bef-t{font-size:12px;font-weight:500;color:var(--text)}
+.zo-bef-d{font-size:10.5px;color:var(--text3);margin-top:2px;line-height:1.35}
+
+.zo-kurve-wrap{padding:8px 20px 0}
+.zo-kurve{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:12px 14px}
+.zo-kurve-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.zo-kurve-t{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);font-family:var(--mono)}
+.zo-kurve-bars{display:flex;align-items:flex-end;gap:4px;height:62px}
+.zo-kb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;min-width:0}
+.zo-kb-bar{width:100%;background:var(--accent-dim);border:1px solid var(--accent-mid);border-bottom:none;border-radius:3px 3px 0 0;min-height:2px}
+.zo-kb-bar.on{background:var(--accent-mid)}
+.zo-kb-lbl{font-size:9px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.zo-kb-val{font-size:10px;font-family:var(--mono);color:var(--text2)}
+
+.zo-split{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 20px 20px;align-items:start}
+.zo-pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);display:flex;flex-direction:column;overflow:hidden}
+.zo-pane-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border)}
+.zo-pane-title{font-size:13px;font-weight:600}
+.zo-count{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--surface2);border-radius:20px;padding:2px 9px}
+.zo-toolbar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);background:var(--surface2);flex-wrap:wrap}
+.zo-toolbar input[type=text]{flex:1;min-width:120px;height:28px;border:1px solid var(--border2);border-radius:var(--r);padding:0 9px;font-family:var(--sans);font-size:12px;background:var(--surface);color:var(--text)}
+.zo-chk{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);cursor:pointer;user-select:none}
+.zo-btn{border:1px solid var(--accent);background:var(--accent-dim);color:#0a7a66;border-radius:var(--r);padding:5px 11px;font-size:11.5px;font-family:var(--sans);cursor:pointer;font-weight:500;white-space:nowrap}
+.zo-btn-danger{border:1px solid #f3b0b0;background:var(--err-bg);color:#b02a2a;border-radius:var(--r);padding:5px 11px;font-size:11.5px;font-family:var(--sans);cursor:pointer;white-space:nowrap}
+.zo-btn-ghost{border:1px solid var(--border2);background:transparent;color:var(--text2);border-radius:var(--r);padding:4px 9px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.zo-adv{display:none;padding:4px 14px 10px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.zo-adv.open{display:block}
+.zo-adv-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px dashed var(--border2)}
+.zo-adv-row:last-child{border-bottom:none}
+.zo-adv-t{font-size:12px;font-weight:500}
+.zo-adv-d{font-size:10.5px;color:var(--text3);line-height:1.4;margin-top:2px;max-width:330px}
+
+.zo-list{max-height:calc(100vh - 340px);overflow-y:auto;padding:8px}
+.zo-grp{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);font-family:var(--mono);padding:9px 6px 4px;display:flex;align-items:center;gap:7px}
+.zo-grp-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+
+.zo-m{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid transparent;border-radius:var(--r);cursor:grab;font-size:12.5px;user-select:none}
+.zo-m:hover{background:var(--surface2);border-color:var(--border)}
+.zo-m.sel{background:var(--accent-dim);border-color:var(--accent-mid)}
+.zo-m.assigned{opacity:0.5}
+.zo-m-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zo-m-pset{font-family:var(--mono);font-size:9.5px;color:var(--text3);white-space:nowrap}
+.zo-m-badge{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);white-space:nowrap}
+
+.zo-ms{border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;overflow:hidden}
+.zo-ms.drop{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.zo-ms-head{display:flex;align-items:center;gap:9px;padding:9px 11px;cursor:pointer;background:var(--surface)}
+.zo-ms-head:hover{background:var(--surface2)}
+.zo-ms-ico{font-size:12px;flex-shrink:0}
+.zo-ms-name{flex:1;min-width:0;font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zo-ms-date{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+.zo-ms-n{font-family:var(--mono);font-size:10px;background:var(--accent-dim);color:#0a7a66;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.zo-ms-n.zero{background:var(--warn-bg);color:#a06000}
+.zo-ms-body{display:none;padding:4px 8px 8px;background:var(--surface2);border-top:1px solid var(--border)}
+.zo-ms-body.open{display:block}
+.zo-a{display:flex;align-items:center;gap:8px;padding:5px 7px;font-size:12px;border-radius:4px}
+.zo-a:hover{background:var(--surface)}
+.zo-a-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zo-a-src{font-family:var(--mono);font-size:9px;color:var(--text3)}
+.zo-a-x{cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0 3px}
+.zo-a-x:hover{color:var(--err)}
+.zo-empty{padding:22px 12px;text-align:center;font-size:12px;color:var(--text3);line-height:1.5}
+
+.zo-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:9px 18px;border-radius:20px;font-size:12.5px;z-index:900;transition:transform 0.22s;pointer-events:none}
+.zo-toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:1100px){.zo-split{grid-template-columns:1fr}.zo-befunde{grid-template-columns:1fr}}
+</style>
+
+<script>
+// ─── SCHLÜSSEL ────────────────────────────────────────────────────────
+const PROJ_KEY   = 'bim_projects_v2';
+const GLOBAL_KEY = 'bim_global_params_v2';
+const PPARAM_KEY = 'bim_proj_params_v1';
+const MS_KEY     = 'bim_milestones_v1';
+const GRP_KEY    = 'bim_param_groups_v1';
+const SET_KEY    = 'bim_settings_v1';
+const ZUO_KEY    = 'bim_zuordnung_v1';   // NEU: { pid: { paramId: {ms, urheber, zeitpunkt, herkunft} } }
+
+const TYP_ICON = {datadrop:'📦', meilenstein:'◆', freigabe:'✓', pruefung:'🔍', besprechung:'💬', sonstiges:'·'};
+const KERN_TYPEN = ['datadrop','meilenstein','freigabe'];
+
+let projects=[], globalParams=[], projParams={}, milestones={}, groups=[], zuo={};
+let currentPid='', selectedParam=null, searchTerm='', openMs=new Set();
+
+function goTo(href){ window.location.href = href; }
+function getCurrentProject(){ return localStorage.getItem('bim_current_project') || ''; }
+function setCurrentProject(pid){ localStorage.setItem('bim_current_project', pid); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function urheber(){ try{ return (JSON.parse(localStorage.getItem(SET_KEY))||{}).name || 'BIM Manager'; }catch(e){ return 'BIM Manager'; } }
+
+function toast(msg){
+  const t=document.getElementById('zo-toast'); if(!t) return;
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(window._zoTt); window._zoTt=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ─── LADEN / SPEICHERN ────────────────────────────────────────────────
+function ls(key, fallback){ try{ const v=JSON.parse(localStorage.getItem(key)); return v==null?fallback:v; }catch(e){ return fallback; } }
+function saveZuo(){ localStorage.setItem(ZUO_KEY, JSON.stringify(zuo)); }
+
+function init(){
+  const s = ls(SET_KEY,{});
+  const el=document.getElementById('sb-user'); if(el) el.textContent = s.name || 'BIM Manager';
+
+  projects     = ls(PROJ_KEY,[]);
+  globalParams = ls(GLOBAL_KEY,[]);
+  projParams   = ls(PPARAM_KEY,{});
+  milestones   = ls(MS_KEY,{});
+  groups       = ls(GRP_KEY,[]);
+  zuo          = ls(ZUO_KEY,{});
+
+  currentPid = getCurrentProject();
+  if(!currentPid && projects.length) { currentPid = projects[0].id; setCurrentProject(currentPid); }
+  if(!zuo[currentPid]) zuo[currentPid] = {};
+
+  renderProjSel();
+  render();
+}
+
+function renderProjSel(){
+  const sel=document.getElementById('proj-sel'); if(!sel) return;
+  if(!projects.length){ sel.innerHTML='<option value="">— kein Projekt —</option>'; return; }
+  sel.innerHTML = projects.map(p=>
+    '<option value="'+esc(p.id)+'"'+(p.id===currentPid?' selected':'')+'>'+esc(p.name||p.id)+'</option>'
+  ).join('');
+}
+function switchProject(pid){
+  currentPid=pid; setCurrentProject(pid);
+  if(!zuo[currentPid]) zuo[currentPid]={};
+  selectedParam=null; openMs.clear();
+  render();
+}
+
+// ─── ABLEITUNGEN ──────────────────────────────────────────────────────
+function katalog(){ return (projParams[currentPid]||[]); }
+
+function meilensteineAlle(){
+  const list = (milestones[currentPid]||[]).slice();
+  list.sort((a,b)=> String(a.datum||'').localeCompare(String(b.datum||'')));
+  return list;
+}
+function meilensteine(){
+  const onlyMs = (document.getElementById('zo-only-ms')||{}).checked;
+  const list = meilensteineAlle();
+  return onlyMs ? list.filter(m=>KERN_TYPEN.indexOf(m.typ)>-1) : list;
+}
+function zuordnungOf(paramId){ return (zuo[currentPid]||{})[paramId] || null; }
+function grpMeta(code){ return groups.find(g=>g.code===code) || {code:code,name:code||'Ohne Gruppe',color:'#94a3b8'}; }
+
+/** Frühester LP-Token eines Merkmals, z. B. 'LP3'. */
+function fruehesteLph(param){
+  const ph = Array.isArray(param.phases)?param.phases:[];
+  if(!ph.length) return null;
+  const nums = ph.map(p=>{ const m=String(p).match(/(\d+)/); return m?parseInt(m[1],10):null; }).filter(n=>n!=null);
+  if(!nums.length) return null;
+  return Math.min.apply(null, nums);
+}
+/** Sucht den ersten Meilenstein, dessen Bezeichnung diese Leistungsphase nennt. */
+function meilensteinFuerLph(nr){
+  const re = new RegExp('(^|[^0-9])(lp|lph|leistungsphase)\\s*0?'+nr+'([^0-9]|$)','i');
+  return meilensteineAlle().find(m=> re.test(String(m.name||'')) ) || null;
+}
+
+// ─── ZUORDNEN ─────────────────────────────────────────────────────────
+function setZuordnung(paramId, msId, herkunft){
+  if(!zuo[currentPid]) zuo[currentPid]={};
+  zuo[currentPid][paramId] = {
+    ms: msId,
+    urheber: urheber(),
+    zeitpunkt: new Date().toISOString(),
+    herkunft: herkunft || 'hand'
+  };
+}
+function assign(paramId, msId){
+  setZuordnung(paramId, msId, 'hand');
+  saveZuo(); selectedParam=null; openMs.add(msId);
+  render(); toast('✓ Zugeordnet');
+}
+function unassign(paramId){
+  if(zuo[currentPid]) delete zuo[currentPid][paramId];
+  saveZuo(); render(); toast('Zuordnung entfernt');
+}
+function pickParam(id){
+  selectedParam = (selectedParam===id) ? null : id;
+  render();
+}
+function onSearch(v){ searchTerm=v.toLowerCase(); render(); }
+function toggleMs(id){ if(openMs.has(id)) openMs.delete(id); else openMs.add(id); render(); }
+function toggleErweitert(){
+  const a=document.getElementById('zo-adv'), b=document.getElementById('zo-adv-btn');
+  if(!a) return;
+  const open=a.classList.toggle('open');
+  if(b) b.textContent = open ? 'Erweitert ▴' : 'Erweitert ▾';
+}
+
+function ableitenAusLph(){
+  const k=katalog(); let n=0, ohneTreffer=0;
+  k.forEach(p=>{
+    if(zuordnungOf(p.id)) return;
+    const nr = fruehesteLph(p);
+    if(nr==null) return;
+    const ms = meilensteinFuerLph(nr);
+    if(!ms){ ohneTreffer++; return; }
+    setZuordnung(p.id, ms.id, 'lph-ableitung'); n++;
+  });
+  saveZuo(); render();
+  toast(n ? ('✓ '+n+' abgeleitet'+(ohneTreffer?' · '+ohneTreffer+' ohne passenden Meilenstein':'')) 
+          : 'Nichts abzuleiten – Meilensteine müssen die Leistungsphase im Namen nennen (z. B. „LP3 Abschluss")');
+}
+function ableitungZuruecknehmen(){
+  const m=zuo[currentPid]||{}; let n=0;
+  Object.keys(m).forEach(pid=>{ if(m[pid] && m[pid].herkunft==='lph-ableitung'){ delete m[pid]; n++; } });
+  saveZuo(); render(); toast(n?('↺ '+n+' Zuordnung(en) zurückgenommen'):'Keine abgeleiteten Zuordnungen vorhanden');
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function render(){
+  renderBefunde();
+  renderKurve();
+  renderLeft();
+  renderRight();
+}
+
+function renderBefunde(){
+  const wrap=document.getElementById('zo-befunde'); if(!wrap) return;
+  const k=katalog(), ms=meilensteine();
+  const ohneZuo = k.filter(p=>!zuordnungOf(p.id)).length;
+  const belegt  = new Set(Object.keys(zuo[currentPid]||{}).map(pid=>(zuo[currentPid][pid]||{}).ms));
+  const msLeer  = ms.filter(m=>!belegt.has(m.id)).length;
+
+  wrap.innerHTML =
+    bef(ohneZuo, ohneZuo>0?'warn':'ok', 'Merkmale ohne Zuordnung',
+        'Gefordert, aber keinem Meilenstein zugeordnet.') +
+    bef(msLeer, msLeer>0?'warn':'ok', 'Meilensteine ohne Merkmale',
+        'Ohne geforderte Merkmale ist der Reifegrad nicht messbar.') +
+    bef('–', 'dim', 'Ungeforderte Merkmale',
+        'Im Modell vorhanden, nie gefordert. Braucht Ist-Daten – sichtbar ab Ebene 1.');
+}
+function bef(n, cls, titel, desc){
+  return '<div class="zo-bef '+cls+'"><div class="zo-bef-n">'+n+'</div>'+
+         '<div><div class="zo-bef-t">'+titel+'</div><div class="zo-bef-d">'+desc+'</div></div></div>';
+}
+
+function renderKurve(){
+  const wrap=document.getElementById('zo-kurve-wrap'); if(!wrap) return;
+  const ms=meilensteine();
+  if(!ms.length){ wrap.innerHTML=''; return; }
+
+  const perMs={}; ms.forEach(m=>perMs[m.id]=0);
+  const map=zuo[currentPid]||{};
+  Object.keys(map).forEach(pid=>{ const t=map[pid]&&map[pid].ms; if(perMs[t]!=null) perMs[t]++; });
+
+  let kum=0; const rows=ms.map(m=>{ kum+=perMs[m.id]; return {m:m, neu:perMs[m.id], kum:kum}; });
+  const max=Math.max(1, kum);
+
+  wrap.innerHTML =
+    '<div class="zo-kurve">'+
+      '<div class="zo-kurve-head"><span class="zo-kurve-t">Soll, kumuliert</span>'+
+      '<span style="font-size:11px;color:var(--text3)">'+kum+' von '+katalog().length+' Merkmalen verortet</span></div>'+
+      '<div class="zo-kurve-bars">'+ rows.map(r=>
+        '<div class="zo-kb" title="'+esc(r.m.name)+' · '+r.kum+' kumuliert ('+r.neu+' neu)">'+
+          '<div class="zo-kb-val">'+r.kum+'</div>'+
+          '<div class="zo-kb-bar'+(r.neu?' on':'')+'" style="height:'+Math.round(r.kum/max*38+2)+'px"></div>'+
+          '<div class="zo-kb-lbl">'+esc((r.m.name||'').slice(0,14))+'</div>'+
+        '</div>').join('') +
+      '</div>'+
+    '</div>';
+}
+
+function renderLeft(){
+  const box=document.getElementById('zo-left'); if(!box) return;
+  const onlyOpen=(document.getElementById('zo-only-open')||{}).checked;
+  let k=katalog();
+
+  const cnt=document.getElementById('zo-left-count');
+  if(cnt) cnt.textContent = k.filter(p=>!zuordnungOf(p.id)).length + ' offen / ' + k.length;
+
+  if(!k.length){
+    box.innerHTML='<div class="zo-empty">Für dieses Projekt sind noch keine Merkmale hinterlegt.<br>'+
+      '<a href="03_merkmalserver_v2.html" style="color:var(--accent)">Im Merkmalskatalog ergänzen →</a></div>';
+    return;
+  }
+  if(onlyOpen) k=k.filter(p=>!zuordnungOf(p.id));
+  if(searchTerm) k=k.filter(p=>(String(p.name||'')+' '+String(p.pset||'')+' '+String(p.attr||'')).toLowerCase().indexOf(searchTerm)>-1);
+
+  if(!k.length){ box.innerHTML='<div class="zo-empty">Alle Merkmale sind zugeordnet.</div>'; return; }
+
+  const byGrp={};
+  k.forEach(p=>{ const g=p.grp||''; (byGrp[g]=byGrp[g]||[]).push(p); });
+
+  box.innerHTML = Object.keys(byGrp).sort().map(g=>{
+    const meta=grpMeta(g);
+    return '<div class="zo-grp"><span class="zo-grp-dot" style="background:'+esc(meta.color)+'"></span>'+
+             esc(meta.code)+' · '+esc(meta.name)+'</div>' +
+           byGrp[g].map(p=>{
+             const z=zuordnungOf(p.id);
+             const lph=fruehesteLph(p);
+             return '<div class="zo-m'+(selectedParam===p.id?' sel':'')+(z?' assigned':'')+'" draggable="true" '+
+                    'ondragstart="dragStart(event,\''+p.id+'\')" onclick="pickParam(\''+p.id+'\')">'+
+                      '<span class="zo-m-name">'+esc(p.name)+'</span>'+
+                      (lph!=null?'<span class="zo-m-badge">LP'+lph+'</span>':'')+
+                      '<span class="zo-m-pset">'+esc(p.attr||'')+'</span>'+
+                    '</div>';
+           }).join('');
+  }).join('');
+}
+
+function renderRight(){
+  const box=document.getElementById('zo-right'); if(!box) return;
+  const ms=meilensteine();
+  const cnt=document.getElementById('zo-right-count'); if(cnt) cnt.textContent=ms.length;
+
+  if(!ms.length){
+    box.innerHTML='<div class="zo-empty">Für dieses Projekt sind noch keine Meilensteine angelegt.<br>'+
+      '<a href="02_meilensteinplanung.html" style="color:var(--accent)">Im Meilensteinplan anlegen →</a></div>';
+    return;
+  }
+  const map=zuo[currentPid]||{};
+  const k=katalog();
+  const byMs={}; ms.forEach(m=>byMs[m.id]=[]);
+  Object.keys(map).forEach(pid=>{
+    const t=map[pid]&&map[pid].ms;
+    if(byMs[t]) { const p=k.find(x=>x.id===pid); if(p) byMs[t].push({p:p,z:map[pid]}); }
+  });
+
+  box.innerHTML = ms.map(m=>{
+    const items=byMs[m.id]||[];
+    const open=openMs.has(m.id);
+    return '<div class="zo-ms" id="ms-'+m.id+'" ondragover="dragOver(event,\''+m.id+'\')" '+
+           'ondragleave="dragLeave(\''+m.id+'\')" ondrop="dropOn(event,\''+m.id+'\')">'+
+      '<div class="zo-ms-head" onclick="onMsClick(\''+m.id+'\')">'+
+        '<span class="zo-ms-ico">'+(TYP_ICON[m.typ]||'·')+'</span>'+
+        '<span class="zo-ms-name">'+esc(m.name)+'</span>'+
+        '<span class="zo-ms-date">'+esc(m.datum||'')+'</span>'+
+        '<span class="zo-ms-n'+(items.length?'':' zero')+'">'+items.length+'</span>'+
+      '</div>'+
+      '<div class="zo-ms-body'+(open?' open':'')+'">'+
+        (items.length ? items.map(it=>
+          '<div class="zo-a"><span class="zo-a-name">'+esc(it.p.name)+'</span>'+
+          (it.z.herkunft==='lph-ableitung'?'<span class="zo-a-src" title="aus Leistungsphase abgeleitet">abgeleitet</span>':'')+
+          '<span class="zo-a-x" onclick="event.stopPropagation();unassign(\''+it.p.id+'\')" title="Zuordnung entfernen">×</span></div>'
+        ).join('') : '<div class="zo-empty" style="padding:12px">Noch kein Merkmal gefordert.</div>')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ─── ZIEHEN & KLICKEN ─────────────────────────────────────────────────
+function dragStart(e,id){ selectedParam=id; try{ e.dataTransfer.setData('text/plain',id); e.dataTransfer.effectAllowed='move'; }catch(x){} }
+function dragOver(e,msId){ e.preventDefault(); const el=document.getElementById('ms-'+msId); if(el) el.classList.add('drop'); }
+function dragLeave(msId){ const el=document.getElementById('ms-'+msId); if(el) el.classList.remove('drop'); }
+function dropOn(e,msId){
+  e.preventDefault();
+  const el=document.getElementById('ms-'+msId); if(el) el.classList.remove('drop');
+  let id=''; try{ id=e.dataTransfer.getData('text/plain'); }catch(x){}
+  if(!id) id=selectedParam;
+  if(id) assign(id,msId);
+}
+function onMsClick(msId){
+  if(selectedParam){ assign(selectedParam,msId); return; }
+  toggleMs(msId);
+}
+
+// ─── START ────────────────────────────────────────────────────────────
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+else init();
+</script>
+</body>
+</html>

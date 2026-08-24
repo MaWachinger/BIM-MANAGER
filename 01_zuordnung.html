@@ -324,10 +324,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
       <div class="zo-pane-head">
         <span class="zo-pane-title">Merkmalskatalog</span>
         <span class="zo-count" id="zo-left-count">0</span>
+        <span class="zo-sel-bar" id="zo-sel-bar" hidden>
+          <span id="zo-sel-count">0 ausgewählt</span>
+          <button type="button" onclick="auswahlAufheben()" title="Auswahl aufheben">×</button>
+        </span>
       </div>
       <div class="zo-toolbar">
         <input type="text" id="zo-search" placeholder="Merkmal suchen…" oninput="onSearch(this.value)">
         <label class="zo-chk"><input type="checkbox" id="zo-only-open" checked onchange="render()"> nur offene</label>
+        <span class="zo-tip" title="Strg/Cmd+Klick wählt einzeln dazu, Shift+Klick einen Bereich, Klick auf die Gruppenzeile die ganze Gruppe. Dann auf einen Meilenstein klicken oder ziehen.">Mehrfachauswahl ⓘ</span>
       </div>
       <div class="zo-list" id="zo-left"></div>
     </div>
@@ -414,6 +419,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .zo-m{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid transparent;border-radius:var(--r);cursor:grab;font-size:12.5px;user-select:none}
 .zo-m:hover{background:var(--surface2);border-color:var(--border)}
 .zo-m.sel{background:var(--accent-dim);border-color:var(--accent-mid)}
+.zo-sel-bar{display:inline-flex;align-items:center;gap:6px;margin-left:8px;font-size:11px;color:var(--accent)}
+.zo-sel-bar button{border:1px solid var(--accent-mid);background:var(--accent-dim);color:var(--accent);border-radius:3px;line-height:1;padding:1px 5px;cursor:pointer;font-size:11px}
+.zo-tip{font-size:10.5px;color:var(--text3);cursor:help;white-space:nowrap}
+.zo-grp-sel{margin-left:auto;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-mid)}
 .zo-m.assigned{opacity:0.5}
 .zo-m-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zo-m-pset{font-family:var(--mono);font-size:9.5px;color:var(--text3);white-space:nowrap}
@@ -458,6 +467,8 @@ const KERN_TYPEN = ['datadrop','meilenstein','freigabe'];
 
 let projects=[], globalParams=[], projParams={}, milestones={}, groups=[], zuo={};
 let currentPid='', selectedParam=null, searchTerm='', openMs=new Set();
+// Mehrfachauswahl: Set der markierten Merkmale, sichtbare Reihenfolge fuer Shift-Bereich
+let selectedParams=new Set(), lastPicked=null, sichtbareIds=[], gruppenIds={};
 
 function goTo(href){ window.location.href = href; }
 function getCurrentProject(){ return localStorage.getItem('bim_current_project') || ''; }
@@ -505,7 +516,7 @@ function renderProjSel(){
 function switchProject(pid){
   currentPid=pid; setCurrentProject(pid);
   if(!zuo[currentPid]) zuo[currentPid]={};
-  selectedParam=null; openMs.clear();
+  selectedParam=null; selectedParams.clear(); lastPicked=null; openMs.clear();
   render();
 }
 
@@ -549,19 +560,53 @@ function setZuordnung(paramId, msId, herkunft){
     herkunft: herkunft || 'hand'
   };
 }
-function assign(paramId, msId){
-  setZuordnung(paramId, msId, 'hand');
-  saveZuo(); selectedParam=null; openMs.add(msId);
-  render(); toast('✓ Zugeordnet');
+function assign(paramId, msId){ assignMany([paramId], msId); }
+function assignMany(ids, msId){
+  const liste=[...new Set((ids||[]).filter(Boolean))];
+  if(!liste.length) return;
+  liste.forEach(id=>setZuordnung(id, msId, 'hand'));
+  saveZuo();
+  selectedParams.clear(); selectedParam=null; lastPicked=null;
+  openMs.add(msId);
+  render();
+  toast(liste.length===1 ? '✓ Zugeordnet' : '✓ '+liste.length+' Merkmale zugeordnet');
 }
 function unassign(paramId){
   if(zuo[currentPid]) delete zuo[currentPid][paramId];
   saveZuo(); render(); toast('Zuordnung entfernt');
 }
-function pickParam(id){
-  selectedParam = (selectedParam===id) ? null : id;
+function pickParam(id, e){
+  // Klick = nur dieses Merkmal · Strg/Cmd = einzeln dazu/weg · Shift = Bereich
+  const strg = e && (e.ctrlKey || e.metaKey);
+  const shift = e && e.shiftKey;
+  if(shift && lastPicked && sichtbareIds.length){
+    const a=sichtbareIds.indexOf(lastPicked), b=sichtbareIds.indexOf(id);
+    if(a>-1 && b>-1){
+      const [von,bis]=a<b?[a,b]:[b,a];
+      for(let i=von;i<=bis;i++) selectedParams.add(sichtbareIds[i]);
+    } else { selectedParams.add(id); }
+  } else if(strg){
+    if(selectedParams.has(id)) selectedParams.delete(id); else selectedParams.add(id);
+    lastPicked=id;
+  } else {
+    const nurDieses = selectedParams.size===1 && selectedParams.has(id);
+    selectedParams.clear();
+    if(!nurDieses){ selectedParams.add(id); lastPicked=id; } else { lastPicked=null; }
+  }
+  selectedParam = selectedParams.size===1 ? [...selectedParams][0] : null;
   render();
 }
+function pickGruppe(grpCode, e){
+  // Klick auf die Gruppenzeile markiert alle sichtbaren Merkmale der Gruppe
+  if(e) e.stopPropagation();
+  const ids=(gruppenIds[grpCode]||[]);
+  const allesDrin = ids.length && ids.every(id=>selectedParams.has(id));
+  ids.forEach(id=> allesDrin ? selectedParams.delete(id) : selectedParams.add(id));
+  lastPicked = ids.length ? ids[ids.length-1] : null;
+  selectedParam = selectedParams.size===1 ? [...selectedParams][0] : null;
+  render();
+}
+function auswahlAufheben(){ selectedParams.clear(); selectedParam=null; lastPicked=null; render(); }
 function onSearch(v){ searchTerm=v.toLowerCase(); render(); }
 function toggleMs(id){ if(openMs.has(id)) openMs.delete(id); else openMs.add(id); render(); }
 function toggleErweitert(){
@@ -666,15 +711,32 @@ function renderLeft(){
   const byGrp={};
   k.forEach(p=>{ const g=p.grp||''; (byGrp[g]=byGrp[g]||[]).push(p); });
 
+  // sichtbare Reihenfolge fuer die Shift-Bereichsauswahl, Gruppenzuordnung fuer Gruppenklick
+  sichtbareIds=[]; gruppenIds={};
+  Object.keys(byGrp).sort().forEach(g=>{
+    gruppenIds[g]=byGrp[g].map(p=>p.id);
+    sichtbareIds=sichtbareIds.concat(gruppenIds[g]);
+  });
+  // nicht mehr sichtbare Merkmale aus der Auswahl nehmen
+  [...selectedParams].forEach(id=>{ if(sichtbareIds.indexOf(id)===-1) selectedParams.delete(id); });
+  const selBar=document.getElementById('zo-sel-bar'), selCnt=document.getElementById('zo-sel-count');
+  if(selBar){ selBar.hidden = selectedParams.size===0;
+    if(selCnt) selCnt.textContent = selectedParams.size+' ausgewählt'; }
+
   box.innerHTML = Object.keys(byGrp).sort().map(g=>{
     const meta=grpMeta(g);
-    return '<div class="zo-grp"><span class="zo-grp-dot" style="background:'+esc(meta.color)+'"></span>'+
-             esc(meta.code)+' · '+esc(meta.name)+'</div>' +
+    const ids=gruppenIds[g];
+    const gewaehlt=ids.filter(id=>selectedParams.has(id)).length;
+    return '<div class="zo-grp" onclick="pickGruppe(\''+esc(g)+'\',event)" style="cursor:pointer" '+
+             'title="Klick markiert alle '+ids.length+' Merkmale dieser Gruppe">'+
+             '<span class="zo-grp-dot" style="background:'+esc(meta.color)+'"></span>'+
+             esc(meta.code)+' · '+esc(meta.name)+
+             (gewaehlt?'<span class="zo-grp-sel">'+gewaehlt+'/'+ids.length+'</span>':'')+'</div>' +
            byGrp[g].map(p=>{
              const z=zuordnungOf(p.id);
              const lph=fruehesteLph(p);
-             return '<div class="zo-m'+(selectedParam===p.id?' sel':'')+(z?' assigned':'')+'" draggable="true" '+
-                    'ondragstart="dragStart(event,\''+p.id+'\')" onclick="pickParam(\''+p.id+'\')">'+
+             return '<div class="zo-m'+(selectedParams.has(p.id)?' sel':'')+(z?' assigned':'')+'" draggable="true" '+
+                    'ondragstart="dragStart(event,\''+p.id+'\')" onclick="pickParam(\''+p.id+'\',event)">'+
                       '<span class="zo-m-name">'+esc(p.name)+'</span>'+
                       (lph!=null?'<span class="zo-m-badge">LP'+lph+'</span>':'')+
                       '<span class="zo-m-pset">'+esc(p.attr||'')+'</span>'+
@@ -724,18 +786,23 @@ function renderRight(){
 }
 
 // ─── ZIEHEN & KLICKEN ─────────────────────────────────────────────────
-function dragStart(e,id){ selectedParam=id; try{ e.dataTransfer.setData('text/plain',id); e.dataTransfer.effectAllowed='move'; }catch(x){} }
+function dragStart(e,id){
+  // Gezogenes Merkmal ist Teil der Auswahl -> ganze Auswahl ziehen, sonst nur dieses
+  if(!selectedParams.has(id)){ selectedParams.clear(); selectedParams.add(id); lastPicked=id; render(); }
+  selectedParam = selectedParams.size===1 ? id : null;
+  try{ e.dataTransfer.setData('text/plain',[...selectedParams].join(',')); e.dataTransfer.effectAllowed='move'; }catch(x){}
+}
 function dragOver(e,msId){ e.preventDefault(); const el=document.getElementById('ms-'+msId); if(el) el.classList.add('drop'); }
 function dragLeave(msId){ const el=document.getElementById('ms-'+msId); if(el) el.classList.remove('drop'); }
 function dropOn(e,msId){
   e.preventDefault();
   const el=document.getElementById('ms-'+msId); if(el) el.classList.remove('drop');
-  let id=''; try{ id=e.dataTransfer.getData('text/plain'); }catch(x){}
-  if(!id) id=selectedParam;
-  if(id) assign(id,msId);
+  let daten=''; try{ daten=e.dataTransfer.getData('text/plain'); }catch(x){}
+  const ids = daten ? daten.split(',').filter(Boolean) : [...selectedParams];
+  if(ids.length) assignMany(ids, msId);
 }
 function onMsClick(msId){
-  if(selectedParam){ assign(selectedParam,msId); return; }
+  if(selectedParams.size){ assignMany([...selectedParams], msId); return; }
   toggleMs(msId);
 }
 

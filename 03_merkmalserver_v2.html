@@ -274,7 +274,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 
     .pcard-push { transition:all 0.15s; }
     .pcard-push:hover { background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important; }
-    </style>
+    
+    .ms-chips-wrap { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+    .ms-chip { display:inline-flex; align-items:center; padding:2px 6px 2px 8px; background:#eff6ff; color:#1e40af;
+               border:1px solid #bfdbfe; border-radius:10px; font-size:10px; font-family:var(--mono); font-weight:500; }
+    .ms-chip span:hover { color:#dc2626; }
+    .ms-picker-item:hover { background:var(--surface2); }
+</style>
 <script src="bim_sync.js"></script>
 </head>
 <body>
@@ -512,6 +518,7 @@ const PROJ_KEY   = 'bim_projects_v2';
 const GLOBAL_KEY = 'bim_global_params_v2';
 const PPARAM_KEY = 'bim_proj_params_v1';
 const ASSIGN_KEY = 'bim_obj_assignments_v1';
+const PM_KEY = 'bim_param_milestones_v1';  // { [pid]: { [paramId]: [msId, ...] } }
 const EXCL_KEY   = 'bim_obj_exclusions_v2';
 const AWF_KEY    = 'bim_awf_v1';
 const SET_KEY    = 'bim_settings_v1';
@@ -746,7 +753,8 @@ const AWF_COLORS_LIST=['#3b82f6','#00c9a7','#8b5cf6','#f59e0b','#ef4444','#10b98
 const DTYPE_SHORT={IfcLabel:'Text',IfcText:'L.Text',IfcReal:'Dez.',IfcInteger:'Ganz.',IfcBoolean:'Bool.',Datum:'Datum',IfcLengthMeasure:'Länge',IfcAreaMeasure:'Fläche',IfcVolumeMeasure:'Vol.',IfcIdentifier:'ID'};
 
 // ─── STATE ────────────────────────────────────────────────────────────
-let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={};
+let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={};
+let bulkMatrixSelected = new Set();  // for multi-select in matrix
 let mode='global', pid=getCurrentProject()||null, selectedNodeId=null;
 let editParamId=null, editParamScope=null;
 let confirmCb=null, importRows=[], importScope='global', importTab2='csv';
@@ -765,6 +773,7 @@ function init() {
   try{globalParams=JSON.parse(localStorage.getItem(GLOBAL_KEY))||[];}catch(e){globalParams=[];}
   try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
   try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
+  try{paramMilestones=JSON.parse(localStorage.getItem(PM_KEY))||{};}catch(e){paramMilestones={};}
   try{exclusions=JSON.parse(localStorage.getItem(EXCL_KEY))||{};}catch(e){exclusions={};}
   try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
   if(!globalParams.length){globalParams=sampleGlobal();saveGlobal();}
@@ -774,6 +783,7 @@ function init() {
 function saveGlobal(){localStorage.setItem(GLOBAL_KEY,JSON.stringify(globalParams));}
 function savePP(){localStorage.setItem(PPARAM_KEY,JSON.stringify(projParams));}
 function saveAssign(){localStorage.setItem(ASSIGN_KEY,JSON.stringify(assignments));}
+function savePM(){localStorage.setItem(PM_KEY,JSON.stringify(paramMilestones));}
 function saveExcl() {localStorage.setItem(EXCL_KEY, JSON.stringify(exclusions));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
@@ -1376,6 +1386,145 @@ function onDrop(e, nodeId){
   }
 }
 
+
+// ─── MEILENSTEIN-ZUWEISUNG (Cross-Modul) ─────────────────────────────
+function loadProjectMilestones(){
+  if(!pid) return [];
+  try{
+    const all=JSON.parse(localStorage.getItem('bim_milestones_v1')||'{}');
+    return (all[pid]||[]).filter(m=>m.name); // filter out empty rows
+  }catch(e){ return []; }
+}
+function getParamMilestones(paramId){
+  if(!pid) return [];
+  return (paramMilestones[pid]||{})[paramId]||[];
+}
+function assignMilestonesToParams(paramIds, msIds, mode){
+  // mode: 'add' = ergaenzen, 'replace' = ersetzen
+  if(!pid) return 0;
+  if(!paramMilestones[pid]) paramMilestones[pid]={};
+  let touched=0;
+  paramIds.forEach(pmId=>{
+    let cur=paramMilestones[pid][pmId]||[];
+    if(mode==='replace') cur=[];
+    msIds.forEach(mid=>{ if(!cur.includes(mid)) cur.push(mid); });
+    paramMilestones[pid][pmId]=cur;
+    touched++;
+  });
+  savePM();
+  return touched;
+}
+function removeMilestoneFromParam(paramId, msId){
+  if(!pid || !paramMilestones[pid] || !paramMilestones[pid][paramId]) return;
+  paramMilestones[pid][paramId]=paramMilestones[pid][paramId].filter(x=>x!==msId);
+  if(paramMilestones[pid][paramId].length===0) delete paramMilestones[pid][paramId];
+  savePM();
+  renderProject();
+}
+
+// ─── BULK MATRIX SELECTION ───────────────────────────────────────────
+function toggleMatrixRow(paramId){
+  if(bulkMatrixSelected.has(paramId)) bulkMatrixSelected.delete(paramId);
+  else bulkMatrixSelected.add(paramId);
+  renderProject();
+}
+function selectAllMatrixRows(paramIds){
+  paramIds.forEach(id=>bulkMatrixSelected.add(id));
+  renderProject();
+}
+function clearMatrixSelection(){
+  bulkMatrixSelected.clear();
+  renderProject();
+}
+
+// ─── MEILENSTEIN-PICKER MODAL ────────────────────────────────────────
+let msPickerMode='add';  // 'add' | 'replace'
+let msPickerSelected=new Set();
+function openMilestonePicker(mode){
+  msPickerMode=mode||'add';
+  msPickerSelected=new Set();
+  const milestones=loadProjectMilestones();
+  if(!milestones.length){
+    showToast('Keine Meilensteine im Projekt – lege welche im Modul Meilensteinplanung an');
+    return;
+  }
+  if(!bulkMatrixSelected.size){
+    showToast('Zuerst Merkmale in der Matrix markieren');
+    return;
+  }
+  // Build modal
+  const html=`
+    <div class="modal-overlay open" id="ms-picker-ol" onclick="if(event.target===this)closeMilestonePicker()">
+      <div class="modal" style="max-width:640px">
+        <div class="modal-header">
+          <div class="modal-title">Meilensteine zuweisen</div>
+          <button class="btn btn-sm" onclick="closeMilestonePicker()" style="background:transparent">✕</button>
+        </div>
+        <div class="modal-body" style="max-height:60vh;overflow-y:auto">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
+            ${bulkMatrixSelected.size} Merkmale ausgewählt · Modus:
+            <label style="margin-left:8px;cursor:pointer"><input type="radio" name="msmode" value="add" ${msPickerMode==='add'?'checked':''} onchange="msPickerMode='add'"> Ergänzen</label>
+            <label style="margin-left:8px;cursor:pointer"><input type="radio" name="msmode" value="replace" ${msPickerMode==='replace'?'checked':''} onchange="msPickerMode='replace'"> Ersetzen</label>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:6px;max-height:400px;overflow-y:auto">
+            ${milestones.map(m=>{
+              const status=(m.status||'').toLowerCase();
+              const stColor=status.includes('abg')?'#10b981':status.includes('bearb')?'#f59e0b':status.includes('verz')?'#ef4444':'#8899b0';
+              const dt=m.datum?new Date(m.datum).toLocaleDateString('de-DE'):'–';
+              return `<div class="ms-picker-item" onclick="toggleMsPicker('${m.id}')" style="padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px">
+                <input type="checkbox" id="msp-${m.id}" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;font-weight:500;color:var(--text)">${m.name}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">${dt}${m.status?` · <span style="color:${stColor}">${m.status}</span>`:''}${m.typ?` · ${m.typ}`:''}</div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeMilestonePicker()">Abbrechen</button>
+          <button class="btn btn-primary" onclick="applyMilestonePicker()">✓ Zuweisen</button>
+        </div>
+      </div>
+    </div>`;
+  const wrap=document.createElement('div');
+  wrap.id='ms-picker-wrap';
+  wrap.innerHTML=html;
+  document.body.appendChild(wrap);
+}
+function toggleMsPicker(msId){
+  const cb=document.getElementById('msp-'+msId);
+  if(msPickerSelected.has(msId)){
+    msPickerSelected.delete(msId);
+    if(cb) cb.checked=false;
+  } else {
+    msPickerSelected.add(msId);
+    if(cb) cb.checked=true;
+  }
+}
+function closeMilestonePicker(){
+  const w=document.getElementById('ms-picker-wrap');
+  if(w) w.remove();
+}
+function applyMilestonePicker(){
+  if(!msPickerSelected.size){ showToast('Keine Meilensteine ausgewählt'); return; }
+  const n=assignMilestonesToParams([...bulkMatrixSelected], [...msPickerSelected], msPickerMode);
+  showToast(`✓ ${n} Merkmale mit ${msPickerSelected.size} Meilenstein(en) verknüpft (${msPickerMode==='replace'?'ersetzt':'ergänzt'})`);
+  closeMilestonePicker();
+  bulkMatrixSelected.clear();
+  renderProject();
+}
+
+// Meilenstein-Chip loeschen (per Klick auf X)
+window.removeMs = removeMilestoneFromParam;
+window.toggleMsPicker = toggleMsPicker;
+window.closeMilestonePicker = closeMilestonePicker;
+window.applyMilestonePicker = applyMilestonePicker;
+window.openMilestonePicker = openMilestonePicker;
+window.toggleMatrixRow = toggleMatrixRow;
+window.selectAllMatrixRows = selectAllMatrixRows;
+window.clearMatrixSelection = clearMatrixSelection;
+
 // ─── AWF MATRIX (col 3) ───────────────────────────────────────────────
 function renderMatrix(nodeId, awfs){
   const nodeAssign=(assignments[pid]?.[nodeId]||[]);
@@ -1433,7 +1582,7 @@ function renderMatrix(nodeId, awfs){
 
     // Group header row
     const groupHeaderRow = `<tr>
-      <td colspan="${1 + awfCols.length + (!awfCols.length?1:0) + 1}"
+      <td colspan="${1 + awfCols.length + (!awfCols.length?1:0) + 1 + 1}"
         style="padding:6px 12px;background:${g.color}18;border-bottom:1px solid ${g.color}40;border-top:1px solid var(--border)">
         <span style="display:inline-flex;align-items:center;gap:7px">
           <span style="width:8px;height:8px;border-radius:50%;background:${g.color}"></span>
@@ -1446,13 +1595,29 @@ function renderMatrix(nodeId, awfs){
 
     const paramRows = rows.map(row=>{
       const param = row._param;
-      return `<tr style="${row._inherited?'background:#fffbeb':''}" title="${row._inherited?'Vererbt von: '+row._from:'Direkt zugewiesen'}">
+      const rowMs = getParamMilestones(param.id);
+      const allMs = loadProjectMilestones();
+      const msChips = rowMs.map(msId=>{
+        const m = allMs.find(x=>x.id===msId);
+        if(!m) return '';
+        return `<span class="ms-chip" title="${m.datum?new Date(m.datum).toLocaleDateString('de-DE'):''} · Klick auf ✕ entfernt">
+          ▣ ${m.name}
+          <span onclick="removeMs('${param.id}','${msId}')" style="cursor:pointer;margin-left:4px;font-weight:600" title="Verknüpfung entfernen">✕</span>
+        </span>`;
+      }).join('');
+      const isSelected = bulkMatrixSelected.has(param.id);
+      return `<tr style="${row._inherited?'background:#fffbeb':''}${isSelected?';background:var(--accent-dim)':''}" title="${row._inherited?'Vererbt von: '+row._from:'Direkt zugewiesen'}">
+        <td style="padding:8px 8px;vertical-align:top;text-align:center">
+          <input type="checkbox" ${isSelected?'checked':''} onchange="toggleMatrixRow('${param.id}')"
+            style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer">
+        </td>
         <td class="td-param">
           <div class="td-param-name">${param.name}${row._inherited?` <span class="inherited-label">↑ ${row._from}</span>`:''}</div>
           <div class="td-param-sub">
             <span style="font-family:var(--mono);font-size:9px">${param.pset}.${param.attr}</span>
             <span class="tag tag-gray" style="font-size:9px;padding:1px 4px">${DTYPE_SHORT[param.dtype]||param.dtype}</span>
           </div>
+          ${msChips?`<div class="ms-chips-wrap">${msChips}</div>`:''}
         </td>
         ${awfCols.map(awf=>`<td class="td-check">
           <input type="checkbox" class="awf-cb" ${(row.awfIds||[]).includes(awf.id)?'checked':''}
@@ -1470,14 +1635,29 @@ function renderMatrix(nodeId, awfs){
     return groupHeaderRow + paramRows;
   }).join('');
 
+  const visibleParamIds = resolvedRows.map(r=>r._param.id);
+  const allSelected = visibleParamIds.length>0 && visibleParamIds.every(id=>bulkMatrixSelected.has(id));
+  const selectedInView = visibleParamIds.filter(id=>bulkMatrixSelected.has(id)).length;
+
   return `<div style="overflow:auto;flex:1;height:100%">
     ${allRows.length>0?`<div class="info-blue" style="margin:12px 16px 0;font-size:11px;line-height:1.5">
       Gelb hinterlegte Zeilen werden von übergeordneten Objektknoten <strong>vererbt</strong> und können hier nicht entfernt werden.
       AWF-Checkboxen werden aktiv sobald Anwendungsfälle im Modul <em>Anwendungsfälle</em> angelegt sind.
     </div>`:''}
+    ${bulkMatrixSelected.size>0?`<div style="margin:8px 16px 0;padding:8px 12px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:600;color:var(--text)">${bulkMatrixSelected.size} Merkmal(e) ausgewählt</span>
+      <button class="btn btn-primary btn-sm" onclick="openMilestonePicker('add')" style="font-size:11px;padding:4px 10px">▣ Meilenstein zuweisen</button>
+      <button class="btn btn-secondary btn-sm" onclick="clearMatrixSelection()" style="font-size:11px;padding:4px 10px">Auswahl leeren</button>
+    </div>`:''}
     <table class="mtable" style="margin:12px 0">
       <thead>
         <tr>
+          <th style="padding:6px 8px;border-bottom:2px solid var(--border);background:var(--surface);position:sticky;top:0;width:34px">
+            <input type="checkbox" ${allSelected?'checked':''} ${selectedInView>0&&!allSelected?'ref="ind"':''}
+              onchange="this.checked?selectAllMatrixRows(${JSON.stringify(visibleParamIds).replace(/"/g,'&quot;')}):clearMatrixSelection()"
+              style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer"
+              title="Alle sichtbaren auswählen / abwählen">
+          </th>
           <th class="th-param">Merkmal</th>
           ${awfHeaders}
           <th style="padding:6px 10px;border-bottom:2px solid var(--border);font-size:10px;color:var(--text3);font-family:var(--mono);background:var(--surface);position:sticky;top:0;width:30px"></th>

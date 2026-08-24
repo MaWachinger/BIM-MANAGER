@@ -751,6 +751,40 @@ const IFC_GROUPS_MODAL = [
 const LP_LIST=['LP1','LP2','LP3','LP4','LP5','LP6','LP7','LP8','LP9'];
 const AWF_COLORS_LIST=['#3b82f6','#00c9a7','#8b5cf6','#f59e0b','#ef4444','#10b981','#ec4899','#0ea5e9'];
 const DTYPE_SHORT={IfcLabel:'Text',IfcText:'L.Text',IfcReal:'Dez.',IfcInteger:'Ganz.',IfcBoolean:'Bool.',Datum:'Datum',IfcLengthMeasure:'Länge',IfcAreaMeasure:'Fläche',IfcVolumeMeasure:'Vol.',IfcIdentifier:'ID'};
+// Normalisiert deutsche/englische Datentyp-Begriffe → IFC-Datentypen
+function normalizeDatatype(input){
+  if(!input) return 'IfcLabel';
+  const raw=String(input).trim();
+  // Wenn bereits ein IFC-Typ: durchreichen
+  if(/^Ifc/i.test(raw)) return raw.charAt(0).toUpperCase()+raw.slice(1);
+  const key=raw.toLowerCase().replace(/[\s\-_./]/g,'');
+  const MAP={
+    // Text
+    'text':'IfcLabel','string':'IfcLabel','label':'IfcLabel','zeichenkette':'IfcLabel','str':'IfcLabel',
+    'freitext':'IfcText','langtext':'IfcText','longtext':'IfcText',
+    // Zahlen
+    'zahl':'IfcInteger','integer':'IfcInteger','int':'IfcInteger','ganzzahl':'IfcInteger','nummer':'IfcInteger','number':'IfcInteger','anzahl':'IfcInteger','stück':'IfcInteger','stueck':'IfcInteger',
+    'dezimalzahl':'IfcReal','kommazahl':'IfcReal','real':'IfcReal','float':'IfcReal','fließkomma':'IfcReal','fliesskomma':'IfcReal','decimal':'IfcReal',
+    // Boolean
+    'janein':'IfcBoolean','jainein':'IfcBoolean','boolean':'IfcBoolean','bool':'IfcBoolean','wahrheitswert':'IfcBoolean','truefalse':'IfcBoolean','yesno':'IfcBoolean',
+    // Datum / Zeit
+    'datum':'IfcDate','date':'IfcDate',
+    'zeit':'IfcTime','time':'IfcTime',
+    'datumzeit':'IfcDateTime','datetime':'IfcDateTime','zeitstempel':'IfcDateTime',
+    // Masse
+    'länge':'IfcLengthMeasure','laenge':'IfcLengthMeasure','length':'IfcLengthMeasure',
+    'fläche':'IfcAreaMeasure','flaeche':'IfcAreaMeasure','area':'IfcAreaMeasure',
+    'volumen':'IfcVolumeMeasure','volume':'IfcVolumeMeasure',
+    'masse':'IfcMassMeasure','gewicht':'IfcMassMeasure','mass':'IfcMassMeasure','weight':'IfcMassMeasure',
+    'zeitspanne':'IfcTimeMeasure','dauer':'IfcTimeMeasure','duration':'IfcTimeMeasure',
+    'temperatur':'IfcThermodynamicTemperatureMeasure','temperature':'IfcThermodynamicTemperatureMeasure',
+    // ID / URI
+    'identifier':'IfcIdentifier','id':'IfcIdentifier','uri':'IfcURIReference','url':'IfcURIReference',
+  };
+  return MAP[key]||'IfcLabel';
+}
+// Generische IFC-Klassen — bei Vorhandensein von spezifischen werden diese ignoriert
+const GENERIC_IFC = new Set(['ifcelement','ifcbuildingelement','ifcbuildingelementproxy','ifcdistributionelement','ifcbuildingcomponent']);
 
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={};
@@ -1966,14 +2000,19 @@ function parseIDS(xml){
     spec.querySelectorAll('requirements property').forEach(prop=>{
       const pset=prop.querySelector('propertySet simpleValue')?.textContent||'';
       const attr=prop.querySelector('baseName simpleValue')?.textContent||'';
-      const dtype=prop.getAttribute('datatype')||'IfcLabel';
+      // Datatype: aus attribute ODER aus value/simpleValue oder aus dataType-Element
+      const rawDtype=prop.getAttribute('datatype')
+                   ||prop.querySelector('value simpleValue')?.getAttribute('type')
+                   ||prop.querySelector('dataType')?.textContent
+                   ||'IfcLabel';
+      const dtype=normalizeDatatype(rawDtype);
       if(pset&&attr) importRows.push({id:uid(),name:attr,pset,attr,dtype,grp:'ZZ',ifcTypes:[ifc],phases:[],desc:''});
     });
   });showPreview();
 }
 function mapImportRow(row){
   const g=k=>([k,k.replace(/ /g,''),k.replace(/-/g,'')].map(x=>row[x]).find(v=>v!==undefined&&v!==''))||'';
-  return{id:uid(),name:g('name')||g('parametername')||g('merkmal'),pset:g('pset')||g('propertyset')||g('ifc property set'),attr:g('attribut')||g('attr')||g('attributname'),dtype:g('datentyp')||g('dtype')||'IfcLabel',grp:g('gruppe')||g('merkmalsgruppe')||'ZZ',ifcTypes:(g('ifc-typen')||'').split(/[;,]/).map(x=>x.trim()).filter(Boolean),phases:(g('leistungsphasen')||'').split(/[;,]/).map(x=>x.trim()).filter(Boolean),desc:g('beschreibung')||g('description')||''};
+  return{id:uid(),name:g('name')||g('parametername')||g('merkmal'),pset:g('pset')||g('propertyset')||g('ifc property set'),attr:g('attribut')||g('attr')||g('attributname'),dtype:normalizeDatatype(g('datentyp')||g('dtype')||g('typ')||g('type')),grp:g('gruppe')||g('merkmalsgruppe')||'ZZ',ifcTypes:(g('ifc-typen')||'').split(/[;,]/).map(x=>x.trim()).filter(Boolean),phases:(g('leistungsphasen')||'').split(/[;,]/).map(x=>x.trim()).filter(Boolean),desc:g('beschreibung')||g('description')||''};
 }
 function showPreview(){
   const el=document.getElementById('prev');if(!el) return;
@@ -2004,11 +2043,51 @@ function doImport(){
     if(!pid){showToast('Kein Projekt');return;}
     if(!projParams[pid]) projParams[pid]=[];
     if(!assignments[pid]) assignments[pid]={};
-    let added=0, skipped=0, autoAssigned=0, unmapped=[];
+
+    // ─── Pre-Dedup: gleiche pset+attr aus mehreren <specification> zusammenfuehren ───
+    // Wenn dasselbe Merkmal fuer IfcElement (generisch) UND IfcWall (spezifisch) definiert
+    // ist, wird die generische IFC-Klasse verworfen, damit keine Doppelzuweisungen entstehen.
+    const grouped=new Map();  // key: pset|attr → merged row
     importRows.forEach(r=>{
+      const key=(r.pset||'')+'||'+(r.attr||'');
+      let g=grouped.get(key);
+      if(!g){
+        g={...r, ifcTypes:[...(r.ifcTypes||[])]};
+        grouped.set(key, g);
+      } else {
+        // Merkmalsspur mergen
+        (r.ifcTypes||[]).forEach(t=>{ if(!g.ifcTypes.includes(t)) g.ifcTypes.push(t); });
+        // Bei Konflikt beim dtype: strengeren Typ bevorzugen (nicht-IfcLabel gewinnt)
+        if(g.dtype==='IfcLabel' && r.dtype && r.dtype!=='IfcLabel') g.dtype=r.dtype;
+      }
+    });
+
+    // Specificity Resolution: generische IFC-Klassen entfernen wenn spezifische auch da
+    const conflictsResolved=[];
+    grouped.forEach(g=>{
+      const spec=(g.ifcTypes||[]).filter(t=>!GENERIC_IFC.has((t||'').toLowerCase()));
+      const gen =(g.ifcTypes||[]).filter(t=> GENERIC_IFC.has((t||'').toLowerCase()));
+      if(spec.length && gen.length){
+        g.ifcTypes=spec;
+        conflictsResolved.push({name:g.attr, pset:g.pset, generic:gen, specific:spec});
+      }
+    });
+
+    const uniqueRows=[...grouped.values()];
+    const dupsCollapsed=importRows.length - uniqueRows.length;
+
+    let added=0, skipped=0, autoAssigned=0, unmapped=[];
+    uniqueRows.forEach(r=>{
       let projP=projParams[pid].find(p=>p.pset===r.pset && p.attr===r.attr && !p.globalRef);
-      if(projP){ skipped++; }
-      else {
+      if(projP){
+        skipped++;
+        // ifcTypes mergen im bestehenden Eintrag (Vorwissen ergaenzen)
+        const existing=new Set(projP.ifcTypes||[]);
+        (r.ifcTypes||[]).forEach(t=>existing.add(t));
+        projP.ifcTypes=[...existing];
+        // Bei erneutem Import: wenn neuer Import strengeren dtype hat, uebernehmen
+        if(projP.dtype==='IfcLabel' && r.dtype && r.dtype!=='IfcLabel') projP.dtype=r.dtype;
+      } else {
         projP={...r,id:uid(),addedAt:new Date().toISOString()};
         projParams[pid].push(projP);
         added++;
@@ -2026,14 +2105,42 @@ function doImport(){
         }
       });
     });
+
+    // Post-cleanup: entferne Ancestor-Zuweisungen wenn Descendant-Zuweisungen desselben
+    // Merkmals existieren (Vererbung deckt sonst zu Doppelzeilen).
+    let ancestorPurged=0;
+    Object.keys(assignments[pid]).forEach(nodeId=>{
+      (assignments[pid][nodeId]||[]).slice().forEach(a=>{
+        const paramRef=a.globalRef||a.projRef;
+        if(!paramRef) return;
+        const node=NODE_MAP[nodeId];
+        if(!node) return;
+        // Existiert dasselbe Merkmal in einem Nachfahren-Knoten?
+        const descs=getDescendants(node);
+        const hasDescAssign=descs.some(dId=>(assignments[pid][dId]||[]).some(x=>
+          (x.globalRef||x.projRef)===paramRef
+        ));
+        if(hasDescAssign){
+          assignments[pid][nodeId]=(assignments[pid][nodeId]||[]).filter(x=>x.id!==a.id);
+          ancestorPurged++;
+        }
+      });
+    });
+
     savePP(); saveAssign();
     const parts=[];
     if(added) parts.push(added+' angelegt');
     if(skipped) parts.push(skipped+' bereits vorhanden');
+    if(dupsCollapsed) parts.push(dupsCollapsed+' Duplikate zusammengefuehrt');
+    if(conflictsResolved.length) parts.push(conflictsResolved.length+' generisch→spezifisch bereinigt');
     if(autoAssigned) parts.push(autoAssigned+' Zuweisungen erzeugt');
+    if(ancestorPurged) parts.push(ancestorPurged+' redundante Vererbungen entfernt');
     let msg='✓ '+parts.join(', ');
     if(unmapped.length) msg+=' · unklare IFC-Typen: '+unmapped.slice(0,3).join(',')+(unmapped.length>3?'…':'');
     showToast(msg);
+    if(conflictsResolved.length){
+      console.info('[IDS Import] Konflikte generisch → spezifisch bereinigt:', conflictsResolved);
+    }
   }
   closeImport();render();
 }

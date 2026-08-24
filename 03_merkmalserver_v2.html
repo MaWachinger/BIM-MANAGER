@@ -1596,8 +1596,40 @@ function showPreview(){
 }
 function doImport(){
   if(!importRows.length) return;
-  if(importScope==='global'){importRows.forEach(r=>globalParams.push(r));saveGlobal();showToast(`✓ ${importRows.length} Merkmale in Bibliothek importiert`);}
-  else{if(!pid){showToast('Kein Projekt');return;}if(!projParams[pid]) projParams[pid]=[];importRows.forEach(r=>projParams[pid].push(r));savePP();showToast(`✓ ${importRows.length} Merkmale in Projekt importiert`);}
+  if(importScope==='global'){
+    let added=0, skipped=0;
+    importRows.forEach(r=>{
+      const exists=globalParams.find(g=>g.pset===r.pset && g.attr===r.attr);
+      if(exists){ skipped++; }
+      else { globalParams.push({...r,id:uid()}); added++; }
+    });
+    saveGlobal();
+    showToast(`✓ `+added+' neu in Bibliothek'+(skipped?', '+skipped+' bereits vorhanden':''));
+  }
+  else{
+    if(!pid){showToast('Kein Projekt');return;}
+    if(!projParams[pid]) projParams[pid]=[];
+    // Also register in global library (dedup by pset+attr) and reference by globalRef
+    // → importierte Merkmale erscheinen in Spalte "Globale Merkmale" mit "in Projekt" Marker
+    let addedGlobal=0, reusedGlobal=0, addedProj=0;
+    importRows.forEach(r=>{
+      let g=globalParams.find(x=>x.pset===r.pset && x.attr===r.attr);
+      let globalId;
+      if(g){ globalId=g.id; reusedGlobal++; }
+      else { const nG={...r,id:uid()}; globalParams.push(nG); globalId=nG.id; addedGlobal++; }
+      const alreadyInProj=projParams[pid].some(p=>p.globalRef===globalId);
+      if(!alreadyInProj){
+        projParams[pid].push({...r,id:uid(),globalRef:globalId,addedAt:new Date().toISOString()});
+        addedProj++;
+      }
+    });
+    saveGlobal(); savePP();
+    const parts=[];
+    if(addedGlobal) parts.push(addedGlobal+' neu in Bibliothek');
+    if(reusedGlobal) parts.push(reusedGlobal+' aus Bibliothek wiederverwendet');
+    if(addedProj) parts.push(addedProj+' Projektzuweisungen angelegt');
+    showToast(`✓ `+parts.join(', '));
+  }
   closeImport();render();
 }
 

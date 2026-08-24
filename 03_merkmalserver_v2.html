@@ -271,7 +271,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .no-project-inner{text-align:center;color:var(--text3)}
 .no-project-inner .ei{font-size:36px;margin-bottom:10px}
 .no-project-inner .et{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px}
-</style>
+
+    .pcard-push { transition:all 0.15s; }
+    .pcard-push:hover { background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important; }
+    </style>
 <script src="bim_sync.js"></script>
 </head>
 <body>
@@ -905,16 +908,16 @@ function renderProject(){
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
     <div style="display:flex;flex:1;overflow:hidden">
 
-      <!-- COL 1: GLOBALE MERKMALSBIBLIOTHEK -->
+      <!-- COL 1: MERKMALE (Global + Projekt-eigen) -->
       <div class="param-col">
         <div class="col-header">
-          <span class="col-title">◈ Globale Merkmale</span>
-          <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${assignedGlobalIds.size} zugewiesen</span>
+          <span class="col-title">◈ Merkmale</span>
+          <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${globalParams.length} global · ${(projParams[pid]||[]).filter(p=>!p.globalRef).length} projekt-eigen</span>
         </div>
         <div class="search-row">
           <input class="search-box" placeholder="Suchen…" value="${libSearch}" oninput="libSearch=this.value;renderProject()">
         </div>
-        <div class="col-scroll" id="lib-scroll">${renderParamList(globalParams, assignedGlobalIds)}</div>
+        <div class="col-scroll" id="lib-scroll">${renderCombinedParamList(globalParams, projParams[pid]||[], assignedGlobalIds)}</div>
       </div>
 
       <!-- COL 2: OBJEKTBAUM -->
@@ -953,6 +956,112 @@ function onProjChange(){
   if(pid&&!assignments[pid]) assignments[pid]={};
   if(pid&&!exclusions[pid]) exclusions[pid]={};
   if(pid&&!awfData[pid]) awfData[pid]=[];
+  render();
+}
+
+// ─── COMBINED PARAM LIST (globale + projekt-eigene) ──────────────────
+function renderCombinedParamList(globals, projs, assignedGlobalIds){
+  const q=libSearch.toLowerCase();
+  // Projekt-eigene = alle projParams die keine globalRef haben
+  const projOwn=projs.filter(p=>!p.globalRef);
+  const projFiltered=projOwn.filter(p=>!q||p.name.toLowerCase().includes(q)||p.pset.toLowerCase().includes(q));
+  const globFiltered=globals.filter(p=>!q||p.name.toLowerCase().includes(q)||p.pset.toLowerCase().includes(q));
+
+  let html='';
+
+  // Sektion 1: Projekt-eigene Merkmale (nur wenn welche vorhanden)
+  if(projOwn.length){
+    html += `<div style="padding:8px 12px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1">
+      · Projekt-eigene Merkmale <span style="font-family:var(--mono);color:var(--text3);font-weight:400">${projFiltered.length}${q?'/'+projOwn.length:''}</span>
+    </div>`;
+    if(projFiltered.length){
+      html += renderProjOwnList(projFiltered);
+    } else if(q){
+      html += `<div style="padding:8px 14px;font-size:11px;color:var(--text3);font-style:italic">Keine Treffer im Filter</div>`;
+    }
+  }
+
+  // Sektion 2: Globale Bibliothek
+  html += `<div style="padding:8px 12px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1;${projOwn.length?'margin-top:4px':''}">
+    ◈ Globale Bibliothek <span style="font-family:var(--mono);color:var(--text3);font-weight:400">${globFiltered.length}${q?'/'+globals.length:''}</span>
+  </div>`;
+  html += renderParamList(globals, assignedGlobalIds);
+  return html;
+}
+
+// Render der projekt-eigenen Merkmale (kompakter, mit Push-Button)
+function renderProjOwnList(items){
+  const grpOrder=PARAM_GROUPS.map(g=>g.code);
+  const byGrp={};
+  items.forEach(p=>{if(!byGrp[p.grp])byGrp[p.grp]=[];byGrp[p.grp].push(p);});
+  const grpCodes=[...grpOrder.filter(c=>byGrp[c]),...Object.keys(byGrp).filter(c=>!grpOrder.includes(c))];
+  return grpCodes.map(code=>{
+    const g=GRP_MAP[code]||{color:'#8899b0',name:code,code};
+    const groupItems=byGrp[code];
+    const isOpen=libSearch||expandedNodes.has('projgrp-'+code);
+    return `<div class="pgrp ${isOpen?'expanded':''}" style="border-left:2px solid var(--accent)">
+      <div class="pgrp-header" onclick="toggleProjGrp('${code}')" style="background:rgba(0,201,167,0.04)">
+        <div style="width:9px;height:9px;border-radius:50%;background:${g.color};flex-shrink:0"></div>
+        <span class="pgrp-code" style="color:${g.color}">${g.code}</span>
+        <span class="pgrp-name">${g.name}</span>
+        <span class="pgrp-count">${groupItems.length}</span>
+        <span class="pgrp-toggle ${isOpen?'open':''}">▶</span>
+      </div>
+      <div class="pgrp-items">
+        ${groupItems.map(p=>`
+          <div class="pcard" draggable="true"
+            ondragstart="onDragStartProjOwn(event,'${p.id}')"
+            ondragend="this.classList.remove('dragging')"
+            title="Projekt-eigenes Merkmal. Auf Objekt ziehen um zuzuweisen, oder Push-Button um in globale Bibliothek zu übernehmen.">
+            <div class="pcard-name" style="display:flex;align-items:center;gap:6px">
+              <span style="flex:1">${p.name}</span>
+              <button class="pcard-push" onclick="event.stopPropagation();pushToGlobal('${p.id}')"
+                title="In globale Bibliothek verschieben (allen Projekten verfügbar machen)"
+                style="background:transparent;border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:10px;cursor:pointer;color:var(--text2);flex-shrink:0">⤴ Push</button>
+            </div>
+            <div class="pcard-sub">${p.pset}.${p.attr} · ${DTYPE_SHORT[p.dtype]||p.dtype}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleProjGrp(code){
+  const key='projgrp-'+code;
+  expandedNodes.has(key)?expandedNodes.delete(key):expandedNodes.add(key);
+  renderProject();
+}
+
+function onDragStartProjOwn(ev,pid_local){
+  ev.dataTransfer.setData('text/plain','projOwn:'+pid_local);
+  ev.currentTarget.classList.add('dragging');
+}
+
+// Ein projekt-eigenes Merkmal explizit in die globale Bibliothek schieben
+function pushToGlobal(paramId){
+  if(!pid) return;
+  const list=projParams[pid]||[];
+  const idx=list.findIndex(p=>p.id===paramId);
+  if(idx<0){showToast('Merkmal nicht gefunden');return;}
+  const p=list[idx];
+  // Dedup gegen bestehende Bibliothek
+  const existing=globalParams.find(g=>g.pset===p.pset && g.attr===p.attr);
+  let globalId;
+  if(existing){
+    globalId=existing.id;
+    showToast('✓ Bereits in Bibliothek vorhanden – verlinkt');
+  } else {
+    const newG={...p,id:uid()};
+    delete newG.globalRef;
+    delete newG.addedAt;
+    globalParams.push(newG);
+    globalId=newG.id;
+    saveGlobal();
+    showToast('⤴ In globale Bibliothek verschoben: '+p.name);
+  }
+  // Konvertiere den Projekt-Eintrag: aus "eigen" wird "Referenz auf global"
+  list[idx]={...p,globalRef:globalId};
+  savePP();
   render();
 }
 
@@ -1134,6 +1243,16 @@ function onDrop(e, nodeId){
   const data=dragParamId||e.dataTransfer.getData('text/plain');
   dragParamId=null;
   if(!data||!pid){ showToast('Bitte zuerst ein Projekt wählen'); return; }
+
+  // Projekt-eigene Merkmale koennen nicht direkt Objekten zugewiesen werden
+  // (Assignments referenzieren globalRef). Ueber Push-Button erst in Bibliothek uebernehmen.
+  if(data.startsWith('projOwn:')){
+    const projP=projParams[pid]?.find(p=>p.id===data.slice(8));
+    showToast(projP
+      ? `Erst per Push-Button (⤴) in globale Bibliothek uebernehmen, dann kann „${projP.name}" zugewiesen werden`
+      : 'Projekt-Merkmal nicht gefunden');
+    return;
+  }
   if(!assignments[pid]) assignments[pid]={};
   if(!assignments[pid][nodeId]) assignments[pid][nodeId]=[];
 
@@ -1609,26 +1728,16 @@ function doImport(){
   else{
     if(!pid){showToast('Kein Projekt');return;}
     if(!projParams[pid]) projParams[pid]=[];
-    // Also register in global library (dedup by pset+attr) and reference by globalRef
-    // → importierte Merkmale erscheinen in Spalte "Globale Merkmale" mit "in Projekt" Marker
-    let addedGlobal=0, reusedGlobal=0, addedProj=0;
+    // Projekt-eigene Merkmale: NUR in projParams speichern, KEIN Push in globale Bibliothek.
+    // Explizite Uebernahme geschieht per Push-Button pro Merkmal.
+    let added=0, skipped=0;
     importRows.forEach(r=>{
-      let g=globalParams.find(x=>x.pset===r.pset && x.attr===r.attr);
-      let globalId;
-      if(g){ globalId=g.id; reusedGlobal++; }
-      else { const nG={...r,id:uid()}; globalParams.push(nG); globalId=nG.id; addedGlobal++; }
-      const alreadyInProj=projParams[pid].some(p=>p.globalRef===globalId);
-      if(!alreadyInProj){
-        projParams[pid].push({...r,id:uid(),globalRef:globalId,addedAt:new Date().toISOString()});
-        addedProj++;
-      }
+      const existsInProj=projParams[pid].some(p=>p.pset===r.pset && p.attr===r.attr);
+      if(existsInProj){ skipped++; }
+      else { projParams[pid].push({...r,id:uid(),addedAt:new Date().toISOString()}); added++; }
     });
-    saveGlobal(); savePP();
-    const parts=[];
-    if(addedGlobal) parts.push(addedGlobal+' neu in Bibliothek');
-    if(reusedGlobal) parts.push(reusedGlobal+' aus Bibliothek wiederverwendet');
-    if(addedProj) parts.push(addedProj+' Projektzuweisungen angelegt');
-    showToast(`✓ `+parts.join(', '));
+    savePP();
+    showToast('✓ '+added+' Projekt-Merkmale angelegt'+(skipped?', '+skipped+' bereits vorhanden':''));
   }
   closeImport();render();
 }

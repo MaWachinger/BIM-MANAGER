@@ -718,6 +718,32 @@ const IFC_TO_NODES = {
   'ifcrailing':              ['rau'],
   'ifcfoundation':           ['bau-bp','bau-ef','bau-sf'],
 };
+// Eltern-Zuordnung fuer das Hochrollen vollstaendiger Geschwistergruppen
+const NODE_PARENT = {};
+(function buildParents(n){ (n.children||[]).forEach(ch=>{ NODE_PARENT[ch.id]=n.id; buildParents(ch); }); })(OBJ_TREE);
+
+// Sind ALLE Kinder eines Knotens in der Menge, wird die Menge auf den Elternknoten
+// zusammengefasst. IFC_TO_NODES zeigt bei Bauteilen auf Ebene-4-Blaetter
+// (Mauerwerks-, Stahlbeton-, Trockenbauwand), bei TGA dagegen auf Gruppenknoten.
+// Ohne das Hochrollen erscheinen Bauteil-Merkmale erst zwei Ebenen tiefer als
+// TGA-Merkmale, obwohl beide gleich zugewiesen sind. Fachlich identisch, weil die
+// Vererbung ohnehin nach unten wirkt.
+function rollUpNodes(ids){
+  let set=new Set(ids), veraendert=true;
+  while(veraendert){
+    veraendert=false;
+    const kandidaten=new Set();
+    set.forEach(id=>{ const p=NODE_PARENT[id]; if(p) kandidaten.add(p); });
+    for(const p of kandidaten){
+      const kinder=(NODE_MAP[p]?.children||[]).map(ch=>ch.id);
+      if(kinder.length && kinder.every(k=>set.has(k))){
+        kinder.forEach(k=>set.delete(k));
+        set.add(p); veraendert=true;
+      }
+    }
+  }
+  return [...set];
+}
 function resolveIfcTypesToNodes(ifcTypes){
   const nodes=new Set();
   (ifcTypes||[]).forEach(t=>{
@@ -725,7 +751,7 @@ function resolveIfcTypesToNodes(ifcTypes){
     if(!key) return;
     (IFC_TO_NODES[key]||[]).forEach(n=>nodes.add(n));
   });
-  return [...nodes];
+  return rollUpNodes([...nodes]);
 }
 function resolveAssignParam(a){
   if(a.globalRef) return globalParams.find(x=>x.id===a.globalRef);

@@ -633,31 +633,81 @@ flattenNodes(OBJ_TREE);
 
 
 // ─── IFC-KLASSE → OBJEKTBAUM-KNOTEN-MAPPING ─────────────────────
+// Keys sind lowercase — resolveIfcTypesToNodes() normalisiert case-insensitiv.
 const IFC_TO_NODES = {
-  'IfcWall':                 ['bau-mw','bau-sbw','bau-tw'],
-  'IfcWallStandardCase':     ['bau-mw','bau-sbw','bau-tw'],
-  'IfcCurtainWall':          ['hub-pa','hub-pr','hub-vo'],
-  'IfcColumn':               ['bau-hs','bau-sbs','bau-ss'],
-  'IfcBeam':                 ['bau-ht','bau-sbt','bau-st'],
-  'IfcSlab':                 ['bau-fi','bau-hb','bau-ob','bau-fd','bau-gd','bau-sd'],
-  'IfcRoof':                 ['bau-fd','bau-gd','bau-sd'],
-  'IfcFooting':              ['bau-bp','bau-ef','bau-sf'],
-  'IfcStair':                ['bau-htr','bau-sbtr','bau-str'],
-  'IfcStairFlight':          ['bau-htr','bau-sbtr','bau-str'],
-  'IfcRamp':                 ['bau-tre'],
-  'IfcWindow':               ['oef-dk','oef-fv','oef-ol'],
-  'IfcDoor':                 ['oef-at','oef-bt','oef-it','oef-ro','oef-sch','oef-sek'],
-  'IfcOpeningElement':       ['oef-dd','oef-so','oef-wd2'],
-  'IfcSpace':                ['fla-bu','fla-te','fla-vk','fla-mep','fla-ra'],
-  'IfcZone':                 ['fla-az','fla-ba','fla-kz'],
-  'IfcCovering':             ['bod-e','bod-f','bod-p','bod-t','dec-a','dec-g','dec-m','wbe-a','wbe-f','wbe-g','hub-wd'],
-  'IfcSite':                 ['aau'],
-  'IfcBuilding':             ['root'],
-  'IfcProject':              ['root'],
+  'ifcwall':                 ['bau-mw','bau-sbw','bau-tw'],
+  'ifcwallstandardcase':     ['bau-mw','bau-sbw','bau-tw'],
+  'ifccurtainwall':          ['hub-pa','hub-pr','hub-vo'],
+  'ifccolumn':               ['bau-hs','bau-sbs','bau-ss'],
+  'ifcbeam':                 ['bau-ht','bau-sbt','bau-st'],
+  'ifcslab':                 ['bau-fi','bau-hb','bau-ob','bau-fd','bau-gd','bau-sd'],
+  'ifcroof':                 ['bau-fd','bau-gd','bau-sd'],
+  'ifcfooting':              ['bau-bp','bau-ef','bau-sf'],
+  'ifcstair':                ['bau-htr','bau-sbtr','bau-str'],
+  'ifcstairflight':          ['bau-htr','bau-sbtr','bau-str'],
+  'ifcramp':                 ['bau-tre'],
+  'ifcwindow':               ['oef-dk','oef-fv','oef-ol'],
+  'ifcdoor':                 ['oef-at','oef-bt','oef-it','oef-ro','oef-sch','oef-sek'],
+  'ifcopeningelement':       ['oef-dd','oef-so','oef-wd2'],
+  'ifcspace':                ['fla-bu','fla-te','fla-vk','fla-mep','fla-ra'],
+  'ifczone':                 ['fla-az','fla-ba','fla-kz'],
+  'ifccovering':             ['bod-e','bod-f','bod-p','bod-t','dec-a','dec-g','dec-m','wbe-a','wbe-f','wbe-g','hub-wd'],
+  'ifcsite':                 ['aau'],
+  'ifcbuilding':             ['root'],
+  'ifcproject':              ['root'],
+  'ifcbuildingstorey':       ['root'],
+  'ifcelement':              ['rau'],
+  'ifcbuildingelement':      ['rau'],
+  'ifcbuildingelementproxy': ['rau'],
+  'ifcfurnishingelement':    ['aau-m'],
+  'ifcfurniture':            ['aau-m'],
+  // TGA – Verteilung/Distribution
+  'ifcdistributionelement':  ['tga-ver'],
+  'ifcflowterminal':         ['tga-abg'],
+  'ifcflowsegment':          ['tga-ver'],
+  'ifcflowfitting':          ['tga-ver'],
+  'ifcflowmovingdevice':     ['tga-pump'],
+  'ifcflowcontroller':       ['tga-msr'],
+  'ifcenergyconversiondevice':['tga-erz'],
+  'ifcflowstoragedevice':    ['tga-bat'],
+  'ifcflowtreatmentdevice':  ['tga-san'],
+  // TGA – Elektro
+  'ifccablesegment':         ['tga-kt'],
+  'ifccablecarriersegment':  ['tga-kt'],
+  'ifcelectricgenerator':    ['tga-gen'],
+  'ifcelectricmotor':        ['tga-el'],
+  'ifclamp':                 ['tga-le'],
+  'ifclightfixture':         ['tga-le'],
+  'ifcoutlet':               ['tga-sd'],
+  'ifcswitchingdevice':      ['tga-schal'],
+  // TGA – HLK
+  'ifcairterminal':          ['tga-gal','tga-tv'],
+  'ifcairterminalbox':       ['tga-luabg'],
+  'ifcairtoairheatrecovery': ['tga-wrg'],
+  'ifcductsegment':          ['tga-lk'],
+  'ifcductfitting':          ['tga-lk'],
+  'ifcfan':                  ['tga-rlt','tga-luver'],
+  'ifcpipesegment':          ['tga-rohr','tga-srohr'],
+  'ifcpipefitting':          ['tga-rohr','tga-srohr'],
+  'ifcheatexchanger':        ['tga-wp','tga-hkess','tga-km','tga-fw','tga-wrg'],
+  'ifcboiler':               ['tga-hkess'],
+  'ifcchiller':              ['tga-km'],
+  'ifccoolingtower':         ['tga-km'],
+  'ifcpump':                 ['tga-pump'],
+  'ifcvalve':                ['tga-hkver'],
+  'ifcspaceheater':          ['tga-hkrp','tga-fbh','tga-kd'],
+  'ifcunitaryequipment':     ['tga-rlt','tga-wp'],
+  // TGA – Sanitaer
+  'ifcsanitaryterminal':     ['tga-du','tga-wt','tga-wc'],
+  'ifcwasteterminal':        ['tga-sanabg'],
 };
 function resolveIfcTypesToNodes(ifcTypes){
   const nodes=new Set();
-  (ifcTypes||[]).forEach(t=>{ (IFC_TO_NODES[t]||[]).forEach(n=>nodes.add(n)); });
+  (ifcTypes||[]).forEach(t=>{
+    const key=(t||'').toString().trim().toLowerCase();
+    if(!key) return;
+    (IFC_TO_NODES[key]||[]).forEach(n=>nodes.add(n));
+  });
   return [...nodes];
 }
 function resolveAssignParam(a){

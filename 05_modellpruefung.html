@@ -1197,42 +1197,103 @@ function parseIFC(text){
 }
 
 // ─── PRÜF-LOGIK ───────────────────────────────────────────────────────
-function runCheck(tmId){
+async function runCheck(tmId){
   const tm=(tmData[pid]||[]).find(t=>t.id===tmId);
   if(!tm?.parsed){showToast('Kein IFC-Inhalt – Teilmodell neu hochladen');return;}
   const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
   showParse('Prüfung läuft…',tm.name);
-  setTimeout(()=>{
-    if(!results[pid]) results[pid]={};
-    results[pid][tmId]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tmId,tm)};
-    saveR(); hideParse(); selNode={type:'tm',id:tmId}; activeTab='uebersicht'; if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();} updateMainBadges();
-    showToast('✓ Prüfung abgeschlossen');
-  },350);
+  await sleep(30);
+  if(!results[pid]) results[pid]={};
+  try{
+    const struktur = tryCheck(()=>checkStruktur(tm.parsed,fm), 'struktur');
+    await sleep(0);
+    const merkmale = tryCheck(()=>checkMerkmale(tm.parsed), 'merkmale');
+    await sleep(0);
+    const loin = tryCheck(()=>checkLoin(tm.parsed), 'loin');
+    await sleep(0);
+    const delta = tryCheck(()=>checkDelta(tmId,tm), 'delta');
+    results[pid][tmId] = {checkedAt:new Date().toISOString(), struktur, merkmale, loin, delta};
+  }catch(err){ console.error('Fehler bei runCheck:', err); }
+  saveR(); hideParse();
+  selNode={type:'tm',id:tmId}; activeTab='uebersicht';
+  if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();}
+  updateMainBadges();
+  showToast('✓ Prüfung abgeschlossen');
 }
-function runFMCheck(fmId){
+async function runFMCheck(fmId){
   const tms=(tmData[pid]||[]).filter(t=>t.fmId===fmId&&t.parsed);
   if(!tms.length){showToast('Keine Teilmodelle mit IFC-Daten');return;}
-  showParse(`Fachmodell prüfen…`,`${tms.length} Teilmodelle`);
-  setTimeout(()=>{
-    if(!results[pid]) results[pid]={};
-    const fm=(fmData[pid]||[]).find(f=>f.id===fmId);
-    tms.forEach(tm=>{results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tm.id,tm)};});
-    saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges(); showToast(`✓ ${tms.length} Teilmodelle geprüft`);
-  },400);
+  _abortAllChecks = false;
+  const fm=(fmData[pid]||[]).find(f=>f.id===fmId);
+  showParse('Fachmodell prüfen…', tms.length + ' Teilmodelle · <button onclick="abortAllChecks()" style="margin-top:8px;padding:4px 12px;background:var(--err);color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px">Abbrechen</button>');
+  await sleep(30);
+  if(!results[pid]) results[pid]={};
+  let done=0;
+  for(const tm of tms){
+    if(_abortAllChecks){
+      hideParse(); saveR(); renderWorkspaceAndGraph(); updateMainBadges();
+      showToast('Abgebrochen · ' + done + '/' + tms.length + ' geprüft');
+      return;
+    }
+    showParse('Prüfe ' + (done+1) + '/' + tms.length + ': ' + (tm.name||'').substring(0,40),
+              'Läuft… <button onclick="abortAllChecks()" style="margin-top:8px;padding:4px 12px;background:var(--err);color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px">Abbrechen</button>');
+    await sleep(20);
+    try{
+      const struktur = tryCheck(()=>checkStruktur(tm.parsed,fm), 'struktur');
+      await sleep(0);
+      const merkmale = tryCheck(()=>checkMerkmale(tm.parsed), 'merkmale');
+      await sleep(0);
+      const loin = tryCheck(()=>checkLoin(tm.parsed), 'loin');
+      await sleep(0);
+      const delta = tryCheck(()=>checkDelta(tm.id,tm), 'delta');
+      results[pid][tm.id] = {checkedAt:new Date().toISOString(), struktur, merkmale, loin, delta};
+    }catch(err){ console.error('Fehler bei TM ' + (tm.name||'') + ':', err); }
+    done++;
+  }
+  saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges();
+  showToast('✓ ' + done + '/' + tms.length + ' Teilmodelle geprüft');
 }
-function runKMCheck(kmId){
+async function runKMCheck(kmId){
   const km=(kmData[pid]||[]).find(k=>k.id===kmId);
   if(!km) return;
   const fmIds=km.fmIds||[];
   const tms=(tmData[pid]||[]).filter(t=>fmIds.includes(t.fmId)&&t.parsed);
   if(!tms.length){showToast('Keine Teilmodelle mit IFC-Daten im KM');return;}
-  showParse(`Koordinationsmodell prüfen…`,`${km.name} · ${tms.length} Teilmodelle`);
-  setTimeout(()=>{
-    if(!results[pid]) results[pid]={};
-    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tm.id,tm)};});
-    saveR(); hideParse(); selNode={type:'km',id:kmId}; activeTab='uebersicht'; if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();} updateMainBadges();
-    showToast(`✓ Koordinationsmodell ${km.name} geprüft`);
-  },400);
+  _abortAllChecks = false;
+  showParse('Koordinationsmodell prüfen…', km.name + ' · ' + tms.length + ' Teilmodelle · <button onclick="abortAllChecks()" style="margin-top:8px;padding:4px 12px;background:var(--err);color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px">Abbrechen</button>');
+  await sleep(30);
+  if(!results[pid]) results[pid]={};
+  let done=0;
+  for(const tm of tms){
+    if(_abortAllChecks){
+      hideParse(); saveR();
+      selNode={type:'km',id:kmId}; activeTab='uebersicht';
+      if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();}
+      updateMainBadges();
+      showToast('Abgebrochen · ' + done + '/' + tms.length + ' geprüft');
+      return;
+    }
+    showParse('Prüfe ' + (done+1) + '/' + tms.length + ': ' + (tm.name||'').substring(0,40),
+              km.name + ' · <button onclick="abortAllChecks()" style="margin-top:8px;padding:4px 12px;background:var(--err);color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px">Abbrechen</button>');
+    await sleep(20);
+    try{
+      const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
+      const struktur = tryCheck(()=>checkStruktur(tm.parsed,fm), 'struktur');
+      await sleep(0);
+      const merkmale = tryCheck(()=>checkMerkmale(tm.parsed), 'merkmale');
+      await sleep(0);
+      const loin = tryCheck(()=>checkLoin(tm.parsed), 'loin');
+      await sleep(0);
+      const delta = tryCheck(()=>checkDelta(tm.id,tm), 'delta');
+      results[pid][tm.id] = {checkedAt:new Date().toISOString(), struktur, merkmale, loin, delta};
+    }catch(err){ console.error('Fehler bei TM ' + (tm.name||'') + ':', err); }
+    done++;
+  }
+  saveR(); hideParse();
+  selNode={type:'km',id:kmId}; activeTab='uebersicht';
+  if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();}
+  updateMainBadges();
+  showToast('✓ Koordinationsmodell ' + km.name + ' geprüft (' + done + '/' + tms.length + ')');
 }
 let _abortAllChecks = false;
 function abortAllChecks(){ _abortAllChecks = true; }

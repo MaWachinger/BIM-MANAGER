@@ -787,65 +787,78 @@ function renderTabContent(tm,res){
 
 // ─── LOIN CHECK ──────────────────────────────────────────────────────
 function checkLoin(parsed){
-  // Lade LOIN + Wertebereiche fuer aktuelles Projekt aus localStorage
   let loin=[], ranges={};
   try{ loin=JSON.parse(localStorage.getItem('bim_loin_v1')||'{}')[pid]||[]; }catch(e){}
   try{ ranges=JSON.parse(localStorage.getItem('bim_valueranges_v1')||'{}')[pid]||{}; }catch(e){}
   if(!loin.length) return {noLoin:true};
 
+  // OPTIMIERUNG: upfront lookups statt N*M nested loops
   const upperCounts={};
-  Object.entries(parsed.entityTypes||{}).forEach(([k,v])=>{upperCounts[k.toUpperCase()]=(upperCounts[k.toUpperCase()]||0)+v;});
+  Object.entries(parsed.entityTypes||{}).forEach(([k,v])=>{
+    upperCounts[k.toUpperCase()]=(upperCounts[k.toUpperCase()]||0)+v;
+  });
+  const propByUpperType={};
+  const propsByType=parsed.propValuesByType||{};
+  Object.entries(propsByType).forEach(([type,psets])=>{
+    propByUpperType[type.toUpperCase()]=psets;
+  });
+  const allUpperTypes=Object.keys(propByUpperType);
+  const rangesCache={};
+  Object.entries(ranges).forEach(([name,rng])=>{
+    const vals=(rng.values||[]).map(v=>typeof v==='object'?(v.code||v.label||''):String(v));
+    rangesCache[name]=new Set(vals.map(v=>String(v).toLowerCase().trim()));
+  });
 
-  // Nach LP gruppieren
   const byLp={};
-  loin.forEach(l=>{
+  for(let i=0;i<loin.length;i++){
+    const l=loin[i];
     const lp=l.abLp||0;
     if(!byLp[lp]) byLp[lp]={total:0, filled:0, missing:[], violations:[]};
     byLp[lp].total++;
-    // Objekte dieser IFC-Klasse im Modell?
     const ifcKey=(l.ifcClass||'').toUpperCase();
-    const objsInModel=upperCounts[ifcKey]||0;
-    if(!objsInModel && ifcKey!=='IFCENTITY'){
-      byLp[lp].missing.push({loin:l, reason:'Keine '+(l.ifcClass||'?')+'-Objekte im Modell'});
-      return;
+    const isEntity=(ifcKey==='IFCENTITY'||ifcKey==='');
+    if(!isEntity && !upperCounts[ifcKey]){
+      if(byLp[lp].missing.length<50) byLp[lp].missing.push({loin:l, reason:'Keine '+(l.ifcClass||'?')+'-Objekte im Modell'});
+      continue;
     }
-    // PropertyValues pro Klasse checken
-    const psetName=l.pset;
-    const propName=l.propertyName;
-    const propsByType=parsed.propValuesByType||{};
-    // finde alle Typen die (case-insensitive) auf ifcClass matchen und value hat
-    let foundValues=[];
-    Object.entries(propsByType).forEach(([type,psets])=>{
-      if(type.toUpperCase()!==ifcKey && ifcKey!=='IFCENTITY') return;
-      const vals=(psets[psetName]||{})[propName];
-      if(vals && vals.length) foundValues=foundValues.concat(vals);
-    });
-    if(!foundValues.length){
-      byLp[lp].missing.push({loin:l, reason:'Merkmal "'+psetName+'.'+propName+'" nicht am Modell gefunden'});
-      return;
+    const psetName=l.pset, propName=l.propertyName;
+    let foundValues=null;
+    if(isEntity){
+      for(let t=0;t<allUpperTypes.length;t++){
+        const psets=propByUpperType[allUpperTypes[t]];
+        const vals=(psets[psetName]||{})[propName];
+        if(vals && vals.length){ foundValues=(foundValues||[]).concat(vals); }
+      }
+    } else {
+      const psets=propByUpperType[ifcKey];
+      if(psets){
+        const vals=(psets[psetName]||{})[propName];
+        if(vals && vals.length) foundValues=vals;
+      }
+    }
+    if(!foundValues || !foundValues.length){
+      if(byLp[lp].missing.length<50) byLp[lp].missing.push({loin:l, reason:'Merkmal "'+psetName+'.'+propName+'" nicht am Modell gefunden'});
+      continue;
     }
     byLp[lp].filled++;
-    // Wertebereich pruefen
-    if(l.valueRangeRef && ranges[l.valueRangeRef]){
-      const rng=ranges[l.valueRangeRef];
-      const validValues=(rng.values||[]).map(v=>typeof v==='object'?(v.code||v.label||''):String(v));
-      const validSet=new Set(validValues.map(v=>String(v).toLowerCase().trim()));
+    if(l.valueRangeRef && rangesCache[l.valueRangeRef]){
+      const validSet=rangesCache[l.valueRangeRef];
       const invalidValues=[];
-      foundValues.forEach(v=>{
-        if(v===null||v===''||v===undefined) return;
-        const check=String(v).toLowerCase().trim();
-        if(!validSet.has(check)) invalidValues.push(v);
-      });
+      for(let v=0;v<foundValues.length;v++){
+        const val=foundValues[v];
+        if(val===null||val===''||val===undefined) continue;
+        const check=String(val).toLowerCase().trim();
+        if(!validSet.has(check)){
+          if(invalidValues.length<10) invalidValues.push(val); else break;
+        }
+      }
       if(invalidValues.length){
         byLp[lp].violations.push({loin:l, invalidValues:invalidValues.slice(0,5), totalInvalid:invalidValues.length, rangeName:l.valueRangeRef});
       }
     }
-  });
-
-  // Alle Violations gesammelt
+  }
   const allViolations=[];
   Object.values(byLp).forEach(lp=>allViolations.push(...lp.violations));
-
   return {byLp, violations:allViolations, total:loin.length};
 }
 
@@ -1221,15 +1234,51 @@ function runKMCheck(kmId){
     showToast(`✓ Koordinationsmodell ${km.name} geprüft`);
   },400);
 }
-function runAllChecks(){
+let _abortAllChecks = false;
+function abortAllChecks(){ _abortAllChecks = true; }
+window.abortAllChecks = abortAllChecks;
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function tryCheck(fn, name){
+  try{ return fn(); }
+  catch(err){ console.error('Check "' + name + '" fehlgeschlagen:', err); return {error: err.message}; }
+}
+
+async function runAllChecks(){
   const tms=(tmData[pid]||[]).filter(t=>t.parsed);
   if(!tms.length){showToast('Keine Teilmodelle mit IFC-Daten');return;}
-  showParse('Alle Modelle prüfen…',`${tms.length} Teilmodelle`);
-  setTimeout(()=>{
-    if(!results[pid]) results[pid]={};
-    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tm.id,tm)};});
-    saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges(); showToast(`✓ ${tms.length} Teilmodelle geprüft`);
-  },500);
+  _abortAllChecks = false;
+  showParse('Alle Modelle prüfen…', tms.length + ' Teilmodelle · <button onclick="abortAllChecks()" style="margin-top:8px;padding:4px 12px;background:var(--err);color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px">Abbrechen</button>');
+  await sleep(30);
+  if(!results[pid]) results[pid]={};
+
+  let done = 0;
+  for(const tm of tms){
+    if(_abortAllChecks){
+      hideParse();
+      showToast('Abgebrochen · ' + done + ' von ' + tms.length + ' geprüft');
+      saveR(); renderWorkspaceAndGraph(); updateMainBadges();
+      return;
+    }
+    showParse('Prüfe ' + (done+1) + '/' + tms.length + ': ' + (tm.name||'').substring(0,40),
+              'Läuft… <button onclick="abortAllChecks()" style="margin-top:8px;padding:4px 12px;background:var(--err);color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px">Abbrechen</button>');
+    await sleep(20);
+    try{
+      const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
+      const struktur = tryCheck(()=>checkStruktur(tm.parsed,fm), 'struktur');
+      await sleep(0);
+      const merkmale = tryCheck(()=>checkMerkmale(tm.parsed), 'merkmale');
+      await sleep(0);
+      const loin = tryCheck(()=>checkLoin(tm.parsed), 'loin');
+      await sleep(0);
+      const delta = tryCheck(()=>checkDelta(tm.id,tm), 'delta');
+      results[pid][tm.id] = {checkedAt:new Date().toISOString(), struktur, merkmale, loin, delta};
+    }catch(err){
+      console.error('Fehler bei TM ' + (tm.name||'') + ':', err);
+    }
+    done++;
+  }
+  saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges();
+  showToast('✓ ' + done + '/' + tms.length + ' Teilmodelle geprüft');
 }
 function checkStruktur(parsed,fm){
   const disc=fm?.disc;

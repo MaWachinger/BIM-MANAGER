@@ -18,7 +18,7 @@
   --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
   --r:6px;--rl:10px;
 }
-body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;height:100vh;max-height:100vh;overflow:hidden;font-size:13px}
 
 /* SIDEBAR */
 .sidebar{width:220px;min-height:100vh;background:var(--nav-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--nav-border);z-index:100}
@@ -39,7 +39,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
 
 /* MAIN */
-.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;height:100vh;max-height:100vh;overflow:hidden;min-width:0}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;flex-shrink:0}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:7px}
 
@@ -65,7 +65,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .workspace{flex:1;display:flex;min-height:0;overflow:hidden}
 
 /* COL 1: PARAMETER LIST */
-.param-col{width:270px;min-width:270px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.param-col{width:var(--col1-w,270px);min-width:180px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
 .col-header{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .col-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)}
 .col-scroll{flex:1;overflow-y:auto;padding:6px 0}
@@ -95,7 +95,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .pcard-badge{position:absolute;top:5px;right:7px;font-size:10px;color:var(--ok);font-weight:600}
 
 /* COL 2: OBJECT TREE */
-.tree-col{width:300px;min-width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.tree-col{width:var(--col2-w,340px);min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
 .tree-scroll{flex:1;overflow-y:auto;padding:4px 0}
 
 /* Tree nodes */
@@ -117,6 +117,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .tnode-count{font-size:10px;font-family:var(--mono);color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:8px;flex-shrink:0}
 .tnode.selected .tnode-count{background:var(--accent-dim);color:var(--accent)}
 .inherited-dot{width:5px;height:5px;border-radius:50%;background:var(--warn);flex-shrink:0;opacity:0.7}
+
+.col-resizer{width:5px;background:transparent;cursor:col-resize;flex-shrink:0;position:relative;z-index:5;transition:background 0.15s}
+.col-resizer:hover,.col-resizer.dragging{background:var(--accent)}
+.col-resizer::before{content:'';position:absolute;left:2px;top:50%;transform:translateY(-50%);width:1px;height:30px;background:var(--border)}
 .tchildren{display:none}
 .tchildren.open{display:block}
 
@@ -875,6 +879,47 @@ let glibCat='alle', libSearch='', libCatFilter='alle';
 let expandedNodes=new Set(['root','rau','tga']); // default expanded
 
 // ─── INIT ─────────────────────────────────────────────────────────────
+
+// COLUMN RESIZER
+function startResize(evt, which){
+  evt.preventDefault();
+  const rsz = document.getElementById('rsz'+which);
+  if(rsz) rsz.classList.add('dragging');
+  const startX = evt.clientX;
+  const col1 = document.getElementById('col1');
+  const col2 = document.getElementById('col2');
+  const col1StartW = col1.getBoundingClientRect().width;
+  const col2StartW = col2.getBoundingClientRect().width;
+  function onMove(e){
+    const dx = e.clientX - startX;
+    if(which===1){
+      const w = Math.max(180, Math.min(600, col1StartW + dx));
+      document.documentElement.style.setProperty('--col1-w', w+'px');
+    } else {
+      const w = Math.max(220, Math.min(800, col2StartW + dx));
+      document.documentElement.style.setProperty('--col2-w', w+'px');
+    }
+  }
+  function onUp(){
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    if(rsz) rsz.classList.remove('dragging');
+    const c1w = getComputedStyle(document.documentElement).getPropertyValue('--col1-w')||'270px';
+    const c2w = getComputedStyle(document.documentElement).getPropertyValue('--col2-w')||'340px';
+    localStorage.setItem('bim_merkmal_col_widths', JSON.stringify({c1:c1w.trim(), c2:c2w.trim()}));
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+window.startResize = startResize;
+try{
+  const cw = JSON.parse(localStorage.getItem('bim_merkmal_col_widths')||'null');
+  if(cw){
+    if(cw.c1) document.documentElement.style.setProperty('--col1-w', cw.c1);
+    if(cw.c2) document.documentElement.style.setProperty('--col2-w', cw.c2);
+  }
+}catch(e){}
+
 function init() {
   try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};(function(){const _el=document.getElementById('sb-user');if(_el)_el.textContent=s.name||'BIM Manager';}());}catch(e){}
   try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
@@ -1247,10 +1292,10 @@ function renderProject(){
 
   (document.getElementById('workspace')||{}).innerHTML=`
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-    <div style="display:flex;flex:1;overflow:hidden">
+    <div style="display:flex;flex:1;overflow:hidden;min-height:0">
 
       <!-- COL 1: MERKMALE (Global + Projekt-eigen) -->
-      <div class="param-col">
+      <div class="param-col" id="col1">
         <div class="col-header">
           <span class="col-title">◈ Merkmale</span>
           <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${globalParams.length} global · ${(projParams[pid]||[]).filter(p=>!p.globalRef).length} projekt-eigen</span>
@@ -1261,8 +1306,11 @@ function renderProject(){
         <div class="col-scroll" id="lib-scroll">${renderCombinedParamList(globalParams, projParams[pid]||[], assignedGlobalIds)}</div>
       </div>
 
+      <!-- Resizer 1 -->
+      <div class="col-resizer" id="rsz1" onmousedown="startResize(event,1)" title="Ziehen um Breite anzupassen"></div>
+
       <!-- COL 2: OBJEKTBAUM -->
-      <div class="tree-col">
+      <div class="tree-col" id="col2">
         <div class="col-header">
           <span class="col-title">Objektbaum</span>
           <span style="font-size:10px;color:var(--text3)">Drag → Zuweisung</span>
@@ -1273,8 +1321,11 @@ function renderProject(){
         <div class="tree-scroll">${renderTree(OBJ_TREE, 0)}${renderLoinExtras()}</div>
       </div>
 
+      <!-- Resizer 2 -->
+      <div class="col-resizer" id="rsz2" onmousedown="startResize(event,2)" title="Ziehen um Breite anzupassen"></div>
+
       <!-- COL 3: AWF-MATRIX -->
-      <div class="awf-col">
+      <div class="awf-col" id="col3">
         <div class="col-header">
           <span class="col-title">${selectedNodeId?`Zuweisungen: ${NODE_MAP[selectedNodeId]?.label||''}`:!awfs.length?'AWF-Zuweisung':'Klicke ein Objekt im Baum'}</span>
           ${selectedNodeId?`<span style="font-size:10px;color:var(--text3)">${countAssigned(selectedNodeId)} Merkmale zugewiesen</span>`:''}
@@ -1568,8 +1619,12 @@ function renderLoinExtras(){
 }
 function toggleNode(id){
   expandedNodes.has(id)?expandedNodes.delete(id):expandedNodes.add(id);
+  if(id==='loin-root' || id.startsWith('loin-kg-')){
+    renderProject();
+    return;
+  }
   const el=document.getElementById('tch-'+id);
-  const tog=document.querySelector(`#tnode-${id} .tnode-toggle`);
+  const tog=document.querySelector('#tnode-'+id+' .tnode-toggle');
   if(el){el.classList.toggle('open',expandedNodes.has(id));}
   if(tog){tog.classList.toggle('open',expandedNodes.has(id));}
 }

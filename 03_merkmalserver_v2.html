@@ -521,6 +521,7 @@ const ASSIGN_KEY = 'bim_obj_assignments_v1';
 const PM_KEY = 'bim_param_milestones_v1';  // { [pid]: { [paramId]: [msId, ...] } }
 const LOIN_KEY = 'bim_loin_v1';
 const VR_KEY = 'bim_valueranges_v1';
+const TREE_EXT_KEY = 'bim_proj_tree_ext_v1';
 const EXCL_KEY   = 'bim_obj_exclusions_v2';
 const AWF_KEY    = 'bim_awf_v1';
 const SET_KEY    = 'bim_settings_v1';
@@ -638,10 +639,18 @@ const OBJ_TREE = {
   ]
 };
 
-// Flat node map
-const NODE_MAP = {};
+// Flat node map (fuellt beim Projekt-Wechsel neu auf)
+let NODE_MAP = {};
 function flattenNodes(node) { NODE_MAP[node.id]=node; (node.children||[]).forEach(flattenNodes); }
+function rebuildNodeMap(){
+  NODE_MAP={};
+  flattenNodes(OBJ_TREE);
+  if(pid && projTreeExt[pid] && projTreeExt[pid].nodes){
+    projTreeExt[pid].nodes.forEach(n=>{ NODE_MAP[n.id]=n; });
+  }
+}
 flattenNodes(OBJ_TREE);
+function saveTreeExt(){localStorage.setItem(TREE_EXT_KEY,JSON.stringify(projTreeExt));}
 
 
 // ─── IFC-KLASSE → OBJEKTBAUM-KNOTEN-MAPPING ─────────────────────
@@ -855,7 +864,7 @@ function normalizeDatatype(input){
 const GENERIC_IFC = new Set(['ifcelement','ifcbuildingelement','ifcbuildingelementproxy','ifcbuildingcomponent']);
 
 // ─── STATE ────────────────────────────────────────────────────────────
-let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={}, loinData={}, valueRanges={};
+let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={}, loinData={}, valueRanges={}, projTreeExt={};
 let bulkMatrixSelected = new Set();  // for multi-select in matrix
 let mode='global', pid=getCurrentProject()||null, selectedNodeId=null;
 let editParamId=null, editParamScope=null;
@@ -878,6 +887,8 @@ function init() {
   try{paramMilestones=JSON.parse(localStorage.getItem(PM_KEY))||{};}catch(e){paramMilestones={};}
   try{loinData=JSON.parse(localStorage.getItem(LOIN_KEY))||{};}catch(e){loinData={};}
   try{valueRanges=JSON.parse(localStorage.getItem(VR_KEY))||{};}catch(e){valueRanges={};}
+  try{projTreeExt=JSON.parse(localStorage.getItem(TREE_EXT_KEY))||{};}catch(e){projTreeExt={};}
+  rebuildNodeMap();
   try{exclusions=JSON.parse(localStorage.getItem(EXCL_KEY))||{};}catch(e){exclusions={};}
   try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
   if(!globalParams.length){globalParams=sampleGlobal();saveGlobal();}
@@ -901,86 +912,93 @@ function openLoinImport(){
       const loin=Array.isArray(bundle.loin)?bundle.loin:(Array.isArray(bundle)?bundle:null);
       const ranges=bundle.wertebereiche||bundle.valueRanges||null;
       if(!loin||!loin.length){showToast('Keine LOIN-Eintraege gefunden');return;}
-
-      // ─── LOIN speichern ─────────────────────────────────────
+      const doReset=confirm('LOIN-Import fuer dieses Projekt:\n\n1. Vorhandene LOIN-basierte Merkmale und Zuweisungen werden entfernt\n2. Neue projekt-spezifische Knoten aus der LOIN erzeugt\n3. Merkmale gezielt an diese Knoten zugewiesen\n\nStandard-Objektbaum-Vorlage bleibt unangetastet.\n\nFortfahren?');
+      if(!doReset) return;
       loinData[pid]=loin; saveLoin();
       if(ranges){valueRanges[pid]=ranges; saveVR();}
-
-      // ─── Auto-Anlage: Merkmale in projParams ergaenzen ──────
+      if(projParams[pid]) projParams[pid]=projParams[pid].filter(p=>p.source!=='loin');
+      const oldLoinNodeIds=new Set();
+      if(projTreeExt[pid] && projTreeExt[pid].nodes){
+        projTreeExt[pid].nodes.forEach(n=>{ if(n.source==='loin') oldLoinNodeIds.add(n.id); });
+      }
+      projTreeExt[pid]={nodes:[]};
+      if(assignments[pid]){
+        Object.keys(assignments[pid]).forEach(nid=>{
+          if(oldLoinNodeIds.has(nid)){ delete assignments[pid][nid]; return; }
+          assignments[pid][nid]=(assignments[pid][nid]||[]).filter(a=>{
+            if(!a.projRef) return true;
+            return (projParams[pid]||[]).some(p=>p.id===a.projRef);
+          });
+        });
+      }
+      const elementMap=new Map();
+      loin.forEach(l=>{
+        const elem=(l.element||'').trim();
+        if(!elem) return;
+        if(!elementMap.has(elem)){
+          elementMap.set(elem, {element: elem, ifcClass: l.ifcClass||'', ifcSubtype: l.ifcSubtype||'', kg: (l.kg||'').toString().trim(), entries: []});
+        }
+        const g=elementMap.get(elem);
+        if(l.ifcClass && l.ifcClass!=='IfcEntity' && (!g.ifcClass || g.ifcClass==='IfcEntity')){
+          g.ifcClass=l.ifcClass; g.ifcSubtype=l.ifcSubtype||'';
+        }
+        g.entries.push(l);
+      });
+      const iconFor=(ifcClass)=>{
+        const cc=(ifcClass||'').toLowerCase();
+        if(cc.includes('door')) return String.fromCodePoint(0x1F6AA);
+        if(cc.includes('window')) return String.fromCodePoint(0x1FA9F);
+        if(cc.includes('wall')) return String.fromCodePoint(0x1F9F1);
+        if(cc.includes('slab')||cc.includes('roof')) return String.fromCodePoint(0x1F3E0);
+        if(cc.includes('stair')||cc.includes('ramp')) return String.fromCodePoint(0x2B06);
+        if(cc.includes('transportelement')||cc.includes('elevator')) return String.fromCodePoint(0x1F6D7);
+        if(cc.includes('boiler')||cc.includes('heater')) return String.fromCodePoint(0x1F525);
+        if(cc.includes('chiller')||cc.includes('cooling')) return String.fromCodePoint(0x2744);
+        if(cc.includes('pump')) return String.fromCodePoint(0x1F4A7);
+        if(cc.includes('valve')) return String.fromCodePoint(0x1F527);
+        if(cc.includes('light')||cc.includes('lamp')) return String.fromCodePoint(0x1F4A1);
+        if(cc.includes('cable')||cc.includes('electric')) return String.fromCodePoint(0x26A1);
+        if(cc.includes('sensor')||cc.includes('alarm')) return String.fromCodePoint(0x1F6A8);
+        if(cc.includes('pipe')||cc.includes('duct')) return String.fromCodePoint(0x1F6E0);
+        if(cc.includes('space')) return String.fromCodePoint(0x1F3D8);
+        if(cc.includes('tank')) return String.fromCodePoint(0x1F6E2);
+        return '•';
+      };
+      const nodes=[];
+      const elementNodeMap=new Map();
+      elementMap.forEach(g=>{
+        const slug=g.element.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').substring(0,40);
+        const nodeId='loin_'+slug+'_'+(nodes.length);
+        nodes.push({id: nodeId, label: g.element, icon: iconFor(g.ifcClass), level: 4, ifcClass: g.ifcClass, ifcSubtype: g.ifcSubtype, kg: g.kg, source: 'loin'});
+        elementNodeMap.set(g.element, nodeId);
+      });
+      projTreeExt[pid]={nodes};
+      saveTreeExt();
+      rebuildNodeMap();
       if(!projParams[pid]) projParams[pid]=[];
       if(!assignments[pid]) assignments[pid]={};
-
-      // Gruppieren nach pset+propertyName, ifcClass-Sets mergen
-      const grouped=new Map();
-      loin.forEach(l=>{
-        const pset=(l.pset||'').trim();
-        const attr=(l.propertyName||'').trim();
-        if(!pset||!attr) return;
-        const key=pset+'||'+attr;
-        let g=grouped.get(key);
-        if(!g){ g={loin:l, ifcClasses:new Set(), abLp:l.abLp}; grouped.set(key,g); }
-        if(l.ifcClass) g.ifcClasses.add(l.ifcClass);
-        // Fruehester LP gewinnt
-        if(l.abLp && (!g.abLp || l.abLp<g.abLp)) g.abLp=l.abLp;
-      });
-
-      // Specificity: wenn generische UND spezifische IFC-Klasse fuer gleiches Merkmal, generische verwerfen
-      grouped.forEach(g=>{
-        const arr=[...g.ifcClasses];
-        const spec=arr.filter(t=>!GENERIC_IFC.has((t||'').toLowerCase()) && (t||'').toLowerCase()!=='ifcentität' && (t||'').toLowerCase()!=='ifcentity');
-        const gen =arr.filter(t=>GENERIC_IFC.has((t||'').toLowerCase()) || (t||'').toLowerCase()==='ifcentität' || (t||'').toLowerCase()==='ifcentity');
-        if(spec.length && gen.length){ g.ifcClasses=new Set(spec); }
-      });
-
-      let added=0, enriched=0, autoAssigned=0, unmapped=[];
-      grouped.forEach(g=>{
-        const l=g.loin;
-        const pset=(l.pset||'').trim();
-        const attr=(l.propertyName||'').trim();
-        const ifcArr=[...g.ifcClasses];
-
-        // Bestehendes projekt-eigenes Merkmal finden oder anlegen
-        let param=projParams[pid].find(p=>p.pset===pset && p.attr===attr && !p.globalRef);
-        if(param){
-          // Enrichment: ifcTypes mergen
-          const existing=new Set(param.ifcTypes||[]);
-          ifcArr.forEach(t=>existing.add(t));
-          param.ifcTypes=[...existing];
-          // Datatype upgraden wenn noch IfcLabel
-          if(param.dtype==='IfcLabel' && l.dataType && l.dataType!=='IfcLabel') param.dtype=l.dataType;
-          // Beschreibung ergaenzen
-          if(!param.desc && l.kommentar) param.desc=l.kommentar;
-          // LP (Phasen) ergaenzen
-          if(g.abLp){
-            const lpTag='LP'+g.abLp;
-            if(!(param.phases||[]).includes(lpTag)){ param.phases=[...(param.phases||[]),lpTag]; }
+      const paramMap=new Map();
+      let addedParams=0, autoAssigned=0;
+      elementMap.forEach(g=>{
+        const nodeId=elementNodeMap.get(g.element);
+        if(!nodeId) return;
+        g.entries.forEach(l=>{
+          const pset=(l.pset||'').trim();
+          const attr=(l.propertyName||'').trim();
+          if(!pset||!attr) return;
+          const key=pset+'||'+attr;
+          let param=paramMap.get(key);
+          if(!param){
+            param=(projParams[pid]||[]).find(p=>p.pset===pset && p.attr===attr && !p.globalRef);
+            if(!param){
+              param={id: uid(), name: (l.elementAttribut||attr).trim(), pset: pset, attr: attr, dtype: l.dataType||'IfcLabel', grp: 'ZZ', ifcTypes: g.ifcClass?[g.ifcClass]:[], phases: l.abLp?['LP'+l.abLp]:[], desc: l.kommentar||'', unit: l.unit||'', valueRangeRef: l.valueRangeRef||'', source: 'loin', addedAt: new Date().toISOString()};
+              projParams[pid].push(param);
+              addedParams++;
+            }
+            paramMap.set(key, param);
+          } else if(g.ifcClass && !(param.ifcTypes||[]).includes(g.ifcClass)){
+            param.ifcTypes=[...(param.ifcTypes||[]), g.ifcClass];
           }
-          enriched++;
-        } else {
-          param={
-            id: uid(),
-            name: (l.elementAttribut||attr).trim(),
-            pset: pset,
-            attr: attr,
-            dtype: l.dataType || 'IfcLabel',
-            grp: 'ZZ',
-            ifcTypes: ifcArr,
-            phases: g.abLp ? ['LP'+g.abLp] : [],
-            desc: l.kommentar || '',
-            unit: l.unit || '',
-            valueRangeRef: l.valueRangeRef || '',
-            addedAt: new Date().toISOString()
-          };
-          projParams[pid].push(param);
-          added++;
-        }
-
-        // Auto-Assignment an Objektbaum
-        const nodeIds=resolveIfcTypesToNodes(ifcArr);
-        if(!nodeIds.length){
-          ifcArr.forEach(t=>{ if(!unmapped.includes(t)) unmapped.push(t); });
-        }
-        nodeIds.forEach(nodeId=>{
           if(!assignments[pid][nodeId]) assignments[pid][nodeId]=[];
           const already=assignments[pid][nodeId].find(a=>a.projRef===param.id);
           if(!already){
@@ -989,41 +1007,16 @@ function openLoinImport(){
           }
         });
       });
-
-      // Post-Cleanup: Ancestor-Zuweisungen entfernen wenn Descendants dasselbe Merkmal haben
-      let ancestorPurged=0;
-      Object.keys(assignments[pid]).forEach(nodeId=>{
-        (assignments[pid][nodeId]||[]).slice().forEach(a=>{
-          const paramRef=a.globalRef||a.projRef;
-          if(!paramRef) return;
-          const node=NODE_MAP[nodeId];
-          if(!node) return;
-          const descs=getDescendants(node);
-          const hasDescAssign=descs.some(dId=>(assignments[pid][dId]||[]).some(x=>(x.globalRef||x.projRef)===paramRef));
-          if(hasDescAssign){
-            assignments[pid][nodeId]=(assignments[pid][nodeId]||[]).filter(x=>x.id!==a.id);
-            ancestorPurged++;
-          }
-        });
-      });
-
       savePP(); saveAssign();
-
       const parts=[];
       parts.push(loin.length+' LOIN-Eintraege');
       if(ranges) parts.push(Object.keys(ranges).length+' Wertebereiche');
-      if(added) parts.push(added+' Merkmale angelegt');
-      if(enriched) parts.push(enriched+' angereichert');
+      parts.push(nodes.length+' Projekt-Objekte im Baum');
+      if(addedParams) parts.push(addedParams+' Merkmale angelegt');
       if(autoAssigned) parts.push(autoAssigned+' Zuweisungen erzeugt');
-      if(ancestorPurged) parts.push(ancestorPurged+' Vererbungen bereinigt');
-      let msg='✓ '+parts.join(', ');
-      if(unmapped.length){
-        msg+=' · unklare IFC-Typen: '+unmapped.slice(0,4).join(', ')+(unmapped.length>4?'…':'');
-        console.info('[LOIN Import] Unklare IFC-Typen:', unmapped);
-      }
-      showToast(msg);
+      showToast(String.fromCodePoint(0x2713)+' '+parts.join(', '));
       render();
-    }catch(err){showToast('Import-Fehler: '+err.message);}
+    }catch(err){showToast('Import-Fehler: '+err.message);console.error(err);}
   };
   inp.click();
 }
@@ -1277,7 +1270,7 @@ function renderProject(){
         <div class="col-header" style="padding:6px 14px;background:var(--surface2)">
           <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Klicken: Merkmale anzeigen · Ziehen: Merkmal zuweisen</span>
         </div>
-        <div class="tree-scroll">${renderTree(OBJ_TREE, 0)}</div>
+        <div class="tree-scroll">${renderTree(OBJ_TREE, 0)}${renderLoinExtras()}</div>
       </div>
 
       <!-- COL 3: AWF-MATRIX -->
@@ -1505,6 +1498,73 @@ function renderTree(node, depth){
     ${node.children.map(c=>renderTree(c,depth+1)).join('')}
   </div>`:''}`;
   return nodeHtml;
+}
+
+function renderLoinExtras(){
+  if(!pid || !projTreeExt[pid] || !projTreeExt[pid].nodes || !projTreeExt[pid].nodes.length) return '';
+  const nodes = projTreeExt[pid].nodes;
+  const byKg = {};
+  nodes.forEach(n=>{
+    const kg = n.kg || '-';
+    if(!byKg[kg]) byKg[kg]=[];
+    byKg[kg].push(n);
+  });
+  const KG_LABELS = {
+    '0': 'KG 0 - Allgemein',
+    '100': 'KG 100 - Grundstueck',
+    '200': 'KG 200 - Herrichten',
+    '300': 'KG 300 - Bauwerk-Baukonstruktionen',
+    '400': 'KG 400 - Bauwerk-Technische Anlagen',
+    '500': 'KG 500 - Aussenanlagen',
+    '600': 'KG 600 - Ausstattung',
+    '700': 'KG 700 - Baunebenkosten',
+    '-': 'Ohne KG'
+  };
+  const rootId = 'loin-root';
+  const isRootOpen = expandedNodes.has(rootId);
+  let html = '<div class="tnode" id="tnode-'+rootId+'" style="padding-left:0;background:rgba(139,92,246,0.05);border-top:2px solid #8b5cf6;margin-top:8px" onclick="selectNode(\''+rootId+'\')">'
+    +'<div class="tnode-inner">'
+    +'<span class="tnode-toggle '+(isRootOpen?'open':'')+'" onclick="event.stopPropagation();toggleNode(\''+rootId+'\')">&#9654;</span>'
+    +'<span class="tnode-icon">&#127959;</span>'
+    +'<span class="tnode-label l0" style="font-weight:600;color:#8b5cf6">LOIN Projekt-Objekte</span>'
+    +'<span class="tnode-count" style="background:#8b5cf6">'+nodes.length+'</span>'
+    +'</div></div>'
+    +'<div class="tchildren '+(isRootOpen?'open':'')+'" id="tch-'+rootId+'">';
+  const kgKeys = Object.keys(byKg).sort();
+  kgKeys.forEach(kg=>{
+    const kgLabel = KG_LABELS[kg] || ('KG '+kg);
+    const kgId = 'loin-kg-'+kg.replace(/[^a-zA-Z0-9]/g,'');
+    const isKgOpen = expandedNodes.has(kgId);
+    const kgItems = byKg[kg].sort((a,b)=>(a.label||'').localeCompare(b.label||''));
+    const kgAssignCount = kgItems.reduce((s,n)=>s+countAssigned(n.id),0);
+    html += '<div class="tnode" id="tnode-'+kgId+'" style="padding-left:14px" onclick="selectNode(\''+kgId+'\')">'
+      +'<div class="tnode-inner">'
+      +'<span class="tnode-toggle '+(isKgOpen?'open':'')+'" onclick="event.stopPropagation();toggleNode(\''+kgId+'\')">&#9654;</span>'
+      +'<span class="tnode-icon">&#128194;</span>'
+      +'<span class="tnode-label l1" style="font-weight:500">'+kgLabel+'</span>'
+      +(kgAssignCount>0?'<span class="tnode-count">'+kgAssignCount+'</span>':'')
+      +'</div></div>'
+      +'<div class="tchildren '+(isKgOpen?'open':'')+'" id="tch-'+kgId+'">';
+    kgItems.forEach(n=>{
+      const cnt = countAssigned(n.id);
+      const isSelected = selectedNodeId===n.id;
+      const ifcInfo = n.ifcClass ? (n.ifcClass + (n.ifcSubtype?'/'+n.ifcSubtype:'')) : '';
+      html += '<div class="tnode '+(isSelected?'selected':'')+'" id="tnode-'+n.id+'" style="padding-left:28px" onclick="selectNode(\''+n.id+'\')"'
+        +' ondragover="event.preventDefault();(document.getElementById(\'tnode-'+n.id+'\')||{}).classList.add(\'drop-over\')"'
+        +' ondragleave="(document.getElementById(\'tnode-'+n.id+'\')||{}).classList.remove(\'drop-over\')"'
+        +' ondrop="onDrop(event,\''+n.id+'\')">'
+        +'<div class="tnode-inner">'
+        +'<span class="tnode-toggle leaf"></span>'
+        +'<span class="tnode-icon">'+(n.icon||'·')+'</span>'
+        +'<span class="tnode-label l4">'+n.label+'</span>'
+        +(cnt>0?'<span class="tnode-count">'+cnt+'</span>':'')
+        +(ifcInfo?'<span style="font-size:9px;color:var(--text3);margin-left:auto;font-family:var(--mono)">'+ifcInfo+'</span>':'')
+        +'</div></div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
 }
 function toggleNode(id){
   expandedNodes.has(id)?expandedNodes.delete(id):expandedNodes.add(id);

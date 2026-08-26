@@ -206,6 +206,25 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .tag-global{background:var(--global-dim);color:var(--global)}
 
 /* MODAL */
+
+/* GLOBAL LIBRARY DRAWER (rechte Sidebar) */
+.gdrawer{position:fixed;top:0;right:0;height:100vh;width:340px;max-width:90vw;background:var(--surface);border-left:1px solid var(--border);box-shadow:-4px 0 16px rgba(0,0,0,0.08);z-index:80;transform:translateX(100%);transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column}
+.gdrawer.open{transform:translateX(0)}
+.gdrawer-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.gdrawer-head strong{flex:1;font-size:13px}
+.gdrawer-head button{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px}
+.gdrawer-head button:hover{background:var(--border);color:var(--text)}
+.gdrawer-search{padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.gdrawer-search input{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px}
+.gdrawer-list{flex:1;overflow-y:auto;padding:8px}
+.gdrawer-empty{padding:24px 12px;text-align:center;color:var(--text3);font-size:11px}
+.gdrawer-item{padding:8px 10px;border:1px solid var(--border);border-radius:5px;margin-bottom:4px;background:var(--surface);cursor:grab;transition:border-color 0.15s}
+.gdrawer-item:hover{border-color:var(--accent)}
+.gdrawer-item.dragging{opacity:0.5;cursor:grabbing}
+.gdrawer-item-name{font-size:12px;font-weight:500;color:var(--text)}
+.gdrawer-item-sub{font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px}
+.gdrawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:79;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.gdrawer-backdrop.open{opacity:1;pointer-events:auto}
 .modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--surface);border-radius:14px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);transform:translateY(16px);transition:transform 0.25s}
@@ -322,9 +341,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
       <button onclick="goTo('08_hilfe.html')" title="Hilfe & Dokumentation" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;cursor:pointer;font-size:13px;color:var(--text2,#4a5876);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">?</button>
     </div>
   </div>
-  <div class="mode-tabs">
-    <div class="mode-tab g active" id="tab-global" onclick="setMode('global')">◈ Globale Bibliothek<span class="tb" id="tb-global">0</span></div>
-    <div class="mode-tab" id="tab-proj" onclick="setMode('proj')">Projektparameter<span class="tb" id="tb-proj">0</span></div>
+  <div class="mode-tabs" id="mode-tabs-row" style="justify-content:space-between;align-items:center">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="mode-tab active" id="tab-proj" onclick="setMode('proj')" style="cursor:default">
+        <span>Projektparameter</span><span class="tb" id="tb-proj">0</span>
+      </div>
+      <button onclick="setMode('global')" id="btn-global-full" style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer" title="Globale Bibliothek verwalten (Vollansicht)">
+        ◈ Bibliothek verwalten
+      </button>
+    </div>
+    <button onclick="toggleGlobalDrawer()" id="btn-toggle-drawer" style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:14px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px" title="Globale Bibliothek als Sidebar öffnen">
+      <span>◈ Bibliothek</span>
+      <span id="drawer-badge" class="tb">0</span>
+      <span id="drawer-arrow">◀</span>
+    </button>
   </div>
   <div id="proj-bar-wrap"></div>
   <div class="workspace" id="workspace"></div>
@@ -870,7 +900,8 @@ const GENERIC_IFC = new Set(['ifcelement','ifcbuildingelement','ifcbuildingeleme
 // ─── STATE ────────────────────────────────────────────────────────────
 let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={}, loinData={}, valueRanges={}, projTreeExt={};
 let bulkMatrixSelected = new Set();  // for multi-select in matrix
-let mode='global', pid=getCurrentProject()||null, selectedNodeId=null;
+let mode='proj', pid=getCurrentProject()||null, selectedNodeId=null;
+let globalDrawerOpen=false;  // globale Bibliothek als rechte Sidebar
 let editParamId=null, editParamScope=null;
 let confirmCb=null, importRows=[], importScope='global', importTab2='csv';
 let selectedIfcTypes=[], selectedPhases=[];
@@ -920,6 +951,52 @@ try{
   }
 }catch(e){}
 
+
+// GLOBAL LIBRARY DRAWER
+function toggleGlobalDrawer(){
+  globalDrawerOpen = !globalDrawerOpen;
+  const dr = document.getElementById('gdrawer');
+  const bd = document.getElementById('gdrawer-backdrop');
+  const arrow = document.getElementById('drawer-arrow');
+  if(dr) dr.classList.toggle('open', globalDrawerOpen);
+  if(bd) bd.classList.toggle('open', globalDrawerOpen);
+  if(arrow) arrow.textContent = globalDrawerOpen ? '\u25b6' : '\u25c0';
+  if(globalDrawerOpen) renderGlobalDrawer();
+}
+function renderGlobalDrawer(){
+  const list = document.getElementById('gdrawer-list');
+  const cnt = document.getElementById('gdrawer-count');
+  const search = document.getElementById('gdrawer-search');
+  if(!list) return;
+  const q = (search && search.value ? search.value : '').toLowerCase().trim();
+  let items = globalParams.slice();
+  if(q){
+    items = items.filter(function(p){
+      return (p.name||'').toLowerCase().indexOf(q)>-1 ||
+             (p.pset||'').toLowerCase().indexOf(q)>-1 ||
+             (p.attr||'').toLowerCase().indexOf(q)>-1;
+    });
+  }
+  if(cnt) cnt.textContent = items.length + (q?' / '+globalParams.length : '');
+  if(!items.length){
+    list.innerHTML = '<div class="gdrawer-empty">' + (q?'Keine Treffer':'Globale Bibliothek ist leer') + '</div>';
+    return;
+  }
+  list.innerHTML = items.slice(0,300).map(function(p){
+    return '<div class="gdrawer-item" draggable="true"' +
+      ' ondragstart="onDragStart(event,\''+p.id+'\')"' +
+      ' ondragend="this.classList.remove(\'dragging\')"' +
+      ' title="Auf einen Objektknoten ziehen">' +
+        '<div class="gdrawer-item-name">' + (p.name||'') + '</div>' +
+        '<div class="gdrawer-item-sub">' + (p.pset||'') + '.' + (p.attr||'') + ' \u00b7 ' + (DTYPE_SHORT[p.dtype]||p.dtype||'') + '</div>' +
+      '</div>';
+  }).join('') + (items.length>300 ? '<div class="gdrawer-empty" style="padding:12px">\u2026 ' + (items.length-300) + ' weitere. Praezisiere die Suche.</div>' : '');
+}
+window.toggleGlobalDrawer = toggleGlobalDrawer;
+window.renderGlobalDrawer = renderGlobalDrawer;
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && globalDrawerOpen) toggleGlobalDrawer();
+});
 function init() {
   try{const s=JSON.parse(localStorage.getItem(SET_KEY))||{};(function(){const _el=document.getElementById('sb-user');if(_el)_el.textContent=s.name||'BIM Manager';}());}catch(e){}
   try{projects=JSON.parse(localStorage.getItem(PROJ_KEY))||[];}catch(e){projects=[];}
@@ -938,6 +1015,7 @@ function init() {
   try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
   if(!globalParams.length){globalParams=sampleGlobal();saveGlobal();}
   buildIfcSelector(); buildPhaseGridModal(); buildAwfColorGrid();
+  if(!pid) mode='global';  // Fallback: ohne Projekt Global-Modus
   render();
 }
 function saveGlobal(){localStorage.setItem(GLOBAL_KEY,JSON.stringify(globalParams));}
@@ -1163,6 +1241,8 @@ function render(){renderProjBadge();
   mode==='global' ? renderGlobal() : renderProject();
 }
 function updateBadges(){
+  const _drawer=document.getElementById('drawer-badge'); if(_drawer) _drawer.textContent=globalParams.length;
+  if(globalDrawerOpen) renderGlobalDrawer();
   (function(){const _e=document.getElementById('tb-global');if(_e)_e.textContent=globalParams.length;}());
   (function(){const _e=document.getElementById('nav-count');if(_e)_e.textContent=globalParams.length;}());
   // Count unique global params that have been assigned in this project
@@ -2651,5 +2731,20 @@ document.addEventListener('keydown',e=>{
 init();
 
 </script>
+
+<!-- GLOBAL LIBRARY DRAWER -->
+<div class="gdrawer-backdrop" id="gdrawer-backdrop" onclick="toggleGlobalDrawer()"></div>
+<div class="gdrawer" id="gdrawer">
+  <div class="gdrawer-head">
+    <strong>◈ Globale Bibliothek</strong>
+    <span id="gdrawer-count" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
+    <button onclick="setMode('global')" title="Vollansicht (verwalten)">⤢</button>
+    <button onclick="toggleGlobalDrawer()" title="Schließen">✕</button>
+  </div>
+  <div class="gdrawer-search">
+    <input type="text" id="gdrawer-search" placeholder="In globaler Bibliothek suchen…" oninput="renderGlobalDrawer()">
+  </div>
+  <div class="gdrawer-list" id="gdrawer-list"></div>
+</div>
 </body>
 </html>

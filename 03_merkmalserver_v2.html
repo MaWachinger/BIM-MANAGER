@@ -519,6 +519,8 @@ const GLOBAL_KEY = 'bim_global_params_v2';
 const PPARAM_KEY = 'bim_proj_params_v1';
 const ASSIGN_KEY = 'bim_obj_assignments_v1';
 const PM_KEY = 'bim_param_milestones_v1';  // { [pid]: { [paramId]: [msId, ...] } }
+const LOIN_KEY = 'bim_loin_v1';
+const VR_KEY = 'bim_valueranges_v1';
 const EXCL_KEY   = 'bim_obj_exclusions_v2';
 const AWF_KEY    = 'bim_awf_v1';
 const SET_KEY    = 'bim_settings_v1';
@@ -836,7 +838,7 @@ function normalizeDatatype(input){
 const GENERIC_IFC = new Set(['ifcelement','ifcbuildingelement','ifcbuildingelementproxy','ifcbuildingcomponent']);
 
 // ─── STATE ────────────────────────────────────────────────────────────
-let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={};
+let projects=[], globalParams=[], projParams={}, assignments={}, exclusions={}, awfData={}, paramMilestones={}, loinData={}, valueRanges={};
 let bulkMatrixSelected = new Set();  // for multi-select in matrix
 let mode='global', pid=getCurrentProject()||null, selectedNodeId=null;
 let editParamId=null, editParamScope=null;
@@ -857,6 +859,8 @@ function init() {
   try{projParams=JSON.parse(localStorage.getItem(PPARAM_KEY))||{};}catch(e){projParams={};}
   try{assignments=JSON.parse(localStorage.getItem(ASSIGN_KEY))||{};}catch(e){assignments={};}
   try{paramMilestones=JSON.parse(localStorage.getItem(PM_KEY))||{};}catch(e){paramMilestones={};}
+  try{loinData=JSON.parse(localStorage.getItem(LOIN_KEY))||{};}catch(e){loinData={};}
+  try{valueRanges=JSON.parse(localStorage.getItem(VR_KEY))||{};}catch(e){valueRanges={};}
   try{exclusions=JSON.parse(localStorage.getItem(EXCL_KEY))||{};}catch(e){exclusions={};}
   try{awfData=JSON.parse(localStorage.getItem(AWF_KEY))||{};}catch(e){awfData={};}
   if(!globalParams.length){globalParams=sampleGlobal();saveGlobal();}
@@ -867,6 +871,36 @@ function saveGlobal(){localStorage.setItem(GLOBAL_KEY,JSON.stringify(globalParam
 function savePP(){localStorage.setItem(PPARAM_KEY,JSON.stringify(projParams));}
 function saveAssign(){localStorage.setItem(ASSIGN_KEY,JSON.stringify(assignments));}
 function savePM(){localStorage.setItem(PM_KEY,JSON.stringify(paramMilestones));}
+function saveLoin(){localStorage.setItem(LOIN_KEY,JSON.stringify(loinData));}
+function saveVR(){localStorage.setItem(VR_KEY,JSON.stringify(valueRanges));}
+function openLoinImport(){
+  if(!pid){showToast('Bitte zuerst ein Projekt auswaehlen');return;}
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='application/json,.json';
+  inp.onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      const bundle=JSON.parse(await f.text());
+      const loin=Array.isArray(bundle.loin)?bundle.loin:(Array.isArray(bundle)?bundle:null);
+      const ranges=bundle.wertebereiche||bundle.valueRanges||null;
+      if(!loin||!loin.length){showToast('Keine LOIN-Eintraege gefunden');return;}
+      loinData[pid]=loin; saveLoin();
+      let msg='✓ '+loin.length+' LOIN-Eintraege importiert';
+      if(ranges){valueRanges[pid]=ranges; saveVR(); msg+=' + '+Object.keys(ranges).length+' Wertebereiche';}
+      showToast(msg); render();
+    }catch(err){showToast('Import-Fehler: '+err.message);}
+  };
+  inp.click();
+}
+function getLoinForParam(param){
+  if(!pid||!param) return null;
+  return (loinData[pid]||[]).find(e=>e.pset===param.pset && (e.propertyName===param.attr||e.propertyName===param.name));
+}
+function getValueRangeForLoin(loin){
+  if(!pid||!loin||!loin.valueRangeRef) return null;
+  return (valueRanges[pid]||{})[loin.valueRangeRef];
+}
+window.openLoinImport=openLoinImport;
 function saveExcl() {localStorage.setItem(EXCL_KEY, JSON.stringify(exclusions));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
@@ -978,6 +1012,7 @@ function renderTopbarRight(){
       <button class="btn btn-primary btn-sm" onclick="openParamModal(null,'global')">+ Merkmal</button><button onclick="goTo('08_hilfe.html')" title="Hilfe" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">?</button>`;
   } else {
     el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="openImport('proj')" ${!pid?'disabled':''}>⬆ Import</button>
+      <button class="btn btn-secondary btn-sm" onclick="openLoinImport()" ${!pid?'disabled':''} title="LOIN + Wertebereiche als JSON-Bundle importieren">📋 LOIN-Bundle</button>
       <button class="btn btn-secondary btn-sm" onclick="exportIDS()" ${!pid?'disabled':''}>⬇ IDS</button>
       <button class="btn btn-primary btn-sm" onclick="openParamModal(null,'proj')" ${!pid?'disabled':''}>+ Merkmal</button>`;
   }
@@ -1197,7 +1232,7 @@ function renderProjOwnList(items, assignedGlobalIds){
                 title="In globale Bibliothek verschieben (allen Projekten verfügbar machen)"
                 style="background:transparent;border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:10px;cursor:pointer;color:var(--text2);flex-shrink:0">⤴ Push</button>
             </div>
-            <div class="pcard-sub">${p.pset}.${p.attr} · ${DTYPE_SHORT[p.dtype]||p.dtype}</div>
+            <div class="pcard-sub">${p.pset}.${p.attr} · ${DTYPE_SHORT[p.dtype]||p.dtype}${(()=>{const loin=getLoinForParam(p);const vr=loin&&getValueRangeForLoin(loin);return (loin&&loin.abLp?` · <span style="color:#0369a1;font-weight:600">Ab LP${loin.abLp}</span>`:'')+(vr?` · <span style="color:#7c3aed" title="${(vr.values||[]).length} zulässige Werte">▣ ${loin.valueRangeRef}</span>`:'');})()}</div>
           </div>`).join('')}
       </div>
     </div>`;

@@ -37,7 +37,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .nav-item.active .nav-badge{background:var(--accent-dim);color:var(--accent)}
 .sidebar-footer{padding:14px 18px;border-top:1px solid var(--nav-border)}
 /* MAIN */
-.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;height:100vh;max-height:100vh;overflow:hidden}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .proj-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
@@ -193,9 +193,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .col-km{background:rgba(0,201,167,0.15);color:var(--accent)}
 
 /* ── VIEWER ────────────────────────────────────────────────────────── */
-.viewer-wrap{flex:1;display:flex;overflow:hidden}
+.viewer-wrap{flex:1;display:flex;overflow:hidden;min-height:0}
 .viewer-sidebar{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.viewer-canvas{flex:1;position:relative;background:#0f1623}
+.viewer-canvas{flex:1;position:relative;background:#0f1623;min-height:0;min-width:0}
 #three-canvas{width:100%;height:100%;display:block}
 .viewer-hud{position:absolute;top:12px;left:12px;background:rgba(15,22,35,0.8);border:1px solid var(--nav-border);border-radius:var(--r);padding:10px 14px;font-size:11px;font-family:var(--mono);color:#90b8e0;min-width:180px;pointer-events:none}
 .viewer-legend{position:absolute;bottom:12px;right:12px;background:rgba(15,22,35,0.85);border:1px solid var(--nav-border);border-radius:var(--r);padding:8px 12px;pointer-events:none}
@@ -260,7 +260,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
     Prüfung <span class="main-tab-badge" id="mtb-pruefung">—</span>
   </div>
   <div class="main-tab" id="mtab-viewer" onclick="setMainTab('viewer')">
-    Viewer <span class="main-tab-badge" id="mtb-viewer">—</span>
+    Viewer <span style="font-size:9px;font-weight:400;color:var(--text3);margin-left:4px">(schematisch)</span> <span class="main-tab-badge" id="mtb-viewer">—</span>
   </div>
 </div>
 <div id="main-content" style="flex:1;display:flex;min-height:0;overflow:hidden"></div>
@@ -900,9 +900,17 @@ function checkStruktur(parsed,fm){
   const disc=fm?.disc;
   const expected=disc&&IFC_ENTITY_MAP[disc]?IFC_ENTITY_MAP[disc]:Object.values(IFC_ENTITY_MAP).flat();
   const unique=[...new Set(expected)];
-  const checks=unique.map(e=>({expected:[e],found:parsed.entityTypes[e]?[e]:[],count:parsed.entityTypes[e]||0}));
+  // Case-insensitive Lookup: Parser=UPPERCASE (IFCWALL), Map=PascalCase (IfcWall)
+  const upperCounts={};
+  Object.entries(parsed.entityTypes||{}).forEach(([k,v])=>{
+    upperCounts[k.toUpperCase()]=(upperCounts[k.toUpperCase()]||0)+v;
+  });
+  const checks=unique.map(e=>{
+    const cnt=upperCounts[e.toUpperCase()]||0;
+    return{expected:[e],found:cnt>0?[e]:[],count:cnt};
+  });
   const relevant=checks.filter(c=>c.count>0||c.expected.some(e=>expected.includes(e)));
-  const issues=relevant.filter(c=>c.count===0).map(c=>({expected:c.expected[0],hint:`Keine ${c.expected[0]}-Instanzen im Modell gefunden`}));
+  const issues=relevant.filter(c=>c.count===0).map(c=>({expected:c.expected[0],hint:'Keine '+c.expected[0]+'-Instanzen im Modell gefunden'}));
   return{checks:relevant,issues,totalExpected:relevant.length,matchedTypes:relevant.filter(c=>c.count>0).length};
 }
 function checkMerkmale(parsed){
@@ -1541,7 +1549,7 @@ function renderViewerPanel(container) {
     </div>
     <div class="viewer-canvas">
       <canvas id="three-canvas"></canvas>
-      <div class="viewer-hud" id="viewer-hud">Kein Modell ausgewählt</div>
+      <div class="viewer-hud" id="viewer-hud">Schematische Uebersicht - kein Modell ausgewaehlt</div>
       <div class="viewer-controls">
         <div class="vc-btn" onclick="resetCamera()" title="Ansicht zurücksetzen">⟳</div>
         <div class="vc-btn" onclick="viewFront()" title="Vorderansicht">↑</div>
@@ -1549,7 +1557,16 @@ function renderViewerPanel(container) {
       </div>
       <div class="viewer-legend" id="viewer-legend"></div>
       <div class="viewer-no-model" id="viewer-no-model" style="display:flex">
-        <div><div style="font-size:32px;margin-bottom:10px">🏗️</div><div style="font-size:14px;font-weight:600;color:#90b8e0">Wähle ein Modell in der Struktur</div><div style="font-size:11px;color:var(--nav-text);margin-top:5px">Teilmodell, Fachmodell oder Koordinationsmodell</div></div>
+        <div style="max-width:420px;padding:24px">
+          <div style="font-size:32px;margin-bottom:10px">🏗️</div>
+          <div style="font-size:14px;font-weight:600;color:#90b8e0">Wähle ein Modell in der Struktur</div>
+          <div style="font-size:11px;color:var(--nav-text);margin-top:5px">Teilmodell, Fachmodell oder Koordinationsmodell</div>
+          <div style="font-size:10px;color:#5a7ba0;margin-top:20px;padding:10px;border:1px solid rgba(144,184,224,0.15);border-radius:4px;text-align:left;line-height:1.5">
+            <strong style="color:#7fa8d0">Hinweis:</strong> Diese Ansicht zeigt eine <em>schematische Uebersicht</em>
+            der Entity-Typen im Modell (farbcodierte Boxen pro IFC-Klasse). Sie ersetzt <strong>kein</strong> vollwertiges
+            IFC-3D-Rendering. Fuer echte 3D-Darstellung ist eine Erweiterung mit web-ifc geplant (Issue #16).
+          </div>
+        </div>
       </div>
     </div>`;
   initThree();

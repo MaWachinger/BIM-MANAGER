@@ -671,6 +671,23 @@ const IFC_TO_NODES = {
   'ifcelement':              ['rau'],
   'ifcbuildingelement':      ['rau'],
   'ifcbuildingelementproxy': ['rau'],
+  'ifcentity':               ['rau'],  // 'IfcEntität' aus LOIN = universal
+  'ifcentität':              ['rau'],  // deutsche Schreibweise
+  // TGA-Ergaenzungen aus LOIN
+  'ifcdistributionflowelement':   ['tga-ver'],
+  'ifcdistributioncontrolelement':['tga-msr','tga-ste'],
+  'ifcdistributionchamberelement':['tga-ver'],
+  'ifcelectricdistributionboard': ['tga-schal','tga-el'],
+  'ifcelectricflowstoragedevice': ['tga-bat'],
+  'ifcfiresuppressionterminal':   ['tga-abg'],
+  'ifctank':                      ['tga-bat'],
+  'ifcaudiovisualappliance':      ['tga-le'],
+  'ifchumidifier':                ['tga-rlt'],
+  'ifcalarm':                     ['tga-msr'],
+  'ifcfilter':                    ['tga-ver'],
+  'ifcactuator':                  ['tga-ste'],
+  'ifcsensor':                    ['tga-msr'],
+  'ifccontroller':                ['tga-ste'],
   'ifcfurnishingelement':    ['aau-m'],
   'ifcfurniture':            ['aau-m'],
   // TGA – Verteilung/Distribution
@@ -884,10 +901,128 @@ function openLoinImport(){
       const loin=Array.isArray(bundle.loin)?bundle.loin:(Array.isArray(bundle)?bundle:null);
       const ranges=bundle.wertebereiche||bundle.valueRanges||null;
       if(!loin||!loin.length){showToast('Keine LOIN-Eintraege gefunden');return;}
+
+      // ─── LOIN speichern ─────────────────────────────────────
       loinData[pid]=loin; saveLoin();
-      let msg='✓ '+loin.length+' LOIN-Eintraege importiert';
-      if(ranges){valueRanges[pid]=ranges; saveVR(); msg+=' + '+Object.keys(ranges).length+' Wertebereiche';}
-      showToast(msg); render();
+      if(ranges){valueRanges[pid]=ranges; saveVR();}
+
+      // ─── Auto-Anlage: Merkmale in projParams ergaenzen ──────
+      if(!projParams[pid]) projParams[pid]=[];
+      if(!assignments[pid]) assignments[pid]={};
+
+      // Gruppieren nach pset+propertyName, ifcClass-Sets mergen
+      const grouped=new Map();
+      loin.forEach(l=>{
+        const pset=(l.pset||'').trim();
+        const attr=(l.propertyName||'').trim();
+        if(!pset||!attr) return;
+        const key=pset+'||'+attr;
+        let g=grouped.get(key);
+        if(!g){ g={loin:l, ifcClasses:new Set(), abLp:l.abLp}; grouped.set(key,g); }
+        if(l.ifcClass) g.ifcClasses.add(l.ifcClass);
+        // Fruehester LP gewinnt
+        if(l.abLp && (!g.abLp || l.abLp<g.abLp)) g.abLp=l.abLp;
+      });
+
+      // Specificity: wenn generische UND spezifische IFC-Klasse fuer gleiches Merkmal, generische verwerfen
+      grouped.forEach(g=>{
+        const arr=[...g.ifcClasses];
+        const spec=arr.filter(t=>!GENERIC_IFC.has((t||'').toLowerCase()) && (t||'').toLowerCase()!=='ifcentität' && (t||'').toLowerCase()!=='ifcentity');
+        const gen =arr.filter(t=>GENERIC_IFC.has((t||'').toLowerCase()) || (t||'').toLowerCase()==='ifcentität' || (t||'').toLowerCase()==='ifcentity');
+        if(spec.length && gen.length){ g.ifcClasses=new Set(spec); }
+      });
+
+      let added=0, enriched=0, autoAssigned=0, unmapped=[];
+      grouped.forEach(g=>{
+        const l=g.loin;
+        const pset=(l.pset||'').trim();
+        const attr=(l.propertyName||'').trim();
+        const ifcArr=[...g.ifcClasses];
+
+        // Bestehendes projekt-eigenes Merkmal finden oder anlegen
+        let param=projParams[pid].find(p=>p.pset===pset && p.attr===attr && !p.globalRef);
+        if(param){
+          // Enrichment: ifcTypes mergen
+          const existing=new Set(param.ifcTypes||[]);
+          ifcArr.forEach(t=>existing.add(t));
+          param.ifcTypes=[...existing];
+          // Datatype upgraden wenn noch IfcLabel
+          if(param.dtype==='IfcLabel' && l.dataType && l.dataType!=='IfcLabel') param.dtype=l.dataType;
+          // Beschreibung ergaenzen
+          if(!param.desc && l.kommentar) param.desc=l.kommentar;
+          // LP (Phasen) ergaenzen
+          if(g.abLp){
+            const lpTag='LP'+g.abLp;
+            if(!(param.phases||[]).includes(lpTag)){ param.phases=[...(param.phases||[]),lpTag]; }
+          }
+          enriched++;
+        } else {
+          param={
+            id: uid(),
+            name: (l.elementAttribut||attr).trim(),
+            pset: pset,
+            attr: attr,
+            dtype: l.dataType || 'IfcLabel',
+            grp: 'ZZ',
+            ifcTypes: ifcArr,
+            phases: g.abLp ? ['LP'+g.abLp] : [],
+            desc: l.kommentar || '',
+            unit: l.unit || '',
+            valueRangeRef: l.valueRangeRef || '',
+            addedAt: new Date().toISOString()
+          };
+          projParams[pid].push(param);
+          added++;
+        }
+
+        // Auto-Assignment an Objektbaum
+        const nodeIds=resolveIfcTypesToNodes(ifcArr);
+        if(!nodeIds.length){
+          ifcArr.forEach(t=>{ if(!unmapped.includes(t)) unmapped.push(t); });
+        }
+        nodeIds.forEach(nodeId=>{
+          if(!assignments[pid][nodeId]) assignments[pid][nodeId]=[];
+          const already=assignments[pid][nodeId].find(a=>a.projRef===param.id);
+          if(!already){
+            assignments[pid][nodeId].push({id:uid(), paramId:param.id, projRef:param.id, pflicht:true, awfIds:[]});
+            autoAssigned++;
+          }
+        });
+      });
+
+      // Post-Cleanup: Ancestor-Zuweisungen entfernen wenn Descendants dasselbe Merkmal haben
+      let ancestorPurged=0;
+      Object.keys(assignments[pid]).forEach(nodeId=>{
+        (assignments[pid][nodeId]||[]).slice().forEach(a=>{
+          const paramRef=a.globalRef||a.projRef;
+          if(!paramRef) return;
+          const node=NODE_MAP[nodeId];
+          if(!node) return;
+          const descs=getDescendants(node);
+          const hasDescAssign=descs.some(dId=>(assignments[pid][dId]||[]).some(x=>(x.globalRef||x.projRef)===paramRef));
+          if(hasDescAssign){
+            assignments[pid][nodeId]=(assignments[pid][nodeId]||[]).filter(x=>x.id!==a.id);
+            ancestorPurged++;
+          }
+        });
+      });
+
+      savePP(); saveAssign();
+
+      const parts=[];
+      parts.push(loin.length+' LOIN-Eintraege');
+      if(ranges) parts.push(Object.keys(ranges).length+' Wertebereiche');
+      if(added) parts.push(added+' Merkmale angelegt');
+      if(enriched) parts.push(enriched+' angereichert');
+      if(autoAssigned) parts.push(autoAssigned+' Zuweisungen erzeugt');
+      if(ancestorPurged) parts.push(ancestorPurged+' Vererbungen bereinigt');
+      let msg='✓ '+parts.join(', ');
+      if(unmapped.length){
+        msg+=' · unklare IFC-Typen: '+unmapped.slice(0,4).join(', ')+(unmapped.length>4?'…':'');
+        console.info('[LOIN Import] Unklare IFC-Typen:', unmapped);
+      }
+      showToast(msg);
+      render();
     }catch(err){showToast('Import-Fehler: '+err.message);}
   };
   inp.click();

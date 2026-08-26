@@ -876,7 +876,7 @@ let confirmCb=null, importRows=[], importScope='global', importTab2='csv';
 let selectedIfcTypes=[], selectedPhases=[];
 let dragParamId=null;
 let glibCat='alle', libSearch='', libCatFilter='alle';
-let expandedNodes=new Set(['root','rau','tga']); // default expanded
+let expandedNodes=new Set(['root','rau','tga','loin-root']); // default expanded
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 
@@ -1265,7 +1265,27 @@ function copyToProject(gid){
 // ═══════════════════════════════════════════════════
 // PROJECT MODE – 3 columns
 // ═══════════════════════════════════════════════════
-function renderProject(){
+function renderProjectPreserveScroll(){
+  // Scroll-Positionen der drei Spalten sichern
+  const libEl = document.getElementById('lib-scroll');
+  const treeEl = document.querySelector('.tree-scroll');
+  const matrixEl = document.querySelector('.matrix-wrap');
+  const libTop = libEl ? libEl.scrollTop : 0;
+  const treeTop = treeEl ? treeEl.scrollTop : 0;
+  const matrixTop = matrixEl ? matrixEl.scrollTop : 0;
+  _renderProject_impl();
+  // Nach Re-Render Scroll wiederherstellen
+  requestAnimationFrame(()=>{
+    const libEl2 = document.getElementById('lib-scroll');
+    const treeEl2 = document.querySelector('.tree-scroll');
+    const matrixEl2 = document.querySelector('.matrix-wrap');
+    if(libEl2) libEl2.scrollTop = libTop;
+    if(treeEl2) treeEl2.scrollTop = treeTop;
+    if(matrixEl2) matrixEl2.scrollTop = matrixTop;
+  });
+}
+function renderProject(){ renderProjectPreserveScroll(); }
+function _renderProject_impl(){
   const awfList=pid?(awfData[pid]||[]):[];
   (document.getElementById('proj-bar-wrap')||{}).innerHTML=`
     <div class="proj-bar">
@@ -1318,7 +1338,7 @@ function renderProject(){
         <div class="col-header" style="padding:6px 14px;background:var(--surface2)">
           <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Klicken: Merkmale anzeigen · Ziehen: Merkmal zuweisen</span>
         </div>
-        <div class="tree-scroll">${renderTree(OBJ_TREE, 0)}${renderLoinExtras()}</div>
+        <div class="tree-scroll">${(pid && projTreeExt[pid] && projTreeExt[pid].nodes && projTreeExt[pid].nodes.length) ? renderLoinExtras() : renderTree(OBJ_TREE, 0)}</div>
       </div>
 
       <!-- Resizer 2 -->
@@ -1577,7 +1597,7 @@ function renderLoinExtras(){
     +'<div class="tnode-inner">'
     +'<span class="tnode-toggle '+(isRootOpen?'open':'')+'" onclick="event.stopPropagation();toggleNode(\''+rootId+'\')">&#9654;</span>'
     +'<span class="tnode-icon">&#127959;</span>'
-    +'<span class="tnode-label l0" style="font-weight:600;color:#8b5cf6">LOIN Projekt-Objekte</span>'
+    +'<span class="tnode-label l0" style="font-weight:600;color:#8b5cf6">LOIN Projekt-Objekte</span><span style="font-size:9px;color:var(--text3);margin-left:8px;font-style:italic">Standard-Vorlage ausgeblendet</span>'
     +'<span class="tnode-count" style="background:#8b5cf6">'+nodes.length+'</span>'
     +'</div></div>'
     +'<div class="tchildren '+(isRootOpen?'open':'')+'" id="tch-'+rootId+'">';

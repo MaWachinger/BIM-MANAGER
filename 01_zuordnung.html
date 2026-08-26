@@ -329,10 +329,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
           <button type="button" onclick="auswahlAufheben()" title="Auswahl aufheben">×</button>
         </span>
       </div>
-      <div class="zo-toolbar">
-        <input type="text" id="zo-search" placeholder="Merkmal suchen…" oninput="onSearch(this.value)">
+      <div class="zo-toolbar" style="flex-wrap:wrap">
+        <input type="text" id="zo-search" placeholder="Merkmal suchen…" oninput="onSearch(this.value)" style="flex:1;min-width:180px">
         <label class="zo-chk"><input type="checkbox" id="zo-only-open" checked onchange="render()"> nur offene</label>
         <span class="zo-tip" title="Strg/Cmd+Klick wählt einzeln dazu, Shift+Klick einen Bereich, Klick auf die Gruppenzeile die ganze Gruppe. Dann auf einen Meilenstein klicken oder ziehen.">Mehrfachauswahl ⓘ</span>
+      </div>
+      <div class="zo-toolbar" style="flex-wrap:wrap;border-top:1px solid var(--border);padding-top:6px" id="zo-filter-row">
+        <button class="zo-fbtn" id="zo-fbtn-lp" onclick="toggleFilterPop('lp',event)">
+          <span>⏱ Leistungsphase</span>
+          <span id="zo-lp-badge" style="display:none"></span>
+        </button>
+        <button class="zo-fbtn" id="zo-fbtn-obj" onclick="toggleFilterPop('obj',event)">
+          <span>▣ Objekt</span>
+          <span id="zo-obj-badge" style="display:none"></span>
+        </button>
+        <span id="zo-filter-status" style="font-size:10px;color:var(--text3);margin-left:auto"></span>
       </div>
       <div class="zo-list" id="zo-left"></div>
     </div>
@@ -412,6 +423,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 .zo-adv-t{font-size:12px;font-weight:500}
 .zo-adv-d{font-size:10.5px;color:var(--text3);line-height:1.4;margin-top:2px;max-width:330px}
 
+
+.zo-fbtn{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid var(--border);border-radius:14px;background:var(--surface);cursor:pointer;font-size:11px;color:var(--text2);transition:all 0.15s;white-space:nowrap}
+.zo-fbtn:hover{border-color:var(--accent);color:var(--accent)}
+.zo-fbtn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:600}
+.zo-fbtn-clear{margin-left:2px;opacity:0.6;font-size:12px;cursor:pointer}
+.zo-fbtn-clear:hover{opacity:1;color:var(--err)}
+.zo-fpop{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:100;min-width:200px;max-width:340px;max-height:360px;overflow:hidden;display:flex;flex-direction:column}
+.zo-fpop-head{padding:6px 10px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);display:flex;justify-content:space-between;align-items:center}
+.zo-fpop-head button{background:transparent;border:none;color:var(--accent);font-size:10px;cursor:pointer;padding:0}
+.zo-fpop-list{overflow-y:auto;padding:4px 0;flex:1}
+.zo-fpop-item{padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.zo-fpop-item:hover{background:var(--surface2,rgba(0,0,0,0.03))}
+.zo-fpop-item input{margin:0;cursor:pointer;accent-color:var(--accent)}
+.zo-fpop-item .zo-fpop-count{margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono)}
 .zo-list{max-height:calc(100vh - 340px);overflow-y:auto;padding:8px}
 .zo-grp{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);font-family:var(--mono);padding:9px 6px 4px;display:flex;align-items:center;gap:7px}
 .zo-grp-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
@@ -467,6 +492,9 @@ const KERN_TYPEN = ['datadrop','meilenstein','freigabe'];
 
 let projects=[], globalParams=[], projParams={}, milestones={}, groups=[], zuo={};
 let currentPid='', selectedParam=null, searchTerm='', openMs=new Set();
+// Filter: LP und Objekt
+let lpFilter=new Set(), objFilter=new Set();
+let projTreeExt={}, objAssignments={};
 // Mehrfachauswahl: Set der markierten Merkmale, sichtbare Reihenfolge fuer Shift-Bereich
 let selectedParams=new Set(), lastPicked=null, sichtbareIds=[], gruppenIds={};
 
@@ -497,6 +525,8 @@ function init(){
   milestones   = ls(MS_KEY,{});
   groups       = ls(GRP_KEY,[]);
   zuo          = ls(ZUO_KEY,{});
+  projTreeExt  = ls('bim_proj_tree_ext_v1',{});
+  objAssignments = ls('bim_obj_assignments_v1',{});
 
   currentPid = getCurrentProject();
   if(!currentPid && projects.length) { currentPid = projects[0].id; setCurrentProject(currentPid); }
@@ -608,6 +638,156 @@ function pickGruppe(grpCode, e){
 }
 function auswahlAufheben(){ selectedParams.clear(); selectedParam=null; lastPicked=null; render(); }
 function onSearch(v){ searchTerm=v.toLowerCase(); render(); }
+
+// ─── FILTER: LEISTUNGSPHASE + OBJEKT ────────────────────────────────
+function getAvailableLps(){
+  const list=projParams[currentPid]||[];
+  const lps=new Set();
+  list.forEach(p=>(p.phases||[]).forEach(ph=>{
+    const m=String(ph).match(/(?:LP)?(\d+)/i);
+    if(m) lps.add('LP'+m[1]);
+  }));
+  return [...lps].sort();
+}
+function getAvailableObjects(){
+  // Aus LOIN-Baum + normalen Assignments Nodes sammeln mit Anzahl zugeordneter Merkmale
+  const nodes=[];
+  const nodeCounts={};
+  const asg=objAssignments[currentPid]||{};
+  Object.entries(asg).forEach(([nodeId,list])=>{
+    if(list.length===0) return;
+    nodeCounts[nodeId]=(list||[]).length;
+  });
+  // Suche Node-Labels aus projTreeExt (LOIN-Objekte)
+  const loinNodes=(projTreeExt[currentPid]||{}).nodes||[];
+  loinNodes.forEach(n=>{
+    if(nodeCounts[n.id]!=null){
+      nodes.push({id:n.id, label:n.label, ifcClass:n.ifcClass||'', count:nodeCounts[n.id]});
+    }
+  });
+  // Sortieren nach Label
+  nodes.sort((a,b)=>(a.label||'').localeCompare(b.label||''));
+  return nodes;
+}
+function toggleFilterPop(kind, evt){
+  evt.stopPropagation();
+  const existing=document.getElementById('zo-fpop');
+  if(existing){
+    const currentKind=existing.dataset.kind;
+    existing.remove();
+    if(currentKind===kind) return;
+  }
+  const btn=document.getElementById('zo-fbtn-'+kind);
+  if(!btn) return;
+  const rect=btn.getBoundingClientRect();
+  const pop=document.createElement('div');
+  pop.className='zo-fpop';
+  pop.id='zo-fpop';
+  pop.dataset.kind=kind;
+  pop.style.top=(rect.bottom+4)+'px';
+  pop.style.left=rect.left+'px';
+
+  if(kind==='lp'){
+    const lps=getAvailableLps();
+    if(!lps.length){
+      pop.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:11px">Keine LP-Angaben an den Merkmalen<br><span style="font-size:10px">(via LOIN-Import setzbar)</span></div>';
+    } else {
+      pop.innerHTML='<div class="zo-fpop-head"><span>Leistungsphase</span><button onclick="clearFilter(\'lp\')">Alle abwählen</button></div>'
+        +'<div class="zo-fpop-list">'
+        +lps.map(lp=>{
+          const active=lpFilter.has(lp);
+          return '<label class="zo-fpop-item"><input type="checkbox" '+(active?'checked':'')+' onchange="toggleLpFilter(\''+lp+'\')"/>'
+            +'<span>'+lp+'</span></label>';
+        }).join('')
+        +'</div>';
+    }
+  } else if(kind==='obj'){
+    const objs=getAvailableObjects();
+    if(!objs.length){
+      pop.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:11px">Keine Objekt-Zuweisungen im Projekt<br><span style="font-size:10px">(via Merkmalserver Zuweisungen setzen)</span></div>';
+    } else {
+      pop.innerHTML='<div class="zo-fpop-head"><span>Objekt (n='+objs.length+')</span><button onclick="clearFilter(\'obj\')">Alle abwählen</button></div>'
+        +'<div class="zo-fpop-list">'
+        +objs.map(o=>{
+          const active=objFilter.has(o.id);
+          return '<label class="zo-fpop-item"><input type="checkbox" '+(active?'checked':'')+' onchange="toggleObjFilter(\''+o.id+'\')"/>'
+            +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(o.label)+(o.ifcClass?' · '+esc(o.ifcClass):'')+'">'+esc(o.label)+'</span>'
+            +'<span class="zo-fpop-count">'+o.count+'</span></label>';
+        }).join('')
+        +'</div>';
+    }
+  }
+  document.body.appendChild(pop);
+  // Klick außerhalb schließt
+  setTimeout(()=>{
+    document.addEventListener('click', closeFilterPopOnOutside, { once:true });
+  }, 10);
+}
+function closeFilterPopOnOutside(e){
+  const pop=document.getElementById('zo-fpop');
+  if(pop && !pop.contains(e.target)) pop.remove();
+}
+function toggleLpFilter(lp){
+  if(lpFilter.has(lp)) lpFilter.delete(lp); else lpFilter.add(lp);
+  updateFilterBadges();
+  render();
+}
+function toggleObjFilter(nodeId){
+  if(objFilter.has(nodeId)) objFilter.delete(nodeId); else objFilter.add(nodeId);
+  updateFilterBadges();
+  render();
+}
+function clearFilter(kind){
+  if(kind==='lp') lpFilter.clear();
+  else if(kind==='obj') objFilter.clear();
+  const pop=document.getElementById('zo-fpop');
+  if(pop) pop.remove();
+  updateFilterBadges();
+  render();
+}
+function updateFilterBadges(){
+  const lpBtn=document.getElementById('zo-fbtn-lp');
+  const lpB=document.getElementById('zo-lp-badge');
+  if(lpBtn && lpB){
+    if(lpFilter.size){
+      lpBtn.classList.add('active');
+      lpB.style.display='';
+      lpB.textContent='('+lpFilter.size+')';
+    } else { lpBtn.classList.remove('active'); lpB.style.display='none'; }
+  }
+  const objBtn=document.getElementById('zo-fbtn-obj');
+  const objB=document.getElementById('zo-obj-badge');
+  if(objBtn && objB){
+    if(objFilter.size){
+      objBtn.classList.add('active');
+      objB.style.display='';
+      objB.textContent='('+objFilter.size+')';
+    } else { objBtn.classList.remove('active'); objB.style.display='none'; }
+  }
+}
+// Helper: welche Nodes matchen dem gewaehlten Objekt-Filter?
+function paramMatchesObjectFilter(paramId){
+  if(objFilter.size===0) return true;
+  const asg=objAssignments[currentPid]||{};
+  for(const nid of objFilter){
+    const list=asg[nid]||[];
+    if(list.some(a=>(a.projRef===paramId||a.globalRef===paramId||a.paramId===paramId))) return true;
+  }
+  return false;
+}
+function paramMatchesLpFilter(param){
+  if(lpFilter.size===0) return true;
+  const phs=(param.phases||[]).map(p=>{
+    const m=String(p).match(/(?:LP)?(\d+)/i);
+    return m?'LP'+m[1]:null;
+  }).filter(Boolean);
+  return phs.some(ph=>lpFilter.has(ph));
+}
+window.toggleFilterPop=toggleFilterPop;
+window.toggleLpFilter=toggleLpFilter;
+window.toggleObjFilter=toggleObjFilter;
+window.clearFilter=clearFilter;
+
 function toggleMs(id){ if(openMs.has(id)) openMs.delete(id); else openMs.add(id); render(); }
 function toggleErweitert(){
   const a=document.getElementById('zo-adv'), b=document.getElementById('zo-adv-btn');
@@ -705,6 +885,9 @@ function renderLeft(){
   }
   if(onlyOpen) k=k.filter(p=>!zuordnungOf(p.id));
   if(searchTerm) k=k.filter(p=>(String(p.name||'')+' '+String(p.pset||'')+' '+String(p.attr||'')).toLowerCase().indexOf(searchTerm)>-1);
+  if(lpFilter.size) k=k.filter(p=>paramMatchesLpFilter(p));
+  if(objFilter.size) k=k.filter(p=>paramMatchesObjectFilter(p.id));
+  updateFilterBadges();
 
   if(!k.length){ box.innerHTML='<div class="zo-empty">Alle Merkmale sind zugeordnet.</div>'; return; }
 

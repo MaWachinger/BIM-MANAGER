@@ -273,7 +273,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 <!-- MODELLHOST CONFIG -->
 <div class="modal-overlay" id="host-ol" onclick="if(event.target===this)closeModal('host-ol')">
   <div class="modal modal-lg">
-    <div class="modal-header"><div class="modal-title">Modellhost konfigurieren</div><button class="modal-close" onclick="closeModal('host-ol')">×</button></div>
+    <div class="modal-header"><div class="modal-title" id="tm-title">Modellhost konfigurieren</div><button class="modal-close" onclick="closeModal('host-ol')">×</button></div>
     <div class="modal-body">
       <div class="fg full">
         <label>SharePoint-Pfad / Lokaler Ordnerpfad</label>
@@ -428,7 +428,7 @@ const IFC_ENTITY_MAP={ARK:['IfcWall','IfcWallStandardCase','IfcSlab','IfcRoof','
 let projects=[], assignments={}, projParams={}, globalParams=[];
 let hostConfig={}, kmData={}, fmData={}, tmData={}, results={};
 let pid=getCurrentProject()||null, selNode=null, activeTab='uebersicht';
-let editKMId=null, editFMId=null, pendingParsed=null, pendingFile=null;
+let editKMId=null, editFMId=null, editTMId=null, pendingParsed=null, pendingFile=null;
 let expandedKMs=new Set(), expandedFMs=new Set();
 let cdeSlots=[];
 
@@ -701,7 +701,8 @@ function renderFMDetail(){
         <td onclick="event.stopPropagation()">
           <div style="display:flex;gap:3px">
             <button class="btn-ghost" style="font-size:11px" onclick="selNode={type:'tm',id:'${tm.id}'};activeTab='uebersicht';runCheck('${tm.id}')" title="Prüfen">▶</button>
-            <button class="btn-ghost" style="font-size:11px;color:var(--err)" onclick="deleteTM('${tm.id}')">⌫</button>
+            <button class="btn-ghost" style="font-size:11px" onclick="openTM('${tm.id}')" title="Teilmodell bearbeiten">✎</button>
+            <button class="btn-ghost" style="font-size:11px;color:var(--err)" onclick="deleteTM('${tm.id}')" title="Teilmodell entfernen">⌫</button>
           </div>
         </td>
       </tr>`;}).join('')}
@@ -1027,14 +1028,28 @@ function deleteFM(id){
 }
 
 // ─── TM CRUD ─────────────────────────────────────────────────────────
-function openTM(){
+function openTM(id=null){
+  editTMId=id;
   pendingParsed=null; pendingFile=null;
-  (function(){const _el=document.getElementById('ifc-drop-label');if(_el)_el.textContent='IFC-Datei ablegen oder klicken';}());
-  (document.getElementById('tm-ok')||{}).disabled=true;
-  (document.getElementById('tm-datadrop')||{}).value='';
-  (document.getElementById('tm-note')||{}).value='';
+  const tm=id?(tmData[pid]||[]).find(t=>t.id===id):null;
+  // Modal-Titel anpassen
+  (function(){const _el=document.getElementById('tm-title');if(_el)_el.textContent=id?'Teilmodell bearbeiten':'Teilmodell anlegen';}());
+  // IFC-Drop-Label: bei Bearbeiten die bestehende Datei anzeigen
+  (function(){
+    const _el=document.getElementById('ifc-drop-label');
+    if(!_el) return;
+    if(tm && tm.parsed){
+      _el.textContent='✓ '+(tm.name||'')+' · '+(tm.parsed.entities||0).toLocaleString()+' Entities · '+(tm.parsed.objectCount||0)+' Objekte – klicken um zu ersetzen';
+    } else {
+      _el.textContent='IFC-Datei ablegen oder klicken';
+    }
+  }());
+  // Save-Button: beim Bearbeiten sofort aktivieren (Metadaten koennen ohne neue IFC geaendert werden)
+  (document.getElementById('tm-ok')||{}).disabled = id ? false : true;
+  (document.getElementById('tm-datadrop')||{}).value = tm?.datadrop || '';
+  (document.getElementById('tm-note')||{}).value = tm?.note || '';
   const fms=fmData[pid]||[];
-  (document.getElementById('tm-fm-sel')||{}).innerHTML=fms.map(f=>`<option value="${f.id}">${f.disc?f.disc+' · ':''} ${f.name}</option>`).join('');
+  (document.getElementById('tm-fm-sel')||{}).innerHTML=fms.map(f=>`<option value="${f.id}" ${tm && f.id===tm.fmId?'selected':''}>${f.disc?f.disc+' · ':''} ${f.name}</option>`).join('');
   (document.getElementById('tm-ol')||{}).classList.add('open');
 }
 function openTMFor(fmId){
@@ -1057,14 +1072,43 @@ function handleIFCFile(file){
   reader.readAsText(file,'utf-8');
 }
 function saveTM(){
-  if(!pendingParsed||!pid){showToast('IFC fehlt');return;}
+  if(!pid){showToast('Kein Projekt');return;}
   const fmId=(document.getElementById('tm-fm-sel')||{}).value;
   if(!fmId){showToast('Fachmodell wählen');return;}
+  const datadrop=(document.getElementById('tm-datadrop')||{}).value.trim();
+  const note=(document.getElementById('tm-note')||{}).value.trim();
   if(!tmData[pid]) tmData[pid]=[];
-  const tm={id:uid(),name:pendingFile.name,fmId,datadrop:(document.getElementById('tm-datadrop')||{}).value.trim(),note:(document.getElementById('tm-note')||{}).value.trim(),parsed:pendingParsed,uploadedAt:new Date().toISOString()};
-  tmData[pid].push(tm);
-  save(); closeModal('tm-ol'); selNode={type:'tm',id:tm.id}; renderProjBar(); renderWorkspaceAndGraph();
-  showToast(`✓ ${tm.name} hinzugefügt`);
+
+  if(editTMId){
+    // Bearbeitungsmodus – bestehendes TM updaten
+    const i=tmData[pid].findIndex(t=>t.id===editTMId);
+    if(i<0){showToast('Teilmodell nicht gefunden');return;}
+    const existing=tmData[pid][i];
+    tmData[pid][i]={
+      ...existing,
+      fmId, datadrop, note,
+      // Nur wenn eine neue IFC hochgeladen wurde, Datei und Parse-Daten ueberschreiben
+      ...(pendingParsed && pendingFile ? {
+        name:pendingFile.name, parsed:pendingParsed,
+        uploadedAt:new Date().toISOString(),
+        // Aeltere Pruefergebnisse gelten fuer die alte IFC → verwerfen
+      } : {})
+    };
+    if(pendingParsed && results[pid]?.[editTMId]){
+      delete results[pid][editTMId];
+      saveR();
+    }
+    save(); closeModal('tm-ol'); selNode={type:'tm',id:editTMId}; renderProjBar(); renderWorkspaceAndGraph();
+    showToast('✓ Teilmodell aktualisiert');
+    editTMId=null;
+  } else {
+    // Neuanlage – IFC ist zwingend
+    if(!pendingParsed){showToast('IFC fehlt');return;}
+    const tm={id:uid(),name:pendingFile.name,fmId,datadrop,note,parsed:pendingParsed,uploadedAt:new Date().toISOString()};
+    tmData[pid].push(tm);
+    save(); closeModal('tm-ol'); selNode={type:'tm',id:tm.id}; renderProjBar(); renderWorkspaceAndGraph();
+    showToast('✓ '+tm.name+' hinzugefügt');
+  }
 }
 function deleteTM(id){if(!confirm('Teilmodell entfernen?'))return;tmData[pid]=(tmData[pid]||[]).filter(t=>t.id!==id);if(results[pid])delete results[pid][id];save();saveR();if(selNode?.id===id)selNode=null;renderProjBar();renderWorkspaceAndGraph();showToast('Entfernt');}
 

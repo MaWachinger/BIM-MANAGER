@@ -446,6 +446,44 @@ function init(){
   try{results=JSON.parse(localStorage.getItem(RESULTS_KEY))||{};}catch(e){results={};}
   render();
 }
+function saveExtras(){localStorage.setItem('bim_proj_ifc_extras_v1',JSON.stringify(projIfcExtras));}
+function getExpectedForDisc(disc){
+  const base=disc && IFC_ENTITY_MAP[disc] ? IFC_ENTITY_MAP[disc] : [];
+  const extras=(projIfcExtras[pid]||{})[disc||'_ALL']||[];
+  return [...new Set([...base, ...extras])];
+}
+function adoptIfcClass(disc, ifcClass){
+  if(!pid) return;
+  if(!projIfcExtras[pid]) projIfcExtras[pid]={};
+  const key=disc||'_ALL';
+  if(!projIfcExtras[pid][key]) projIfcExtras[pid][key]=[];
+  if(projIfcExtras[pid][key].includes(ifcClass)){
+    showToast(ifcClass+' bereits adoptiert');
+    return;
+  }
+  projIfcExtras[pid][key].push(ifcClass);
+  saveExtras();
+  showToast('✓ '+ifcClass+(disc?' fuer '+disc:' projektweit')+' adoptiert');
+  if(selNode){
+    if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}
+    else renderWorkspaceAndGraph();
+  }
+}
+function removeAdoptedClass(disc, ifcClass){
+  if(!pid || !projIfcExtras[pid]) return;
+  const key=disc||'_ALL';
+  if(!projIfcExtras[pid][key]) return;
+  projIfcExtras[pid][key]=projIfcExtras[pid][key].filter(x=>x!==ifcClass);
+  saveExtras();
+  showToast('Adoption von '+ifcClass+' entfernt');
+  if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}
+}
+const PROXY_WHITELIST_KEYWORDS = ['provisionforvoid','provisionforspace','recess','ausschnitt','aussparung','durchbruch','opening','platzhalter','placeholder','dummy','stub','clearance'];
+function isProxyLegitimate(name){
+  if(!name) return false;
+  const n=name.toLowerCase();
+  return PROXY_WHITELIST_KEYWORDS.some(kw=>n.includes(kw));
+}
 const save=()=>{localStorage.setItem(KM_KEY,JSON.stringify(kmData));localStorage.setItem(FM_KEY,JSON.stringify(fmData));localStorage.setItem(TM_KEY,JSON.stringify(tmData));};
 const saveR=()=>localStorage.setItem(RESULTS_KEY,JSON.stringify(results));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -770,6 +808,66 @@ function renderUebersicht(tm,res){
 function renderStruktur(res){
   const st=res.struktur||{};
   if(!st.checks?.length) return `<div class="info-box info-amber">Keine Objekttyp-Zuweisungen für dieses Projekt im Merkmalserver gefunden.</div>`;
+  const disc=st.disc||'';
+  const adopted=(projIfcExtras[pid]||{})[disc||'_ALL']||[];
+  const discHtml = (st.discovered && st.discovered.length) ? `
+    <div class="sc">
+      <div class="sc-header">
+        <span class="sc-title">+ Zusätzlich im Modell gefunden</span>
+        <span style="font-size:11px;color:var(--text3)">${st.discovered.length} unbekannte Klasse(n)</span>
+      </div>
+      <div style="padding:8px 14px;font-size:11px;color:var(--text2);background:rgba(59,130,246,0.05);border-bottom:1px solid var(--border)">
+        Diese IFC-Klassen sind im Modell vorhanden aber nicht in der Erwartungsliste für Disziplin <strong>${disc||'(alle)'}</strong>. Adoption übernimmt die Klasse dauerhaft für dieses Projekt (${disc?'nur '+disc:'projektweit'}).
+      </div>
+      <table class="ptable"><thead><tr><th>IFC-Klasse</th><th>Anzahl</th><th>Beispiele</th><th>Aktion</th></tr></thead><tbody>
+      ${st.discovered.map(d=>`<tr>
+        <td><span style="font-family:var(--mono);font-size:11px;font-weight:600">${d.type}</span></td>
+        <td style="font-family:var(--mono)">${d.count}</td>
+        <td style="font-size:10px;color:var(--text3);max-width:280px">${d.samples.slice(0,3).map(s=>'"'+s.substring(0,32)+(s.length>32?'…':'')+'"').join(', ')||'—'}</td>
+        <td><button class="btn btn-primary btn-xs" onclick="adoptIfcClass('${disc}','${d.type}')" title="Zur Erwartungsliste für ${disc||'das Projekt'} hinzufügen">✓ Adoptieren</button></td>
+      </tr>`).join('')}
+      </tbody></table>
+    </div>` : '';
+  const adoptedHtml = adopted.length ? `
+    <div class="sc">
+      <div class="sc-header"><span class="sc-title">★ Adoptierte Klassen (projektspezifisch)</span></div>
+      <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px">
+        ${adopted.map(cls=>`<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.4);border-radius:12px;font-size:11px;font-family:var(--mono)">
+          ${cls}
+          <button class="btn-ghost" style="padding:0;font-size:11px;color:var(--err)" onclick="removeAdoptedClass('${disc}','${cls}')" title="Adoption entfernen">×</button>
+        </span>`).join('')}
+      </div>
+    </div>` : '';
+  const pa = st.proxyAnalysis;
+  const proxyHtml = pa ? `
+    <div class="sc">
+      <div class="sc-header">
+        <span class="sc-title">🔍 Proxy-Analyse (IfcBuildingElementProxy)</span>
+        <span style="font-size:11px;color:${pa.suspiciousRatio>0.5?'var(--err)':pa.suspiciousRatio>0.2?'var(--warn)':'var(--ok)'}">
+          ${pa.total} Objekt(e) · ${Math.round(pa.legitimateRatio*100)}% legitim
+        </span>
+      </div>
+      <div style="padding:8px 14px;font-size:11px;color:var(--text2);background:rgba(245,158,11,0.05);border-bottom:1px solid var(--border);line-height:1.5">
+        IfcBuildingElementProxy sollten die Ausnahme sein (z.B. ProvisionForVoid, Ausschnitte). Andere Objekte sollten spezifisch klassifiziert werden (IfcWall, IfcDoor, IfcSlab …).
+      </div>
+      ${pa.suspiciousNames.length ? `
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:600;color:var(--err);margin-bottom:6px">⚠ ${pa.suspiciousNames.length} Auffällige (Stichprobe aus ${pa.total})</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${pa.suspiciousNames.map(n=>`<span style="padding:2px 6px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:3px;font-size:10px;font-family:var(--mono)" title="${n}">${n.substring(0,40)}${n.length>40?'…':''}</span>`).join('')}
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:8px">Empfehlung: Planer bitten, diese Objekte spezifisch zu klassifizieren.</div>
+        </div>
+      `:''}
+      ${pa.legitimateNames.length ? `
+        <div style="padding:10px 14px">
+          <div style="font-size:11px;font-weight:600;color:var(--ok);margin-bottom:6px">✓ ${pa.legitimateNames.length} Legitim (Whitelist-Match)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${pa.legitimateNames.map(n=>`<span style="padding:2px 6px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:3px;font-size:10px;font-family:var(--mono)">${n.substring(0,40)}${n.length>40?'…':''}</span>`).join('')}
+          </div>
+        </div>
+      `:''}
+    </div>` : '';
   return `<div class="sc"><div class="sc-header"><span class="sc-title">Objekttypen-Abgleich</span><span style="font-size:11px;color:var(--text3)">${st.matchedTypes}/${st.totalExpected} gefunden</span></div>
   <table class="ptable"><thead><tr><th>Erwartete IFC-Entities</th><th>Im Modell gefunden</th><th>Anzahl</th><th>Status</th></tr></thead><tbody>
   ${st.checks.map(c=>`<tr><td><span style="font-family:var(--mono);font-size:10px">${c.expected.join(', ')}</span></td>
@@ -778,6 +876,9 @@ function renderStruktur(res){
     <td><span class="sp ${c.count>0?'sp-ok':'sp-err'}">${c.count>0?'✓':'✗ Fehlt'}</span></td>
   </tr>`).join('')}
   </tbody></table></div>
+  ${adoptedHtml}
+  ${discHtml}
+  ${proxyHtml}
   ${st.issues?.length?`<div class="sc"><div class="sc-header"><span class="sc-title">Abweichungen</span></div><table class="ptable"><thead><tr><th>Entitytyp</th><th>Hinweis</th></tr></thead><tbody>${st.issues.map(i=>`<tr><td style="font-family:var(--mono);font-size:11px">${i.expected}</td><td style="color:var(--text2)">${i.hint}</td></tr>`).join('')}</tbody></table></div>`:''}`;
 }
 function renderMerkmale(res){
@@ -898,9 +999,8 @@ function runAllChecks(){
 }
 function checkStruktur(parsed,fm){
   const disc=fm?.disc;
-  const expected=disc&&IFC_ENTITY_MAP[disc]?IFC_ENTITY_MAP[disc]:Object.values(IFC_ENTITY_MAP).flat();
+  const expected=disc?getExpectedForDisc(disc):Object.values(IFC_ENTITY_MAP).flat().concat(Object.values(projIfcExtras[pid]||{}).flat());
   const unique=[...new Set(expected)];
-  // Case-insensitive Lookup: Parser=UPPERCASE (IFCWALL), Map=PascalCase (IfcWall)
   const upperCounts={};
   Object.entries(parsed.entityTypes||{}).forEach(([k,v])=>{
     upperCounts[k.toUpperCase()]=(upperCounts[k.toUpperCase()]||0)+v;
@@ -911,7 +1011,41 @@ function checkStruktur(parsed,fm){
   });
   const relevant=checks.filter(c=>c.count>0||c.expected.some(e=>expected.includes(e)));
   const issues=relevant.filter(c=>c.count===0).map(c=>({expected:c.expected[0],hint:'Keine '+c.expected[0]+'-Instanzen im Modell gefunden'}));
-  return{checks:relevant,issues,totalExpected:relevant.length,matchedTypes:relevant.filter(c=>c.count>0).length};
+
+  // Discovered: IFC-Objekt-Klassen im Modell, die nicht erwartet sind
+  const expectedUpper=new Set(unique.map(e=>e.toUpperCase()));
+  const discovered=[];
+  Object.entries(parsed.entityTypes||{}).forEach(([type,count])=>{
+    if(!type.startsWith('IFC')) return;
+    if(!(parsed.samplesForType||{})[type]) return;
+    if(expectedUpper.has(type)) return;
+    const pascal='Ifc'+type.slice(3).charAt(0).toUpperCase()+type.slice(4).toLowerCase();
+    discovered.push({type:pascal, upperType:type, count, samples:(parsed.samplesForType[type]||[]).slice(0,5)});
+  });
+  discovered.sort((a,b)=>b.count-a.count);
+
+  // Proxy-Analyse
+  let proxyAnalysis=null;
+  const proxyCount=upperCounts['IFCBUILDINGELEMENTPROXY']||0;
+  if(proxyCount>0){
+    const proxySamples=(parsed.samplesForType||{})['IFCBUILDINGELEMENTPROXY']||[];
+    let legitimate=0, suspicious=0;
+    const suspiciousNames=[];
+    const legitimateNames=[];
+    proxySamples.forEach(n=>{
+      if(isProxyLegitimate(n)){ legitimate++; if(legitimateNames.length<8) legitimateNames.push(n); }
+      else{ suspicious++; if(suspiciousNames.length<12) suspiciousNames.push(n); }
+    });
+    proxyAnalysis={
+      total: proxyCount,
+      sampled: proxySamples.length,
+      legitimateRatio: proxySamples.length>0 ? legitimate/proxySamples.length : 0,
+      suspiciousRatio: proxySamples.length>0 ? suspicious/proxySamples.length : 0,
+      legitimateNames, suspiciousNames
+    };
+  }
+
+  return{checks:relevant,issues,totalExpected:relevant.length,matchedTypes:relevant.filter(c=>c.count>0).length,discovered,proxyAnalysis,disc};
 }
 function checkMerkmale(parsed){
   const assign=assignments[pid]||{};

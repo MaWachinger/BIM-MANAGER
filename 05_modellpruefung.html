@@ -755,7 +755,7 @@ function renderTMDetail(){
   if(!tm) return renderWelcome();
   const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);
   const res=results[pid]?.[tm.id];
-  const tabs=[{id:'uebersicht',label:'Übersicht'},{id:'struktur',label:'Strukturprüfung',n:res?.struktur?.issues?.length},{id:'merkmale',label:'Merkmale',n:res?.merkmale?.issues?.length},{id:'delta',label:'Datadrop-Delta',n:res?.delta?.changes?.length}];
+  const tabs=[{id:'uebersicht',label:'Übersicht'},{id:'struktur',label:'Strukturprüfung',n:res?.struktur?.issues?.length},{id:'merkmale',label:'Merkmale',n:res?.merkmale?.issues?.length},{id:'loin',label:'LOIN',n:res?.loin?.violations?.length},{id:'delta',label:'Datadrop-Delta',n:res?.delta?.changes?.length}];
   return `<div style="max-width:860px;margin:0 auto">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px">
       <div>
@@ -780,8 +780,136 @@ function renderTabContent(tm,res){
   if(activeTab==='uebersicht') return renderUebersicht(tm,res);
   if(activeTab==='struktur')   return renderStruktur(res);
   if(activeTab==='merkmale')   return renderMerkmale(res);
+  if(activeTab==='loin')       return renderLoin(tm,res);
   if(activeTab==='delta')      return renderDelta(res,tm);
   return '';
+}
+
+// ─── LOIN CHECK ──────────────────────────────────────────────────────
+function checkLoin(parsed){
+  // Lade LOIN + Wertebereiche fuer aktuelles Projekt aus localStorage
+  let loin=[], ranges={};
+  try{ loin=JSON.parse(localStorage.getItem('bim_loin_v1')||'{}')[pid]||[]; }catch(e){}
+  try{ ranges=JSON.parse(localStorage.getItem('bim_valueranges_v1')||'{}')[pid]||{}; }catch(e){}
+  if(!loin.length) return {noLoin:true};
+
+  const upperCounts={};
+  Object.entries(parsed.entityTypes||{}).forEach(([k,v])=>{upperCounts[k.toUpperCase()]=(upperCounts[k.toUpperCase()]||0)+v;});
+
+  // Nach LP gruppieren
+  const byLp={};
+  loin.forEach(l=>{
+    const lp=l.abLp||0;
+    if(!byLp[lp]) byLp[lp]={total:0, filled:0, missing:[], violations:[]};
+    byLp[lp].total++;
+    // Objekte dieser IFC-Klasse im Modell?
+    const ifcKey=(l.ifcClass||'').toUpperCase();
+    const objsInModel=upperCounts[ifcKey]||0;
+    if(!objsInModel && ifcKey!=='IFCENTITY'){
+      byLp[lp].missing.push({loin:l, reason:'Keine '+(l.ifcClass||'?')+'-Objekte im Modell'});
+      return;
+    }
+    // PropertyValues pro Klasse checken
+    const psetName=l.pset;
+    const propName=l.propertyName;
+    const propsByType=parsed.propValuesByType||{};
+    // finde alle Typen die (case-insensitive) auf ifcClass matchen und value hat
+    let foundValues=[];
+    Object.entries(propsByType).forEach(([type,psets])=>{
+      if(type.toUpperCase()!==ifcKey && ifcKey!=='IFCENTITY') return;
+      const vals=(psets[psetName]||{})[propName];
+      if(vals && vals.length) foundValues=foundValues.concat(vals);
+    });
+    if(!foundValues.length){
+      byLp[lp].missing.push({loin:l, reason:'Merkmal "'+psetName+'.'+propName+'" nicht am Modell gefunden'});
+      return;
+    }
+    byLp[lp].filled++;
+    // Wertebereich pruefen
+    if(l.valueRangeRef && ranges[l.valueRangeRef]){
+      const rng=ranges[l.valueRangeRef];
+      const validValues=(rng.values||[]).map(v=>typeof v==='object'?(v.code||v.label||''):String(v));
+      const validSet=new Set(validValues.map(v=>String(v).toLowerCase().trim()));
+      const invalidValues=[];
+      foundValues.forEach(v=>{
+        if(v===null||v===''||v===undefined) return;
+        const check=String(v).toLowerCase().trim();
+        if(!validSet.has(check)) invalidValues.push(v);
+      });
+      if(invalidValues.length){
+        byLp[lp].violations.push({loin:l, invalidValues:invalidValues.slice(0,5), totalInvalid:invalidValues.length, rangeName:l.valueRangeRef});
+      }
+    }
+  });
+
+  // Alle Violations gesammelt
+  const allViolations=[];
+  Object.values(byLp).forEach(lp=>allViolations.push(...lp.violations));
+
+  return {byLp, violations:allViolations, total:loin.length};
+}
+
+function renderLoin(tm,res){
+  const lo=res.loin||checkLoin(tm.parsed);
+  if(lo.noLoin) return '<div class="info-box info-amber">Keine LOIN-Tabelle fuer dieses Projekt geladen. Importiere im Merkmalserver ein LOIN-Bundle.</div>';
+  const lps=Object.keys(lo.byLp||{}).sort((a,b)=>a-b);
+  return `<div class="sc">
+    <div class="sc-header">
+      <span class="sc-title">LOIN Reifegrad pro Leistungsphase</span>
+      <span style="font-size:11px;color:var(--text3)">${lo.total} LOIN-Anforderungen</span>
+    </div>
+    <div style="padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+      ${lps.map(lp=>{
+        const d=lo.byLp[lp];
+        const pct=d.total>0?Math.round(d.filled/d.total*100):0;
+        const color=pct>=80?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
+        return `<div style="padding:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface)">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:4px">LP ${lp||'?'}</div>
+          <div style="font-size:24px;font-weight:700;color:${color}">${pct}%</div>
+          <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px"></div></div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--text3)">${d.filled}/${d.total} erfuellt${d.violations.length?' &middot; <span style="color:var(--err)">'+d.violations.length+' Wertebereich-Verletzung(en)</span>':''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  ${lo.violations && lo.violations.length ? `
+    <div class="sc">
+      <div class="sc-header">
+        <span class="sc-title">Wertebereich-Verletzungen</span>
+        <span style="font-size:11px;color:var(--err)">${lo.violations.length} Merkmal(e) mit ungueltigen Werten</span>
+      </div>
+      <table class="ptable"><thead><tr><th>Merkmal</th><th>Pset.Attr</th><th>Wertebereich</th><th>Ungueltige Werte</th></tr></thead><tbody>
+      ${lo.violations.slice(0,50).map(v=>`<tr>
+        <td style="font-weight:500">${v.loin.elementAttribut||v.loin.propertyName||'?'}</td>
+        <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">${v.loin.pset}.${v.loin.propertyName}</td>
+        <td style="font-family:var(--mono);font-size:10px">${v.rangeName}</td>
+        <td style="font-size:10px">
+          <div style="display:flex;flex-wrap:wrap;gap:3px">
+            ${v.invalidValues.map(iv=>`<span style="padding:1px 5px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:3px;font-family:var(--mono)" title="${iv}">${String(iv).substring(0,25)}${String(iv).length>25?'...':''}</span>`).join('')}
+            ${v.totalInvalid>5?`<span style="color:var(--text3);font-size:9px">+${v.totalInvalid-5} weitere</span>`:''}
+          </div>
+        </td>
+      </tr>`).join('')}
+      ${lo.violations.length>50?`<tr><td colspan="4" style="text-align:center;padding:10px;color:var(--text3)">...${lo.violations.length-50} weitere Verletzungen</td></tr>`:''}
+      </tbody></table>
+    </div>
+  `:''}
+  <div class="sc">
+    <div class="sc-header"><span class="sc-title">Details pro Leistungsphase</span></div>
+    ${lps.map(lp=>{
+      const d=lo.byLp[lp];
+      return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;font-size:12px;margin-bottom:6px">LP ${lp||'?'} &middot; ${d.filled}/${d.total} erfuellt</div>
+        ${d.missing.length?`<details style="margin-top:6px">
+          <summary style="cursor:pointer;font-size:11px;color:var(--err)">${d.missing.length} fehlende Merkmale</summary>
+          <ul style="margin:6px 0 0 20px;font-size:11px;color:var(--text2);max-height:200px;overflow:auto">
+            ${d.missing.slice(0,30).map(m=>`<li>${m.loin.elementAttribut||m.loin.propertyName} <span style="color:var(--text3);font-family:var(--mono);font-size:10px">(${m.loin.ifcClass}) &middot; ${m.reason}</span></li>`).join('')}
+            ${d.missing.length>30?`<li style="color:var(--text3)">...${d.missing.length-30} weitere</li>`:''}
+          </ul>
+        </details>`:'<div style="font-size:11px;color:var(--ok)">Alle Merkmale vorhanden ✓</div>'}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 function renderUebersicht(tm,res){
   const st=res.struktur||{}, mk=res.merkmale||{}, dl=res.delta||{};
@@ -919,33 +1047,139 @@ function renderDelta(res,tm){
 
 // ─── IFC PARSER ───────────────────────────────────────────────────────
 function parseIFC(text){
-  const r={schema:'',entities:0,objectCount:0,psetCount:0,guidCount:0,entityTypes:{},propertySets:{},guids:{},guidNames:{}};
+  const r={schema:'',entities:0,objectCount:0,psetCount:0,guidCount:0,entityTypes:{},propertySets:{},guids:{},guidNames:{},samplesForType:{},
+    // ETAPPE 2: Property-Werte
+    propRefs:{}, psetRefs:{}, relDefinesRefs:[], objectRefs:{},
+    // Aggregate (nach Post-Processing)
+    psetContents:{},        // { psetName: { propName: [values...] } }
+    propValuesByType:{},    // { ifcType: { psetName: { propName: [values...] } } }
+    objectProperties:{}     // { guid: { psetName: { propName: value } } }
+  };
   const sm=text.match(/FILE_SCHEMA\s*\(\s*\(\s*'([^']+)'/);
   if(sm) r.schema=sm[1];
-  const OBJ_TYPES=new Set(['IFCWALL','IFCWALLSTANDARDCASE','IFCSLAB','IFCCOLUMN','IFCBEAM','IFCSTAIR','IFCSTAIRFLIGHT','IFCRAMP','IFCRAMPFLIGHT','IFCDOOR','IFCWINDOW','IFCCURTAINWALL','IFCSPACE','IFCZONE','IFCPIPESEGMENT','IFCPIPEFITTING','IFCDUCTSEGMENT','IFCDUCTFITTING','IFCCABLESEGMENT','IFCPUMP','IFCVALVE','IFCLIGHTFIXTURE','IFCSWITCHINGDEVICE','IFCAIRHANDLINGUNIT','IFCSPACEHEATER','IFCPLATE','IFCMEMBER','IFCFURNISHINGELEMENT','IFCBUILDINGELEMENTPROXY','IFCFOOTING','IFCBOILER']);
+  const OBJ_TYPES=new Set(['IFCWALL','IFCWALLSTANDARDCASE','IFCSLAB','IFCCOLUMN','IFCBEAM','IFCSTAIR','IFCSTAIRFLIGHT','IFCRAMP','IFCRAMPFLIGHT','IFCDOOR','IFCWINDOW','IFCCURTAINWALL','IFCSPACE','IFCZONE','IFCPIPESEGMENT','IFCPIPEFITTING','IFCDUCTSEGMENT','IFCDUCTFITTING','IFCCABLESEGMENT','IFCPUMP','IFCVALVE','IFCLIGHTFIXTURE','IFCSWITCHINGDEVICE','IFCAIRHANDLINGUNIT','IFCSPACEHEATER','IFCPLATE','IFCMEMBER','IFCFURNISHINGELEMENT','IFCBUILDINGELEMENTPROXY','IFCFOOTING','IFCBOILER','IFCCOVERING','IFCRAILING','IFCFLOWTERMINAL','IFCFLOWSEGMENT','IFCFLOWFITTING','IFCAIRTERMINAL','IFCAIRTERMINALBOX','IFCFAN','IFCHEATEXCHANGER','IFCUNITARYEQUIPMENT','IFCSANITARYTERMINAL','IFCCABLECARRIERSEGMENT','IFCLAMP','IFCTRANSPORTELEMENT','IFCROOF','IFCOPENINGELEMENT','IFCCHILLER','IFCDISTRIBUTIONCONTROLELEMENT','IFCDISTRIBUTIONFLOWELEMENT','IFCDISTRIBUTIONELEMENT','IFCELECTRICDISTRIBUTIONBOARD','IFCELECTRICFLOWSTORAGEDEVICE','IFCFIRESUPPRESSIONTERMINAL','IFCTANK','IFCAUDIOVISUALAPPLIANCE','IFCHUMIDIFIER','IFCALARM','IFCFILTER','IFCACTUATOR','IFCSENSOR','IFCCONTROLLER']);
   const lines=text.split('\n');
   for(const line of lines){
     const ln=line.trim();
-    const m=ln.match(/^#\d+\s*=\s*([A-Z][A-Z0-9_]*)\s*\((.*)/);
+    const m=ln.match(/^#(\d+)\s*=\s*([A-Z][A-Z0-9_]*)\s*\((.*)/);
     if(!m) continue;
     r.entities++;
-    const[,type,rest]=m;
+    const refNr=m[1], type=m[2], rest=m[3];
     r.entityTypes[type]=(r.entityTypes[type]||0)+1;
-    if(OBJ_TYPES.has(type)) r.objectCount++;
+
+    // IFCPROPERTYSINGLEVALUE: 'Name', desc, value, unit
+    if(type==='IFCPROPERTYSINGLEVALUE'){
+      const nameMatch=rest.match(/^'([^']*)'/);
+      if(nameMatch){
+        // Wert-Extraktion: nach 2. Komma
+        // Format ist: 'name',$|desc,IFCLABEL('X') | IFCREAL(1.5) | .T. | .F. | $ | 'value',...
+        const afterName=rest.substring(rest.indexOf(nameMatch[0])+nameMatch[0].length);
+        // skip until comma
+        const parts=afterName.match(/^\s*,\s*(?:\$|[^,]+)\s*,\s*([^,]+(?:\([^)]*\))?)/);
+        let rawVal='';
+        if(parts) rawVal=parts[1].trim();
+        // Aus Wrappern extrahieren: IFCLABEL('X') → X, IFCREAL(1.5) → 1.5, .T. → true
+        let val=rawVal;
+        const wrapMatch=rawVal.match(/^IFC[A-Z]+\(\s*(.+?)\s*\)$/);
+        if(wrapMatch) val=wrapMatch[1];
+        // Strings aus Quotes extrahieren
+        if(val.startsWith("'") && val.endsWith("'")) val=val.slice(1,-1);
+        // Boolean STEP: .T. / .F.
+        if(val==='.T.') val=true;
+        else if(val==='.F.') val=false;
+        else if(val==='$') val=null;
+        r.propRefs[refNr]={name:nameMatch[1], value:val};
+      }
+    }
+
+    // IFCPROPERTYSET: 'guid', owner, 'name', desc, (#100,#101,...)
     if(type==='IFCPROPERTYSET'){
       r.psetCount++;
-      const nm=rest.match(/,\s*'([^']+)'/);
-      if(nm) r.propertySets[nm[1]]=(r.propertySets[nm[1]]||0)+1;
+      // Name = 3. String (nach GUID und Owner-Ref)
+      const nameMatch=rest.match(/^'[^']*'\s*,\s*[#$0-9]+\s*,\s*'([^']+)'/);
+      if(nameMatch){
+        r.propertySets[nameMatch[1]]=(r.propertySets[nameMatch[1]]||0)+1;
+        // Property-Refs: alles zwischen ( und ) am Ende
+        const refsMatch=rest.match(/\(\s*(#[\d,\s#]+)\s*\)\s*\)?\s*;?\s*$/);
+        const propRefs=refsMatch ? refsMatch[1].split(',').map(s=>s.trim().replace('#','')).filter(Boolean) : [];
+        r.psetRefs[refNr]={name:nameMatch[1], propRefs};
+      }
     }
+
+    // IFCRELDEFINESBYPROPERTIES: 'guid', owner, name, desc, (#obj1, #obj2), #pset
+    if(type==='IFCRELDEFINESBYPROPERTIES'){
+      // Suche (#nums,#nums,...),#psetRef am Ende
+      const relMatch=rest.match(/\(\s*(#[\d,\s#]+)\s*\)\s*,\s*#(\d+)\s*\)\s*;?\s*$/);
+      if(relMatch){
+        const objRefs=relMatch[1].split(',').map(s=>s.trim().replace('#','')).filter(Boolean);
+        const psetRef=relMatch[2];
+        r.relDefinesRefs.push({psetRef, objRefs});
+      }
+    }
+
     if(OBJ_TYPES.has(type)){
       const gm=rest.match(/^'([A-Za-z0-9_$]{22})'/);
       if(gm){
         r.guidCount++;
         const nm2=rest.match(/'[^']*',\s*\$?,\s*'([^']+)'/);
-        r.guids[gm[1]]=type; r.guidNames[gm[1]]=nm2?nm2[1]:'';
+        r.guids[gm[1]]=type;
+        r.guidNames[gm[1]]=nm2?nm2[1]:'';
+        r.objectRefs[refNr]={type, guid:gm[1], name:nm2?nm2[1]:''};
+        if(nm2){
+          if(!r.samplesForType[type]) r.samplesForType[type]=[];
+          if(r.samplesForType[type].length<50) r.samplesForType[type].push(nm2[1]);
+        }
       }
     }
   }
+
+  // ─── POST-PROCESSING: Werte pro Pset + pro Objekt aggregieren ─────
+  // psetContents: alle Werte pro Pset gesammelt
+  Object.values(r.psetRefs).forEach(pset=>{
+    if(!r.psetContents[pset.name]) r.psetContents[pset.name]={};
+    pset.propRefs.forEach(pr=>{
+      const prop=r.propRefs[pr];
+      if(!prop) return;
+      if(!r.psetContents[pset.name][prop.name]) r.psetContents[pset.name][prop.name]=[];
+      // Nur bis zu 100 Werte pro (pset,attr) merken (Speicherlimit)
+      if(r.psetContents[pset.name][prop.name].length<100) r.psetContents[pset.name][prop.name].push(prop.value);
+    });
+  });
+
+  // objectProperties: pro GUID die Property-Werte pro Pset
+  r.relDefinesRefs.forEach(rel=>{
+    const pset=r.psetRefs[rel.psetRef];
+    if(!pset) return;
+    rel.objRefs.forEach(objRef=>{
+      const obj=r.objectRefs[objRef];
+      if(!obj) return;
+      if(!r.objectProperties[obj.guid]) r.objectProperties[obj.guid]={};
+      if(!r.objectProperties[obj.guid][pset.name]) r.objectProperties[obj.guid][pset.name]={};
+      pset.propRefs.forEach(pr=>{
+        const prop=r.propRefs[pr];
+        if(!prop) return;
+        r.objectProperties[obj.guid][pset.name][prop.name]=prop.value;
+      });
+      // Aggregate per type
+      if(!r.propValuesByType[obj.type]) r.propValuesByType[obj.type]={};
+      if(!r.propValuesByType[obj.type][pset.name]) r.propValuesByType[obj.type][pset.name]={};
+      pset.propRefs.forEach(pr=>{
+        const prop=r.propRefs[pr];
+        if(!prop) return;
+        if(!r.propValuesByType[obj.type][pset.name][prop.name]) r.propValuesByType[obj.type][pset.name][prop.name]=[];
+        if(r.propValuesByType[obj.type][pset.name][prop.name].length<100){
+          r.propValuesByType[obj.type][pset.name][prop.name].push(prop.value);
+        }
+      });
+    });
+  });
+
+  // Zwischen-Refs entfernen um Speicher zu sparen
+  delete r.propRefs;
+  delete r.psetRefs;
+  delete r.relDefinesRefs;
+  delete r.objectRefs;
+
   return r;
 }
 
@@ -957,7 +1191,7 @@ function runCheck(tmId){
   showParse('Prüfung läuft…',tm.name);
   setTimeout(()=>{
     if(!results[pid]) results[pid]={};
-    results[pid][tmId]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tmId,tm)};
+    results[pid][tmId]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tmId,tm)};
     saveR(); hideParse(); selNode={type:'tm',id:tmId}; activeTab='uebersicht'; if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();} updateMainBadges();
     showToast('✓ Prüfung abgeschlossen');
   },350);
@@ -969,7 +1203,7 @@ function runFMCheck(fmId){
   setTimeout(()=>{
     if(!results[pid]) results[pid]={};
     const fm=(fmData[pid]||[]).find(f=>f.id===fmId);
-    tms.forEach(tm=>{results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tm.id,tm)};});
+    tms.forEach(tm=>{results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tm.id,tm)};});
     saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges(); showToast(`✓ ${tms.length} Teilmodelle geprüft`);
   },400);
 }
@@ -982,7 +1216,7 @@ function runKMCheck(kmId){
   showParse(`Koordinationsmodell prüfen…`,`${km.name} · ${tms.length} Teilmodelle`);
   setTimeout(()=>{
     if(!results[pid]) results[pid]={};
-    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tm.id,tm)};});
+    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tm.id,tm)};});
     saveR(); hideParse(); selNode={type:'km',id:kmId}; activeTab='uebersicht'; if(mainTab==='pruefung'){const el=document.getElementById('main-content');renderPruefungPanel(el);}else{renderWorkspaceAndGraph();} updateMainBadges();
     showToast(`✓ Koordinationsmodell ${km.name} geprüft`);
   },400);
@@ -993,7 +1227,7 @@ function runAllChecks(){
   showParse('Alle Modelle prüfen…',`${tms.length} Teilmodelle`);
   setTimeout(()=>{
     if(!results[pid]) results[pid]={};
-    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),delta:checkDelta(tm.id,tm)};});
+    tms.forEach(tm=>{const fm=(fmData[pid]||[]).find(f=>f.id===tm.fmId);results[pid][tm.id]={checkedAt:new Date().toISOString(),struktur:checkStruktur(tm.parsed,fm),merkmale:checkMerkmale(tm.parsed),loin:checkLoin(tm.parsed),delta:checkDelta(tm.id,tm)};});
     saveR(); hideParse(); renderWorkspaceAndGraph(); updateMainBadges(); showToast(`✓ ${tms.length} Teilmodelle geprüft`);
   },500);
 }

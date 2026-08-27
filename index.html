@@ -477,13 +477,27 @@ function updateActiveProjBar() {
   if (proj) { el.textContent = '● ' + proj.name; el.style.background='var(--accent-dim)'; el.style.color='var(--accent)'; }
   else { el.textContent='Kein aktives Projekt'; el.style.background='var(--surface2)'; el.style.color='var(--text3)'; }
 }
+
+// Kartenklick: in Uebersicht neues Tab oeffnen, in Detail-View normale interne Anzeige
+function handleProjectCardClick(id) {
+  const u = new URLSearchParams(location.search);
+  const isInDetailView = u.get('view') === 'detail';
+  if (isInDetailView) {
+    showDetail(id);  // schon in Detail-View: intern anzeigen
+  } else {
+    activateProject(id);  // in Uebersicht: neues Tab oeffnen
+  }
+}
+window.handleProjectCardClick = handleProjectCardClick;
+
 function activateProject(pid) {
-  setCurrentProject(pid);
+  // WICHTIG: setCurrentProject(pid) NICHT aufrufen - das wuerde den Heartbeat
+  // dieses Tabs (Uebersicht) auf 'project:pid' aendern und die Tab-Tracking-
+  // Logik denken lassen dieses Tab sei bereits das Projekt-Tab.
   const proj = (window.projects||window.data||[]).find(p => p.id === pid);
   const name = proj ? proj.name : pid;
   const url = 'index.html?pid=' + encodeURIComponent(pid) + '&view=detail';
   openOrFocusTab(url, 'project:' + pid, name);
-  renderProjects();
 }
 function openProjectInSameTab(pid) {
   // Alternative fuer Nutzer die kein Popup wollen
@@ -670,7 +684,7 @@ function renderProjects(){
   if(currentView==='grid'){
     container.innerHTML=`<div class="projects-grid">${list.map(p=>{
       const ag=getAg(p), isMine=settings.name&&p.bimManager===settings.name;
-      return `<div class="project-card" onclick="showDetail('${p.id}')">
+      return `<div class="project-card" onclick="handleProjectCardClick('${p.id}')">
         <div class="project-card-bar" style="background:${phaseColor(p)}"></div>
         <div class="project-card-body">
           <div class="project-number">${p.number}</div>
@@ -695,7 +709,7 @@ function renderProjects(){
   } else {
     container.innerHTML=`<div class="projects-list">
       <div class="list-header"><div>Projekt</div><div>Phasen</div><div>Auftraggeber</div><div>BIM Manager</div><div>Status</div></div>
-      ${list.map(p=>`<div class="list-row" onclick="showDetail('${p.id}')">
+      ${list.map(p=>`<div class="list-row" onclick="handleProjectCardClick('${p.id}')">
         <div><div style="font-weight:500">${p.name}</div><div style="font-size:12px;color:var(--text3)">${p.number}</div></div>
         <div style="display:flex;gap:4px;flex-wrap:wrap">${phaseTags(p)}</div>
         <div style="font-size:13px;color:var(--text2)">${getAg(p)||'—'}</div>
@@ -708,6 +722,16 @@ function renderProjects(){
 
 function showDetail(id){
   const p=projects.find(x=>x.id===id); if(!p) return;
+  // URL updaten damit Detail-State persistent ist (fuer Refresh/Bookmarks)
+  try {
+    const u = new URLSearchParams(location.search);
+    if (u.get('view') !== 'detail' || u.get('pid') !== id) {
+      const newUrl = 'index.html?pid=' + encodeURIComponent(id) + '&view=detail';
+      history.replaceState({}, '', newUrl);
+    }
+    if (typeof _updateSidebarVisibility === 'function') _updateSidebarVisibility();
+    if (typeof _updateTabTitle === 'function') _updateTabTitle('Projekteigenschaften');
+  } catch(e){}
   const betRows=BETEILIGTE_KAT.map(k=>{
     const b=p.beteiligte?.[k.id];
     if(!b||typeof b!=='object'||!b.firma) return '';
@@ -763,7 +787,17 @@ function showDetail(id){
   window.scrollTo(0,0);
 }
 
-function showListView(){ (document.getElementById('view-list')||{}).style.display='block'; (document.getElementById('view-detail')||{}).style.display='none'; window.scrollTo(0,0); }
+function showListView(){
+  (document.getElementById('view-list')||{}).style.display='block';
+  (document.getElementById('view-detail')||{}).style.display='none';
+  window.scrollTo(0,0);
+  // URL zurueck auf reine Uebersicht + Sidebar aktualisieren
+  try {
+    if (location.search) history.replaceState({}, '', 'index.html');
+    if (typeof _updateSidebarVisibility === 'function') _updateSidebarVisibility();
+    if (typeof _updateTabTitle === 'function') _updateTabTitle('Projektverwaltung');
+  } catch(e){}
+}
 
 function buildPhaseCheckboxes(){
   (document.getElementById('phase-checkboxes')||{}).innerHTML=LEISTUNGSPHASEN.map(lp=>`
@@ -1177,7 +1211,33 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal(); clo
 init();
 
 // ─── CROSS-MODULE STATE ───────────────────────────────────────────────
-function goTo(href) { window.location.href = href; }
+
+// Sidebar dynamisch: in Uebersicht nur Projektverwaltung, in Detail-View alle Module
+function _updateSidebarVisibility() {
+  const u = new URLSearchParams(location.search);
+  const isDetail = u.get('view') === 'detail' && u.get('pid');
+  const nav = document.querySelector('nav.nav');
+  if (!nav) return;
+  nav.querySelectorAll('.nav-item, .nav-section').forEach(function(el){
+    const txt = el.textContent.trim();
+    const isPv = txt === 'Projektverwaltung';
+    const isProjSection = el.classList.contains('nav-section') && txt.toLowerCase() === 'projekt';
+    if (isDetail) {
+      el.style.display = '';  // alle sichtbar
+    } else {
+      el.style.display = (isPv || isProjSection) ? '' : 'none';
+    }
+  });
+}
+window._updateSidebarVisibility = _updateSidebarVisibility;
+
+function goTo(href) {
+  const _pid = getCurrentProject();
+  if(_pid && !href.startsWith('index.html') && !href.startsWith('08_hilfe') && !href.includes('pid=')){
+    href = href + (href.includes('?')?'&':'?') + 'pid=' + encodeURIComponent(_pid);
+  }
+  window.location.href = href;
+}
 function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
 function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
 
@@ -1288,17 +1348,7 @@ document.addEventListener('DOMContentLoaded', function(){
   } else {
     _updateTabTitle('Projektverwaltung');
   }
-  // Konditionale Sidebar: ohne view=detail nur "Projektverwaltung" sichtbar
-  const isDetail = view === 'detail' && pid;
-  const nav = document.querySelector('nav.nav');
-  if (nav && !isDetail) {
-    nav.querySelectorAll('.nav-item, .nav-section').forEach(function(el){
-      const txt = el.textContent.trim();
-      const isPv = txt === 'Projektverwaltung';
-      const isPvSection = el.classList.contains('nav-section') && txt.toLowerCase() === 'projekt';
-      if (!isPv && !isPvSection) el.style.display = 'none';
-    });
-  }
+  _updateSidebarVisibility();
 });
 </script>
 </body>

@@ -181,7 +181,9 @@ textarea { resize:vertical; min-height:72px; line-height:1.6; }
     </div>
     <div class="logo-sub">v0.1 · Projektverwaltung</div>
   </div>
-  <nav class="nav">
+    <nav class="nav">
+    <div class="nav-section">Projekt</div>
+    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2H2zm5 2v10M2 8h16"/></svg>Projektverwaltung</div>
     <div class="nav-section">Festlegen &nbsp;·&nbsp; Ebene 0</div>
     <div class="nav-item" onclick="goTo('01_zuordnung.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h5M3 10h5M3 15h5M12 10h5M8 5c3 0 1 5 4 5M8 15c3 0 1-5 4-5"/></svg>Zuordnung</div>
     <div class="nav-item" onclick="goTo('03_merkmalserver_v2.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5h16v3H2zM2 10h16v3H2zM2 15h10v3H2z"/></svg>Merkmalskatalog</div>
@@ -191,8 +193,7 @@ textarea { resize:vertical; min-height:72px; line-height:1.6; }
     <div class="nav-item" onclick="goTo('06_modellpruefung_regeln.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3a7 7 0 100 14A7 7 0 0010 3zm0 3v4M10 13h.01"/></svg>Prüfregeln</div>
     <div class="nav-section">Auswerten</div>
     <div class="nav-item" onclick="goTo('07_berichtsgenerator.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2zM10 9h4M10 13h4M6 9h.01M6 13h.01"/></svg>Reifegradbericht</div>
-    <div class="nav-section">Projektrahmen</div>
-    <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2H2zm5 2v10M2 8h16"/></svg>Projektverwaltung</div>
+    <div class="nav-section">Konfiguration</div>
     <div class="nav-item" onclick="goTo('04_anwendungsfaelle.html')"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 4v4l3 3"/></svg>Anwendungsfälle</div>
   </nav>
   <div class="sidebar-footer">
@@ -477,19 +478,11 @@ function updateActiveProjBar() {
   else { el.textContent='Kein aktives Projekt'; el.style.background='var(--surface2)'; el.style.color='var(--text3)'; }
 }
 function activateProject(pid) {
-  // Behalt globalen State fuer Legacy-Fallback, aber Kern-Aktion: Projekt in neuem Fenster
   setCurrentProject(pid);
   const proj = (window.projects||window.data||[]).find(p => p.id === pid);
   const name = proj ? proj.name : pid;
-  // Oeffne Standard-Modul (Meilensteinplanung) in neuem Tab mit pid als URL-Param
-  const url = '02_meilensteinplanung.html?pid=' + encodeURIComponent(pid);
-  const win = window.open(url, '_blank');
-  if(!win){
-    // Popup blockiert - Toast mit Hinweis
-    showToast('Popup-Blocker aktiv - Projekt konnte nicht in neuem Tab geoeffnet werden');
-    return;
-  }
-  showToast('▶ ' + name + ' in neuem Tab geoeffnet');
+  const url = 'index.html?pid=' + encodeURIComponent(pid) + '&view=detail';
+  openOrFocusTab(url, 'project:' + pid, name);
   renderProjects();
 }
 function openProjectInSameTab(pid) {
@@ -1199,6 +1192,114 @@ setTimeout(function() {
     }
   } catch(e) { console.warn('[BIM] Safety re-render:', e.message); }
 }, 800);
+
+
+// TAB-TRACKING (verhindert Duplikate)
+const _tabId = Math.random().toString(36).slice(2, 10);
+let _tabChannel = null;
+try { _tabChannel = new BroadcastChannel('bim-tabs'); } catch(e){}
+function getTabKey() {
+  const pid = getCurrentProject();
+  return pid ? ('project:' + pid) : 'projectmgmt';
+}
+function _updateTabHeartbeat() {
+  try {
+    const tabs = JSON.parse(localStorage.getItem('bim_active_tabs') || '{}');
+    Object.keys(tabs).forEach(k => { if (!tabs[k] || (Date.now() - tabs[k].ts > 15000)) delete tabs[k]; });
+    tabs[getTabKey()] = { tabId: _tabId, ts: Date.now(), url: location.href };
+    localStorage.setItem('bim_active_tabs', JSON.stringify(tabs));
+  } catch(e){}
+}
+_updateTabHeartbeat();
+setInterval(_updateTabHeartbeat, 3000);
+window.addEventListener('beforeunload', () => {
+  try {
+    const tabs = JSON.parse(localStorage.getItem('bim_active_tabs') || '{}');
+    const k = getTabKey();
+    if (tabs[k] && tabs[k].tabId === _tabId) delete tabs[k];
+    localStorage.setItem('bim_active_tabs', JSON.stringify(tabs));
+  } catch(e){}
+});
+function findExistingTab(key) {
+  try {
+    const tabs = JSON.parse(localStorage.getItem('bim_active_tabs') || '{}');
+    const info = tabs[key];
+    if (info && (Date.now() - info.ts) < 15000) return info;
+  } catch(e){}
+  return null;
+}
+function openOrFocusTab(url, key, displayName) {
+  const existing = findExistingTab(key);
+  if (existing && _tabChannel) {
+    _tabChannel.postMessage({ type: 'focus-request', targetTabId: existing.tabId });
+    setTimeout(() => {
+      const msg = '▶ ' + (displayName||'Fenster') + ' ist bereits offen – Titel-Flash im Zielfenster';
+      if (typeof showToast === 'function') showToast(msg); else console.info(msg);
+    }, 100);
+    return;
+  }
+  const win = window.open(url, 'bim-' + key);
+  if (!win) {
+    const msg = 'Popup-Blocker aktiv – bitte Popups für diese Seite freigeben';
+    if (typeof showToast === 'function') showToast(msg); else alert(msg);
+  }
+}
+if (_tabChannel) {
+  _tabChannel.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'focus-request' && e.data.targetTabId === _tabId) {
+      window.focus();
+      const orig = document.title;
+      let toggle = false;
+      const iv = setInterval(() => { document.title = toggle ? orig : '👋 ' + orig; toggle = !toggle; }, 500);
+      setTimeout(() => { clearInterval(iv); document.title = orig; }, 3000);
+    }
+  });
+}
+function _updateTabTitle(moduleName) {
+  try {
+    const pid = getCurrentProject();
+    if (pid) {
+      const projs = JSON.parse(localStorage.getItem('bim_projects') || '[]');
+      const proj = projs.find(p => p.id === pid);
+      if (proj) { document.title = proj.name + (moduleName ? ' — ' + moduleName : ''); return; }
+    }
+    if (moduleName) document.title = moduleName + ' — BIM Manager';
+  } catch(e){}
+}
+function goToProjectMgmt() {
+  openOrFocusTab('index.html', 'projectmgmt', 'Projektverwaltung');
+}
+window.goToProjectMgmt = goToProjectMgmt;
+window.openOrFocusTab = openOrFocusTab;
+window.findExistingTab = findExistingTab;
+window._updateTabTitle = _updateTabTitle;
+
+
+// URL-Handler: bei ?pid=xyz&view=detail direkt in Detail-View starten
+document.addEventListener('DOMContentLoaded', function(){
+  const u = new URLSearchParams(location.search);
+  const pid = u.get('pid');
+  const view = u.get('view');
+  if (pid && view === 'detail') {
+    setTimeout(function(){
+      if (typeof showDetail === 'function') showDetail(pid);
+      _updateTabTitle('Projekteigenschaften');
+    }, 300);
+  } else {
+    _updateTabTitle('Projektverwaltung');
+  }
+  // Konditionale Sidebar: ohne view=detail nur "Projektverwaltung" sichtbar
+  const isDetail = view === 'detail' && pid;
+  const nav = document.querySelector('nav.nav');
+  if (nav && !isDetail) {
+    nav.querySelectorAll('.nav-item, .nav-section').forEach(function(el){
+      const txt = el.textContent.trim();
+      const isPv = txt === 'Projektverwaltung';
+      const isPvSection = el.classList.contains('nav-section') && txt.toLowerCase() === 'projekt';
+      if (!isPv && !isPvSection) el.style.display = 'none';
+    });
+  }
+});
 </script>
 </body>
 </html>

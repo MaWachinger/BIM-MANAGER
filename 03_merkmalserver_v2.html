@@ -523,9 +523,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex
 </script>
 <script>
 // ─── CROSS-MODULE NAVIGATION ─────────────────────────────────────────
-function goTo(href) { window.location.href = href; }
+function goTo(href){
+  const _pid = getCurrentProject();
+  if(_pid && !href.startsWith('index.html') && !href.startsWith('08_hilfe') && !href.includes('pid=')){
+    href = href + (href.includes('?')?'&':'?') + 'pid=' + encodeURIComponent(_pid);
+  }
+  window.location.href = href;
+}
 function setCurrentProject(pid) { localStorage.setItem('bim_current_project', pid); }
-function getCurrentProject() { return localStorage.getItem('bim_current_project') || ''; }
+function getCurrentProject(){ const _u=new URLSearchParams(location.search); const _p=_u.get('pid'); if(_p) return _p; return localStorage.getItem('bim_current_project') || ''; }
+function isUrlPidLocked(){ return !!(new URLSearchParams(location.search)).get('pid'); }
 
 function renderProjBadge() {
   const pid = getCurrentProject();
@@ -2730,6 +2737,20 @@ document.addEventListener('keydown',e=>{
 
 init();
 
+
+// URL-Pid-Lock: Projekt-Wechsler sperren wenn Projekt via URL fixiert
+document.addEventListener('DOMContentLoaded', function(){
+  if(!isUrlPidLocked()) return;
+  setTimeout(function(){
+    document.querySelectorAll('select#psel, select#project-select, select[data-project-switcher]').forEach(function(sel){
+      sel.disabled = true; sel.title = 'Projekt via URL fixiert - Zurueck zur Projektverwaltung';
+    });
+    // Auch "wechseln" Buttons deaktivieren wenn vorhanden
+    document.querySelectorAll('button[onclick*="wechseln"],button[onclick*="switchProject"]').forEach(function(btn){
+      btn.disabled=true;
+    });
+  }, 100);
+});
 </script>
 
 <!-- GLOBAL LIBRARY DRAWER -->

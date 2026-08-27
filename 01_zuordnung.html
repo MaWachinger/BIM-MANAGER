@@ -498,8 +498,15 @@ let projTreeExt={}, objAssignments={};
 // Mehrfachauswahl: Set der markierten Merkmale, sichtbare Reihenfolge fuer Shift-Bereich
 let selectedParams=new Set(), lastPicked=null, sichtbareIds=[], gruppenIds={};
 
-function goTo(href){ window.location.href = href; }
-function getCurrentProject(){ return localStorage.getItem('bim_current_project') || ''; }
+function goTo(href){
+  const _pid = getCurrentProject();
+  if(_pid && !href.startsWith('index.html') && !href.startsWith('08_hilfe') && !href.includes('pid=')){
+    href = href + (href.includes('?')?'&':'?') + 'pid=' + encodeURIComponent(_pid);
+  }
+  window.location.href = href;
+}
+function getCurrentProject(){ const _u=new URLSearchParams(location.search); const _p=_u.get('pid'); if(_p) return _p; return localStorage.getItem('bim_current_project') || ''; }
+function isUrlPidLocked(){ return !!(new URLSearchParams(location.search)).get('pid'); }
 function setCurrentProject(pid){ localStorage.setItem('bim_current_project', pid); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -992,6 +999,20 @@ function onMsClick(msId){
 // ─── START ────────────────────────────────────────────────────────────
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
 else init();
+
+// URL-Pid-Lock: Projekt-Wechsler sperren wenn Projekt via URL fixiert
+document.addEventListener('DOMContentLoaded', function(){
+  if(!isUrlPidLocked()) return;
+  setTimeout(function(){
+    document.querySelectorAll('select#psel, select#project-select, select[data-project-switcher]').forEach(function(sel){
+      sel.disabled = true; sel.title = 'Projekt via URL fixiert - Zurueck zur Projektverwaltung';
+    });
+    // Auch "wechseln" Buttons deaktivieren wenn vorhanden
+    document.querySelectorAll('button[onclick*="wechseln"],button[onclick*="switchProject"]').forEach(function(btn){
+      btn.disabled=true;
+    });
+  }, 100);
+});
 </script>
 </body>
 </html>

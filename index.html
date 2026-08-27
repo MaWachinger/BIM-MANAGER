@@ -477,13 +477,24 @@ function updateActiveProjBar() {
   else { el.textContent='Kein aktives Projekt'; el.style.background='var(--surface2)'; el.style.color='var(--text3)'; }
 }
 function activateProject(pid) {
+  // Behalt globalen State fuer Legacy-Fallback, aber Kern-Aktion: Projekt in neuem Fenster
   setCurrentProject(pid);
-  renderProjects();
-  updateActiveProjBar();
   const proj = (window.projects||window.data||[]).find(p => p.id === pid);
-  if (proj) showToast('✓ ' + proj.name + ' ist jetzt aktiv');
-  // Öffne die Detailansicht des Projekts
-  showDetail(pid);
+  const name = proj ? proj.name : pid;
+  // Oeffne Standard-Modul (Meilensteinplanung) in neuem Tab mit pid als URL-Param
+  const url = '02_meilensteinplanung.html?pid=' + encodeURIComponent(pid);
+  const win = window.open(url, '_blank');
+  if(!win){
+    // Popup blockiert - Toast mit Hinweis
+    showToast('Popup-Blocker aktiv - Projekt konnte nicht in neuem Tab geoeffnet werden');
+    return;
+  }
+  showToast('▶ ' + name + ' in neuem Tab geoeffnet');
+  renderProjects();
+}
+function openProjectInSameTab(pid) {
+  // Alternative fuer Nutzer die kein Popup wollen
+  location.href = '02_meilensteinplanung.html?pid=' + encodeURIComponent(pid);
 }
 
 function loadSettings() { try { settings=JSON.parse(localStorage.getItem(SETTINGS_KEY))||{name:'',org:''}; } catch(e){} }
@@ -642,7 +653,7 @@ function phaseTags(p){
 }
 
 function statusBadge(s){
-  const m={aktiv:['status-ok','● Aktiv'],abgeschlossen:['status-info','✓ Abgeschlossen'],pausiert:['status-warn','⏸ Pausiert'],setup:['status-pending','○ Setup']};
+  const m={aktiv:['status-ok','● Aktiv (Legacy)'],abgeschlossen:['status-info','✓ Abgeschlossen'],pausiert:['status-warn','⏸ Pausiert'],setup:['status-pending','○ Setup']};
   const [c,l]=m[s]||['status-pending',s]; return `<span class="status-badge ${c}">${l}</span>`;
 }
 
@@ -723,7 +734,7 @@ function showDetail(id){
         <div style="display:flex;gap:6px;flex-wrap:wrap">${phaseTags(p)} ${p.lod?`<span class="tag tag-gray">${p.lod}</span>`:''} ${statusBadge(p.status)}</div>
       </div>
       <div class="detail-actions">
-        <button class="btn ${getCurrentProject()===p.id?'btn-primary':'btn-secondary'}" onclick="activateProject('${p.id}')" style="display:flex;align-items:center;gap:5px">${getCurrentProject()===p.id?'● Aktiv':'▶ Als aktives Projekt öffnen'}</button>
+        <button class="btn ${getCurrentProject()===p.id?'btn-primary':'btn-secondary'}" onclick="activateProject('${p.id}')" style="display:flex;align-items:center;gap:5px">${getCurrentProject()===p.id?'● Aktiv':'▶ In neuem Fenster öffnen'}</button>
         <button class="btn btn-secondary" onclick="openModal('${p.id}')">✎ Bearbeiten</button>
         <button class="btn btn-danger" onclick="confirmDelete('${p.id}')">⌫ Löschen</button>
       </div>

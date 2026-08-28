@@ -2273,7 +2273,8 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 
-// TAB-TRACKING (verhindert Duplikate)
+
+// TAB-TRACKING (Living-Check via BroadcastChannel-Ping)
 const _tabId = Math.random().toString(36).slice(2, 10);
 let _tabChannel = null;
 try { _tabChannel = new BroadcastChannel('bim-tabs'); } catch(e){}
@@ -2281,58 +2282,61 @@ function getTabKey() {
   const pid = getCurrentProject();
   return pid ? ('project:' + pid) : 'projectmgmt';
 }
-function _updateTabHeartbeat() {
-  try {
-    const tabs = JSON.parse(localStorage.getItem('bim_active_tabs') || '{}');
-    Object.keys(tabs).forEach(k => { if (!tabs[k] || (Date.now() - tabs[k].ts > 15000)) delete tabs[k]; });
-    tabs[getTabKey()] = { tabId: _tabId, ts: Date.now(), url: location.href };
-    localStorage.setItem('bim_active_tabs', JSON.stringify(tabs));
-  } catch(e){}
+// Ping/Pong: aktive Tabs antworten auf Ping mit ihrer Key + tabId
+const _pongResponders = {};
+if (_tabChannel) {
+  _tabChannel.addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d) return;
+    // Ping empfangen: mit eigenem Key antworten wenn passend
+    if (d.type === 'ping-tab' && d.key === getTabKey()) {
+      _tabChannel.postMessage({ type: 'pong-tab', key: d.key, tabId: _tabId, requestId: d.requestId });
+    }
+    // Pong empfangen: registrieren
+    if (d.type === 'pong-tab' && _pongResponders[d.requestId]) {
+      _pongResponders[d.requestId].push(d);
+    }
+    // Focus-Request
+    if (d.type === 'focus-request' && d.targetTabId === _tabId) {
+      window.focus();
+      const orig = document.title;
+      let t = false;
+      const iv = setInterval(() => { document.title = t ? orig : '👋 ' + orig; t = !t; }, 500);
+      setTimeout(() => { clearInterval(iv); document.title = orig; }, 3000);
+    }
+  });
 }
-_updateTabHeartbeat();
-setInterval(_updateTabHeartbeat, 3000);
-window.addEventListener('beforeunload', () => {
-  try {
-    const tabs = JSON.parse(localStorage.getItem('bim_active_tabs') || '{}');
-    const k = getTabKey();
-    if (tabs[k] && tabs[k].tabId === _tabId) delete tabs[k];
-    localStorage.setItem('bim_active_tabs', JSON.stringify(tabs));
-  } catch(e){}
-});
-function findExistingTab(key) {
-  try {
-    const tabs = JSON.parse(localStorage.getItem('bim_active_tabs') || '{}');
-    const info = tabs[key];
-    if (info && (Date.now() - info.ts) < 15000) return info;
-  } catch(e){}
-  return null;
-}
-function openOrFocusTab(url, key, displayName) {
-  const existing = findExistingTab(key);
-  if (existing && _tabChannel) {
-    _tabChannel.postMessage({ type: 'focus-request', targetTabId: existing.tabId });
+// Living-Check: sendet Ping, wartet 250ms auf Antworten
+function findExistingTabLive(key, timeout) {
+  return new Promise((resolve) => {
+    if (!_tabChannel) { resolve(null); return; }
+    const requestId = Math.random().toString(36).slice(2, 10);
+    _pongResponders[requestId] = [];
+    _tabChannel.postMessage({ type: 'ping-tab', key, requestId });
     setTimeout(() => {
-      const msg = '▶ ' + (displayName||'Fenster') + ' ist bereits offen – Titel-Flash im Zielfenster';
-      if (typeof showToast === 'function') showToast(msg); else console.info(msg);
-    }, 100);
+      const responses = _pongResponders[requestId] || [];
+      delete _pongResponders[requestId];
+      // Nur "andere" Tabs zaehlen (nicht wir selbst)
+      const others = responses.filter(r => r.tabId !== _tabId);
+      resolve(others.length > 0 ? others[0] : null);
+    }, timeout || 250);
+  });
+}
+async function openOrFocusTab(url, key, displayName) {
+  // 1. Live-Check via Ping
+  const existing = await findExistingTabLive(key);
+  if (existing) {
+    _tabChannel.postMessage({ type: 'focus-request', targetTabId: existing.tabId });
+    const msg = '▶ ' + (displayName||'Fenster') + ' bereits offen – im anderen Tab suchen (Titel blinkt 👋)';
+    if (typeof showToast === 'function') showToast(msg); else console.info(msg);
     return;
   }
+  // 2. Kein anderer Tab antwortet → neues Fenster
   const win = window.open(url, 'bim-' + key);
   if (!win) {
     const msg = 'Popup-Blocker aktiv – bitte Popups für diese Seite freigeben';
     if (typeof showToast === 'function') showToast(msg); else alert(msg);
   }
-}
-if (_tabChannel) {
-  _tabChannel.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'focus-request' && e.data.targetTabId === _tabId) {
-      window.focus();
-      const orig = document.title;
-      let toggle = false;
-      const iv = setInterval(() => { document.title = toggle ? orig : '👋 ' + orig; toggle = !toggle; }, 500);
-      setTimeout(() => { clearInterval(iv); document.title = orig; }, 3000);
-    }
-  });
 }
 function _updateTabTitle(moduleName) {
   try {
@@ -2348,11 +2352,15 @@ function _updateTabTitle(moduleName) {
 function goToProjectMgmt() {
   openOrFocusTab('index.html', 'projectmgmt', 'Projektverwaltung');
 }
+// NOTFALL-RESET: falls Tab-Tracking hakt, ueber Console aufrufbar
+window.bimResetTabTracking = function(){
+  try { localStorage.removeItem('bim_active_tabs'); } catch(e){}
+  console.info('Tab-Tracking zurueckgesetzt');
+  return 'ok';
+};
 window.goToProjectMgmt = goToProjectMgmt;
 window.openOrFocusTab = openOrFocusTab;
-window.findExistingTab = findExistingTab;
 window._updateTabTitle = _updateTabTitle;
-
 
 // Tab-Titel setzen
 if(typeof _updateTabTitle==='function') setTimeout(function(){ _updateTabTitle('Modellprüfung'); }, 200);
